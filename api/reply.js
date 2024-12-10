@@ -48,7 +48,7 @@ export default async function handler(req, res) {
 
 async function saveToGoogleSheets(userMessage, botReply) {
     try {
-        const response = await fetch("https://script.google.com/macros/s/<DEPLOYMENT_ID>/exec", {
+        const response = await fetch("https://script.google.com/macros/s/AKfycbzLZuhWhQXAMQpXOqht0iIT7Bkido3l0wlVME9qGF_8Oq3-WbqQcVSGVvzy5K9We38/exec", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userMessage, botReply }),
