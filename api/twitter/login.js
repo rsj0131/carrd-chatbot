@@ -12,4 +12,5 @@ export default async function handler(req, res) {
     });
 
     res.redirect(`https://twitter.com/i/oauth2/authorize?${params.toString()}`);
+    console.log(`https://twitter.com/i/oauth2/authorize?${params.toString()}`);
 }
