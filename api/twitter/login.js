@@ -11,6 +11,6 @@ export default async function handler(req, res) {
         code_challenge_method: "plain",
     });
 
-    res.redirect(`https://twitter.com/i/oauth2/authorize?${params.toString()}`);
     console.log(`https://twitter.com/i/oauth2/authorize?${params.toString()}`);
+    res.redirect(`https://twitter.com/i/oauth2/authorize?${params.toString()}`);
 }
