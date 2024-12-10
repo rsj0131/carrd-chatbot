@@ -5,6 +5,7 @@ const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY, // Ensure this is set in Vercel's environment variables
 });
 const openai = new OpenAIApi(configuration);
+var systemMessage = "";
 
 export default async function handler(req, res) {
     // Set CORS headers
@@ -30,11 +31,33 @@ export default async function handler(req, res) {
     try {
         const response = await openai.createChatCompletion({
             model: "gpt-4o-mini",
-            messages: [{ role: "user", content: message }],
+            messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
         });
-        res.status(200).json({ reply: response.data.choices[0].message.content });
+
+        const botReply = response.data.choices[0].message.content;
+
+        // Save conversation to Google Sheets
+        await saveToGoogleSheets(message, botReply);
+
+        res.status(200).json({ reply: botReply });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+async function saveToGoogleSheets(userMessage, botReply) {
+    try {
+        const response = await fetch("https://script.google.com/macros/s/<DEPLOYMENT_ID>/exec", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userMessage, botReply }),
+        });
+
+        if (!response.ok) {
+            console.error("Failed to save to Google Sheets:", response.statusText);
+        }
+    } catch (error) {
+        console.error("Error saving to Google Sheets:", error);
     }
 }
