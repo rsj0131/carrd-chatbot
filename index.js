@@ -35,10 +35,6 @@ app.post("/reply", async (req, res) => {
     }
 });
 
-app.get("/reply", (req, res) => {
-    res.send("This endpoint only supports POST requests. Please send a POST request with a valid JSON body.");
-});
-
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
