@@ -1,11 +1,16 @@
 import jwt from "jsonwebtoken";
-const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 export default async function handler(req, res) {
     const { code } = req.query;
 
     if (!code) {
         return res.status(400).json({ error: "Missing code parameter" });
+    }
+
+    // Extract the code_verifier from the cookie
+    const codeVerifier = req.cookies.code_verifier;
+    if (!codeVerifier) {
+        return res.status(400).json({ error: "Missing code_verifier" });
     }
 
     try {
@@ -23,6 +28,7 @@ export default async function handler(req, res) {
                 code: code,
                 redirect_uri: process.env.TWITTER_CALLBACK_URL,
                 client_id: process.env.TWITTER_API_KEY,
+                code_verifier: codeVerifier,
             }),
         });
 
