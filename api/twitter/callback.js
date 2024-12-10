@@ -5,6 +5,7 @@ export default async function handler(req, res) {
     const { code } = req.query;
 
     if (!code) {
+        console.error("Missing code parameter");
         return res.status(400).json({ error: "Missing code parameter" });
     }
 
@@ -14,6 +15,7 @@ export default async function handler(req, res) {
     console.log("Received cookies:", req.headers.cookie);
 
     if (!codeVerifier) {
+        console.error("Missing code_verifier");
         return res.status(400).json({ error: "Missing code_verifier" });
     }
 
@@ -37,12 +39,21 @@ export default async function handler(req, res) {
         });
 
         const tokenData = await tokenResponse.json();
+        console.log("Token Data Response:", tokenData); // Debug token data
+
         if (!tokenResponse.ok) {
             console.error("Token exchange failed:", tokenData);
             return res.status(400).json({ error: "Token exchange failed" });
         }
 
-        const { access_token } = tokenData;
+        const { access_token, scope } = tokenData;
+        console.log("Access Token:", access_token);
+        console.log("Granted Scope:", scope);
+
+        if (!scope.includes("tweet.read") || !scope.includes("users.read")) {
+            console.error("Insufficient scope permissions");
+            return res.status(403).json({ error: "Insufficient scope permissions" });
+        }
 
         // Fetch user details using the access token
         const userResponse = await fetch("https://api.twitter.com/2/users/me", {
@@ -52,12 +63,19 @@ export default async function handler(req, res) {
         });
 
         const userData = await userResponse.json();
+        console.log("User Data Response:", userData); // Debug user data
+
         if (!userResponse.ok) {
             console.error("Fetching user data failed:", userData);
             return res.status(400).json({ error: "Fetching user data failed" });
         }
 
         const { id, username } = userData;
+
+        if (!username) {
+            console.error("Username is undefined");
+            return res.status(500).json({ error: "User data is incomplete" });
+        }
 
         // Generate a JWT token for the session
         const token = jwt.sign(
