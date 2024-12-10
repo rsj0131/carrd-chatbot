@@ -11,6 +11,7 @@ export default async function handler(req, res) {
     // Parse the cookies
     const cookies = cookie.parse(req.headers.cookie || "");
     const codeVerifier = cookies.code_verifier;
+    console.log("Received cookies:", req.headers.cookie);
 
     if (!codeVerifier) {
         return res.status(400).json({ error: "Missing code_verifier" });
