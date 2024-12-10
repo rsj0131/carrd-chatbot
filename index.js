@@ -35,6 +35,10 @@ app.post("/reply", async (req, res) => {
     }
 });
 
+app.get("/debug", (req, res) => {
+    res.send("Debug route reached successfully!");
+});
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
