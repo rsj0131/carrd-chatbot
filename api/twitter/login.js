@@ -4,7 +4,7 @@ export default async function handler(req, res) {
     // Generate a random code_verifier
     const codeVerifier = randomBytes(32).toString("hex");
 
-    // Store the code_verifier in a cookie
+    // Store the code_verifier in a secure HTTP-only cookie
     res.setHeader(
         "Set-Cookie",
         `code_verifier=${codeVerifier}; HttpOnly; Path=/; Max-Age=300; Secure; SameSite=Strict`
