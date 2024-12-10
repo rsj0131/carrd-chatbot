@@ -1,3 +1,11 @@
+import { Configuration, OpenAIApi } from "openai";
+
+// Configure OpenAI
+const configuration = new Configuration({
+    apiKey: process.env.OPENAI_API_KEY, // Ensure this is set in Vercel's environment variables
+});
+const openai = new OpenAIApi(configuration);
+
 export default async function handler(req, res) {
     // Set CORS headers
     res.setHeader("Access-Control-Allow-Origin", "*");
