@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import fetch from "node-fetch";
+const fetch = (...args) => import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 export default async function handler(req, res) {
     const { code } = req.query;
