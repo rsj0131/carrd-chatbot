@@ -1,13 +1,14 @@
-import { Configuration, OpenAIApi } from "openai";
-
-// OpenAI configuration
-const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY, // Ensure this is set in Vercel's environment variables
-});
-const openai = new OpenAIApi(configuration);
-
 export default async function handler(req, res) {
-    // Only allow POST requests
+    // Set CORS headers
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+    // Handle preflight OPTIONS request
+    if (req.method === "OPTIONS") {
+        return res.status(204).end();
+    }
+
     if (req.method !== "POST") {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
@@ -20,7 +21,7 @@ export default async function handler(req, res) {
 
     try {
         const response = await openai.createChatCompletion({
-            model: "gpt-4o-mini", // Correct OpenAI model
+            model: "gpt-4o-mini",
             messages: [{ role: "user", content: message }],
         });
         res.status(200).json({ reply: response.data.choices[0].message.content });
