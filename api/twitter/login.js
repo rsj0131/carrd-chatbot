@@ -8,7 +8,7 @@ export default async function handler(req, res) {
     // Store the code_verifier in a secure HTTP-only cookie
     res.setHeader(
         "Set-Cookie",
-        `code_verifier=${codeVerifier}; HttpOnly; Path=/; Max-Age=300; Secure; SameSite=Strict`
+        `code_verifier=${codeVerifier}; HttpOnly; Path=/; Max-Age=300; Secure; SameSite=Lax`
     );
 
     // Generate the corresponding code_challenge
