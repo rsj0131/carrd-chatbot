@@ -6,8 +6,8 @@ export default async function handler(req, res) {
         client_id: process.env.TWITTER_API_KEY,
         redirect_uri: process.env.TWITTER_CALLBACK_URL,
         scope: "tweet.read users.read offline.access",
-        state: "randomstring", // You can use a better method for generating state
-        code_challenge: "challenge", // Replace with a valid code challenge
+        state: "randomstring", // Ensure a secure, random state string
+        code_challenge: "challenge", // Replace with a valid PKCE challenge
         code_challenge_method: "plain",
     });
 
