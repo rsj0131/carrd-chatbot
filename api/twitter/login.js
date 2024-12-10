@@ -3,7 +3,8 @@ import { randomBytes, createHash } from "crypto";
 export default async function handler(req, res) {
     // Generate a random code_verifier
     const codeVerifier = randomBytes(32).toString("hex");
-
+    console.log("Generated code_verifier:", codeVerifier);
+    
     // Store the code_verifier in a secure HTTP-only cookie
     res.setHeader(
         "Set-Cookie",
