@@ -1,0 +1,11 @@
+{
+  "name": "vercel-openai-backend",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "openai": "^3.2.1"
+  }
+}
