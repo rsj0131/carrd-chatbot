@@ -1,4 +1,9 @@
 import { Configuration, OpenAIApi } from "openai";
+import { MongoClient } from "mongodb";
+
+const uri = process.env.MONGODB_URI; // Set your MongoDB connection string in environment variables
+const client = new MongoClient(uri);
+const dbName = "chatHistory";
 
 // Configure Mars API
 const configuration = new Configuration({
@@ -46,8 +51,8 @@ export default async function handler(req, res) {
         // Adjust based on the Mars API response format
         const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
 
-        // Save conversation to Google Sheets
-        await saveToGoogleSheets(message, botReply);
+        // Save to MongoDB
+        await saveToMongoDB(message, botReply);
         
         res.status(200).json({ reply: botReply });
     } catch (error) {
@@ -56,18 +61,23 @@ export default async function handler(req, res) {
     }
 }
 
-async function saveToGoogleSheets(userMessage, botReply) {
+async function saveToMongoDB(userMessage, botReply) {
     try {
-        const response = await fetch(process.env.SHEET_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userMessage, botReply }),
-        });
+        await client.connect();
+        const database = client.db(dbName);
+        const messages = database.collection("messages");
 
-        if (!response.ok) {
-            console.error("Failed to save to Google Sheets:", response.statusText);
-        }
+        const doc = {
+            userMessage,
+            botReply,
+            timestamp: new Date(),
+        };
+
+        const result = await messages.insertOne(doc);
+        console.log(`New document inserted with _id: ${result.insertedId}`);
     } catch (error) {
-        console.error("Error saving to Google Sheets:", error);
+        console.error("Error saving to MongoDB:", error);
+    } finally {
+        await client.close();
     }
 }
