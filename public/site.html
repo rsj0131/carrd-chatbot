@@ -113,64 +113,82 @@
     <script>
         document.getElementById("chatForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-        
+            sendMessage();
+        });
+    
+        document.getElementById("message").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault(); // Prevent default newline behavior
+                sendMessage();
+            }
+        });
+    
+        async function sendMessage() {
             const inputElement = document.getElementById("message");
             const message = inputElement.value;
-        
-            if (!message.trim()) return;
-        
+    
+            if (!message.trim()) return; // Skip if message is empty or just spaces
+    
             const messagesDiv = document.getElementById("messages");
-        
+    
             // Add user message
             const userMessageContainer = document.createElement("div");
             userMessageContainer.className = "message-container user";
-        
+    
             const userMessage = document.createElement("div");
             userMessage.className = "user-message";
             userMessage.innerText = message;
-        
+    
             userMessageContainer.appendChild(userMessage);
             messagesDiv.appendChild(userMessageContainer);
-        
+    
+            // Clear the input field
             inputElement.value = "";
-        
+    
+            // Scroll to the bottom
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        
+    
             try {
+                // Send message to the backend
                 const response = await fetch("https://carrd-chatbot.vercel.app/api/reply", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message }),
                 });
-        
+    
                 const data = await response.json();
-        
+    
+                // Add bot reply
                 const botMessageContainer = document.createElement("div");
                 botMessageContainer.className = "message-container bot";
-        
+    
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
-                botMessage.innerHTML = data.reply || "Error: No response available.";
-        
+                botMessage.innerText = data.reply || "Error: " + data.error;
+    
                 botMessageContainer.appendChild(botMessage);
                 messagesDiv.appendChild(botMessageContainer);
-        
+    
+                // Scroll to the bottom
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             } catch (error) {
+                // Handle errors
                 const botMessageContainer = document.createElement("div");
                 botMessageContainer.className = "message-container bot";
-        
+    
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
                 botMessage.innerText = "Error: Unable to connect to the server.";
-        
+    
                 botMessageContainer.appendChild(botMessage);
                 messagesDiv.appendChild(botMessageContainer);
-        
+    
+                // Scroll to the bottom
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
-        });
+        }
     </script>
+
 
 </body>
 </html>
