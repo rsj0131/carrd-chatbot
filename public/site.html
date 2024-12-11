@@ -96,7 +96,7 @@
         document.getElementById("chatForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             const message = document.getElementById("message").value;
-
+            
             // Display user message in the chat window
             const messagesDiv = document.getElementById("messages");
             const userMessage = document.createElement("div");
@@ -106,6 +106,9 @@
 
             // Scroll to the bottom
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+            // Clear the input field
+            document.getElementById("message").value = "";
 
             try {
                 // Send message to the backend
@@ -135,9 +138,6 @@
                 // Scroll to the bottom
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
-
-            // Clear the input field
-            document.getElementById("message").value = "";
         });
     </script>
 </body>
