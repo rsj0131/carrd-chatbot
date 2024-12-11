@@ -7,7 +7,7 @@
     <link rel="stylesheet" href="main.css">
     <style>
         #chat-container {
-            background-color: rgba(255, 255, 255, 0.059);
+            background-color: transparent;
             border: 1px solid rgba(255, 255, 255, 0.09);
             border-radius: 1rem;
             padding: 2rem;
@@ -18,16 +18,17 @@
         }
 
         #chat-window {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: transparent;
             padding: 1rem;
             border-radius: 0.5rem;
             max-height: 300px;
             overflow-y: auto;
             margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .user-message {
-            background-color: #4caf50;
+            background-color: rgba(135, 206, 235, 0.8);
             color: white;
             padding: 0.5rem;
             border-radius: 0.5rem;
@@ -36,7 +37,7 @@
         }
 
         .bot-message {
-            background-color: #e0e0e0;
+            background-color: rgba(135, 206, 235, 0.5);
             padding: 0.5rem;
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
@@ -48,15 +49,15 @@
             width: 100%;
             padding: 1rem;
             border-radius: 0.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            background-color: rgba(255, 255, 255, 0.1);
+            border: none;
+            background-color: transparent;
             color: white;
             font-family: 'Inter', sans-serif;
             resize: none;
         }
 
         button {
-            background-color: #4caf50;
+            background-color: rgba(135, 206, 235, 0.8);
             color: white;
             border: none;
             padding: 0.5rem 1rem;
@@ -66,7 +67,7 @@
         }
 
         button:hover {
-            background-color: #45a049;
+            background-color: rgba(135, 206, 235, 1);
         }
     </style>
 </head>
@@ -74,10 +75,7 @@
     <div id="chat-container">
         <header>
             <h1>My Chatbot</h1>
-            <button id="loginButton">Login with Twitter</button>
         </header>
-
-        <div id="login-status">You are not logged in.</div>
 
         <div id="chat-window">
             <div id="messages"></div>
@@ -89,22 +87,6 @@
     </div>
 
     <script>
-        // Check for login status in the URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const loggedIn = urlParams.get("logged_in");
-        const username = urlParams.get("username");
-
-        if (loggedIn === "true" && username) {
-            document.getElementById("login-status").innerText = `Welcome, ${username}!`;
-        } else {
-            document.getElementById("login-status").innerText = "You are not logged in.";
-        }
-
-        // Login Button
-        document.getElementById("loginButton").addEventListener("click", () => {
-            window.location.href = "https://carrd-chatbot.vercel.app/api/twitter/login";
-        });
-
         // Chat Form Submission Handler
         document.getElementById("chatForm").addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -125,7 +107,6 @@
                 const response = await fetch("https://carrd-chatbot.vercel.app/api/reply", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    credentials: "include", // Include cookies for session validation
                     body: JSON.stringify({ message }),
                 });
 
