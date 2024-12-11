@@ -31,12 +31,30 @@ export default async function handler(req, res) {
         const response = await openai.createChatCompletion({
             model: "mixtral",
             messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
+            stream: true, // Enable streaming mode
         });
 
-        console.log("API Response:", JSON.stringify(response.data, null, 2));
+        let botReply = "";
+        response.data.on("data", (chunk) => {
+            const lines = chunk.toString().split("\n").filter((line) => line.trim() !== "");
+            for (const line of lines) {
+                if (line === "[DONE]") {
+                    break;
+                }
+                const parsed = JSON.parse(line.replace(/^data: /, ""));
+                const content = parsed.choices[0]?.delta?.content || "";
+                botReply += content;
+            }
+        });
 
-        const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
-        res.status(200).json({ reply: botReply });
+        response.data.on("end", () => {
+            res.status(200).json({ reply: botReply.trim() || "No response available." });
+        });
+
+        response.data.on("error", (error) => {
+            console.error("Stream Error:", error);
+            res.status(500).json({ error: "Internal Server Error" });
+        });
     } catch (error) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
