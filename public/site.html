@@ -16,7 +16,7 @@
             color: #FFFFFF;
             font-family: 'Inter', sans-serif;
         }
-    
+
         #chat-window {
             background-color: transparent;
             padding: 1rem;
@@ -25,6 +25,9 @@
             overflow-y: auto;
             margin-bottom: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
 
         .user-message,
@@ -33,33 +36,33 @@
             padding: 0.5rem;
             border-radius: 0.5rem;
             margin-bottom: 0.5rem;
-            word-wrap: break-word; /* Ensure long words wrap */
+            word-wrap: break-word;
             word-break: break-word;
-            max-width: 80%; /* Set a maximum width relative to the container */
-            width: fit-content; /* Automatically adjust width to fit content */
+            max-width: 80%;
+            width: fit-content;
         }
-        
+
         .user-message {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
             align-self: flex-end;
             text-align: right;
         }
-        
+
         .bot-message {
             background-color: rgba(135, 206, 235, 0.5);
             color: white;
             align-self: flex-start;
             text-align: left;
         }
-    
+
         form {
             display: flex;
             gap: 0.5rem; /* Spacing between textarea and button */
             width: 100%; /* Match container width */
             margin: 0; /* Reset any default margin */
         }
-    
+
         textarea {
             flex: 1; /* Ensure textarea fills available space */
             padding: 0.75rem;
@@ -72,11 +75,11 @@
             margin: 0; /* Remove default margin */
             box-sizing: border-box; /* Include padding in width */
         }
-    
+
         textarea::placeholder {
             color: white;
         }
-    
+
         button {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
@@ -87,18 +90,18 @@
             font-family: 'Inter', sans-serif;
             margin: 0; /* Ensure button aligns with textarea */
         }
-    
+
         button:hover {
             background-color: rgba(135, 206, 235, 1);
         }
     </style>
-
-    
+</head>
+<body>
     <div id="chat-container">
         <header>
             <h1>My Chatbot</h1>
         </header>
-    
+
         <div id="chat-window">
             <div id="messages"></div>
         </div>
@@ -107,7 +110,6 @@
             <button type="submit">Send</button>
         </form>
     </div>
-
 
     <script>
         // Chat Form Submission Handler
