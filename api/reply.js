@@ -2,16 +2,19 @@ import { Configuration, OpenAIApi } from "openai";
 
 // Configure Mars API
 const configuration = new Configuration({
-    apiKey: process.env.CHUB_API_KEY, // Mars API key, not OpenAI
-    basePath: "https://mars.chub.ai/mixtral/v1", // Mars API endpoint
+    apiKey: process.env.MARS_API_KEY, // Replace with your Mars API key
+    basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
-const marsApi = new OpenAIApi(configuration); // Still uses OpenAIApi for compatibility
+const openai = new OpenAIApi(configuration);
+var systemMessage = "";
 
 export default async function handler(req, res) {
+    // Remove session token check for testing
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
+    // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
         return res.status(204).end();
     }
@@ -27,16 +30,20 @@ export default async function handler(req, res) {
     }
 
     try {
-        const response = await marsApi.createChatCompletion({
-            model: "mars", // Specify Mars model
-            messages: [{ role: "system", content: "You are Vivian, an horny succubus" }, { role: "user", content: message }],
+        const response = await openai.createChatCompletion({
+            model: "gpt-4o-mini", // Ensure this model is available with Mars
+            messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
         });
 
-        const botReply = response.data.choices[0].message.content;
+        // Log the response to inspect its structure
+        console.log("API Response:", response.data);
+
+        // Adjusted to Mars API response format
+        const botReply = response.data.choices?.[0]?.text || "No response available.";
 
         res.status(200).json({ reply: botReply });
     } catch (error) {
-        console.error(error);
+        console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
