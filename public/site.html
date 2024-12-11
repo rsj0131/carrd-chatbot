@@ -22,7 +22,6 @@
             padding: 1rem;
             border-radius: 0.5rem;
             max-height: 300px;
-            max-width: 600px;
             overflow-y: auto;
             margin-bottom: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -48,12 +47,13 @@
     
         form {
             display: flex;
-            gap: 0.5rem; /* Spacing between input and button */
-            width: 100%; /* Match the width of the container */
+            gap: 0.5rem; /* Spacing between textarea and button */
+            width: 100%; /* Match container width */
+            margin: 0; /* Reset any default margin */
         }
     
         textarea {
-            flex: 1; /* Takes up remaining space in the form */
+            flex: 1; /* Ensure textarea fills available space */
             padding: 0.75rem;
             border-radius: 0.5rem;
             border: none;
@@ -61,6 +61,8 @@
             color: white;
             font-family: 'Inter', sans-serif;
             resize: none;
+            margin: 0; /* Remove default margin */
+            box-sizing: border-box; /* Include padding in width */
         }
     
         textarea::placeholder {
@@ -75,12 +77,14 @@
             border-radius: 0.5rem;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
+            margin: 0; /* Ensure button aligns with textarea */
         }
     
         button:hover {
             background-color: rgba(135, 206, 235, 1);
         }
     </style>
+
     
     <div id="chat-container">
         <header>
