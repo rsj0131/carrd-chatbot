@@ -3,7 +3,7 @@ import { Configuration, OpenAIApi } from "openai";
 // Configure Mars API
 const configuration = new Configuration({
     apiKey: process.env.CHUB_API_KEY, // Mars API key, not OpenAI
-    basePath: "https://mars.chub.ai/v1", // Mars API endpoint
+    basePath: "https://mars.chub.ai/mixtral/v1", // Mars API endpoint
 });
 const marsApi = new OpenAIApi(configuration); // Still uses OpenAIApi for compatibility
 
