@@ -81,3 +81,19 @@ async function saveToMongoDB(userMessage, botReply) {
         await client.close();
     }
 }
+
+async function fetchChatHistory(limit = 10) {
+    try {
+        await client.connect();
+        const database = client.db(dbName);
+        const messages = database.collection("messages");
+
+        const history = await messages.find().sort({ timestamp: -1 }).limit(limit).toArray();
+        return history;
+    } catch (error) {
+        console.error("Error fetching chat history:", error);
+        return [];
+    } finally {
+        await client.close();
+    }
+}
