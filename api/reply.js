@@ -1,10 +1,6 @@
 import { Configuration, OpenAIApi } from "openai";
 import { MongoClient } from "mongodb";
 
-const uri = process.env.MONGODB_URI; // Set your MongoDB connection string in environment variables
-const client = new MongoClient(uri);
-const dbName = "chatHistory";
-
 // Configure Mars API
 const configuration = new Configuration({
     apiKey: process.env.CHUB_API_KEY, // Replace with your Mars API key
@@ -13,13 +9,20 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 var systemMessage = "You're Vivian, a horny succubus";
 
+let client;
+let clientPromise;
+
+// Initialize MongoDB client
+if (!client) {
+    client = new MongoClient(process.env.MONGODB_URI);
+    clientPromise = client.connect(); // Persistent connection
+}
+
 export default async function handler(req, res) {
-    // Remove session token check for testing
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
         return res.status(204).end();
     }
@@ -36,24 +39,21 @@ export default async function handler(req, res) {
 
     try {
         const response = await openai.createChatCompletion({
-            model: "mixtral", // Ensure this model is available with Mars
+            model: "mixtral",
             messages: [
-                { role: "system", content: systemMessage }, 
-                { role: "user", content: message }
+                { role: "system", content: systemMessage },
+                { role: "user", content: message },
             ],
             temperature: 0.8,
-            stream: false, // Ensure the response is not streamed
+            stream: false,
         });
 
-        // Log the response to inspect its structure
-        console.log("API Response:", JSON.stringify(response.data, null, 2));
-
-        // Adjust based on the Mars API response format
         const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+        console.log("API Response:", JSON.stringify(response.data, null, 2));
 
         // Save to MongoDB
         await saveToMongoDB(message, botReply);
-        
+
         res.status(200).json({ reply: botReply });
     } catch (error) {
         console.error("API Error:", error);
@@ -63,8 +63,8 @@ export default async function handler(req, res) {
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
-        await client.connect();
-        const database = client.db(dbName);
+        const client = await clientPromise; // Reuse persistent connection
+        const database = client.db("chatHistory");
         const messages = database.collection("messages");
 
         const doc = {
@@ -77,15 +77,13 @@ async function saveToMongoDB(userMessage, botReply) {
         console.log(`New document inserted with _id: ${result.insertedId}`);
     } catch (error) {
         console.error("Error saving to MongoDB:", error);
-    } finally {
-        await client.close();
     }
 }
 
 async function fetchChatHistory(limit = 10) {
     try {
-        await client.connect();
-        const database = client.db(dbName);
+        const client = await clientPromise; // Reuse persistent connection
+        const database = client.db("chatHistory");
         const messages = database.collection("messages");
 
         const history = await messages.find().sort({ timestamp: -1 }).limit(limit).toArray();
@@ -93,7 +91,5 @@ async function fetchChatHistory(limit = 10) {
     } catch (error) {
         console.error("Error fetching chat history:", error);
         return [];
-    } finally {
-        await client.close();
     }
 }
