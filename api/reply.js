@@ -36,10 +36,10 @@ export default async function handler(req, res) {
             stream: false, // Ensure the response is not streamed
         });
 
-        // Log the full API response to inspect its structure
+        // Log the response to inspect its structure
         console.log("API Response:", JSON.stringify(response.data, null, 2));
 
-        // Extract the assistant's message content
+        // Adjust based on the Mars API response format
         const botReply = response.data.choices?.[0]?.delta?.content || "No response available.";
 
         res.status(200).json({ reply: botReply });
