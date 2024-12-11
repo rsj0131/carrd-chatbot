@@ -9,10 +9,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Missing code parameter" });
     }
 
-    // Parse the cookies
     const cookies = cookie.parse(req.headers.cookie || "");
     const codeVerifier = cookies.code_verifier;
-    console.log("Received cookies:", req.headers.cookie);
 
     if (!codeVerifier) {
         console.error("Missing code_verifier");
@@ -20,7 +18,6 @@ export default async function handler(req, res) {
     }
 
     try {
-        // Exchange the authorization code for access tokens
         const tokenResponse = await fetch("https://api.twitter.com/2/oauth2/token", {
             method: "POST",
             headers: {
@@ -34,12 +31,11 @@ export default async function handler(req, res) {
                 code: code,
                 redirect_uri: process.env.TWITTER_CALLBACK_URL,
                 client_id: process.env.TWITTER_API_KEY,
-                code_verifier: codeVerifier, // Include the code_verifier
+                code_verifier: codeVerifier,
             }),
         });
 
         const tokenData = await tokenResponse.json();
-        console.log("Token Data Response:", tokenData); // Debug token data
 
         if (!tokenResponse.ok) {
             console.error("Token exchange failed:", tokenData);
@@ -47,15 +43,12 @@ export default async function handler(req, res) {
         }
 
         const { access_token, scope } = tokenData;
-        console.log("Access Token:", access_token);
-        console.log("Granted Scope:", scope);
 
         if (!scope.includes("tweet.read") || !scope.includes("users.read")) {
             console.error("Insufficient scope permissions");
             return res.status(403).json({ error: "Insufficient scope permissions" });
         }
 
-        // Fetch user details using the access token
         const userResponse = await fetch("https://api.twitter.com/2/users/me", {
             headers: {
                 Authorization: `Bearer ${access_token}`,
@@ -63,7 +56,6 @@ export default async function handler(req, res) {
         });
 
         const userData = await userResponse.json();
-        console.log("User Data Response:", userData); // Debug user data
 
         if (!userResponse.ok || !userData.data) {
             console.error("Fetching user data failed:", userData);
@@ -77,18 +69,17 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: "User data is incomplete" });
         }
 
-        // Generate a JWT token for the session
         const token = jwt.sign(
             { id, username, name },
             process.env.JWT_SECRET,
-            { expiresIn: "1h" } // Session expires in 1 hour
+            { expiresIn: "1h" }
         );
 
-        // Set the session token in a secure HTTP-only cookie
         res.setHeader("Set-Cookie", `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict`);
 
-        // Redirect the user back to the Carrd page with the login status and username
-        res.redirect(`https://vivianchatter.carrd.co/?logged_in=true&username=${encodeURIComponent(username)}`);
+        // Use the REDIRECT_URL environment variable
+        const redirectUrl = process.env.REDIRECT_URL || "https://doublevchan.carrd.co";
+        res.redirect(`${redirectUrl}?logged_in=true&username=${encodeURIComponent(username)}`);
     } catch (error) {
         console.error("OAuth Callback Error:", error);
         res.status(500).json({ error: "Authentication failed" });
