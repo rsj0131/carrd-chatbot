@@ -6,7 +6,7 @@ const configuration = new Configuration({
     basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
 const openai = new OpenAIApi(configuration);
-var systemMessage = "";
+var systemMessage = "You're Vivian, a horny succubus";
 
 export default async function handler(req, res) {
     // Remove session token check for testing
@@ -31,7 +31,7 @@ export default async function handler(req, res) {
 
     try {
         const response = await openai.createChatCompletion({
-            model: "gpt-4o-mini", // Ensure this model is available with Mars
+            model: "mixstral", // Ensure this model is available with Mars
             messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
         });
 
