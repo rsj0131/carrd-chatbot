@@ -16,7 +16,7 @@
             color: #FFFFFF;
             font-family: 'Inter', sans-serif;
         }
-
+    
         #chat-window {
             background-color: transparent;
             padding: 1rem;
@@ -27,7 +27,7 @@
             margin-bottom: 1rem;
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
-
+    
         .user-message {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
@@ -36,7 +36,7 @@
             margin-bottom: 0.5rem;
             text-align: right;
         }
-
+    
         .bot-message {
             background-color: rgba(135, 206, 235, 0.5);
             padding: 0.5rem;
@@ -45,10 +45,16 @@
             text-align: left;
             color: #000;
         }
-
+    
+        form {
+            display: flex;
+            gap: 0.5rem; /* Spacing between input and button */
+            width: 100%; /* Match the width of the container */
+        }
+    
         textarea {
-            width: 100%;
-            padding: 1rem;
+            flex: 1; /* Takes up remaining space in the form */
+            padding: 0.75rem;
             border-radius: 0.5rem;
             border: none;
             background-color: transparent;
@@ -56,32 +62,31 @@
             font-family: 'Inter', sans-serif;
             resize: none;
         }
-
+    
         textarea::placeholder {
             color: white;
         }
-
+    
         button {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
             border: none;
-            padding: 0.5rem 1rem;
+            padding: 0.75rem 1rem;
             border-radius: 0.5rem;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
         }
-
+    
         button:hover {
             background-color: rgba(135, 206, 235, 1);
         }
     </style>
-</head>
-<body>
+    
     <div id="chat-container">
         <header>
             <h1>My Chatbot</h1>
         </header>
-
+    
         <div id="chat-window">
             <div id="messages"></div>
         </div>
@@ -90,6 +95,7 @@
             <button type="submit">Send</button>
         </form>
     </div>
+
 
     <script>
         // Chat Form Submission Handler
