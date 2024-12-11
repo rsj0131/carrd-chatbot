@@ -44,8 +44,11 @@ export default async function handler(req, res) {
         console.log("API Response:", JSON.stringify(response.data, null, 2));
 
         // Adjust based on the Mars API response format
-        const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
-
+        const botReply = response.data.choices?.[0]?.message?.content
+        .replace(/\\n/g, "\n") // Replace escaped new lines
+        .replace(/<s>/g, "") // Remove <s> tags
+        .trim() || "No response available.";
+        
         // Save conversation to Google Sheets
         await saveToGoogleSheets(message, botReply);
         
