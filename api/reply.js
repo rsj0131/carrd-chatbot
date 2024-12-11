@@ -32,7 +32,11 @@ export default async function handler(req, res) {
     try {
         const response = await openai.createChatCompletion({
             model: "mixtral", // Ensure this model is available with Mars
-            messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
+            messages: [
+                { role: "system", content: systemMessage }, 
+                { role: "user", content: message }
+            ],
+            temperature: 0.8,
             stream: false, // Ensure the response is not streamed
         });
 
@@ -42,9 +46,28 @@ export default async function handler(req, res) {
         // Adjust based on the Mars API response format
         const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
 
+        // Save conversation to Google Sheets
+        await saveToGoogleSheets(message, botReply);
+        
         res.status(200).json({ reply: botReply });
     } catch (error) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+async function saveToGoogleSheets(userMessage, botReply) {
+    try {
+        const response = await fetch(process.env.SHEET_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userMessage, botReply }),
+        });
+
+        if (!response.ok) {
+            console.error("Failed to save to Google Sheets:", response.statusText);
+        }
+    } catch (error) {
+        console.error("Error saving to Google Sheets:", error);
     }
 }
