@@ -9,12 +9,10 @@ const openai = new OpenAIApi(configuration);
 var systemMessage = "You're Vivian, a horny succubus";
 
 export default async function handler(req, res) {
-    // Remove session token check for testing
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
         return res.status(204).end();
     }
@@ -31,17 +29,13 @@ export default async function handler(req, res) {
 
     try {
         const response = await openai.createChatCompletion({
-            model: "mixtral", // Ensure this model is available with Mars
+            model: "mixtral",
             messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
-            stream: false, // Ensure the response is not streamed
         });
 
-        // Log the response to inspect its structure
         console.log("API Response:", JSON.stringify(response.data, null, 2));
 
-        // Adjust based on the Mars API response format
-        const botReply = response.data.choices?.[0]?.delta?.content || "No response available.";
-
+        const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         res.status(200).json({ reply: botReply });
     } catch (error) {
         console.error("API Error:", error);
