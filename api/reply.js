@@ -31,15 +31,16 @@ export default async function handler(req, res) {
 
     try {
         const response = await openai.createChatCompletion({
-            model: "mixstral", // Ensure this model is available with Mars
+            model: "mixtral", // Ensure this model is available with Mars
             messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
+            stream: false, // Ensure the response is not streamed
         });
 
         // Log the response to inspect its structure
-        console.log("API Response:", response.data);
+        console.log("API Response:", JSON.stringify(response.data, null, 2));
 
-        // Adjusted to Mars API response format
-        const botReply = response.data.choices?.[0]?.text || "No response available.";
+        // Adjust based on the Mars API response format
+        const botReply = response.data.choices?.[0]?.delta?.content || "No response available.";
 
         res.status(200).json({ reply: botReply });
     } catch (error) {
