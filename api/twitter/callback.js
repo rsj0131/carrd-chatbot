@@ -65,21 +65,21 @@ export default async function handler(req, res) {
         const userData = await userResponse.json();
         console.log("User Data Response:", userData); // Debug user data
 
-        if (!userResponse.ok) {
+        if (!userResponse.ok || !userData.data) {
             console.error("Fetching user data failed:", userData);
             return res.status(400).json({ error: "Fetching user data failed" });
         }
 
-        const { id, username } = userData;
+        const { id, username, name } = userData.data;
 
-        if (!username) {
-            console.error("Username is undefined");
+        if (!username || !id || !name) {
+            console.error("Incomplete user data:", userData.data);
             return res.status(500).json({ error: "User data is incomplete" });
         }
 
         // Generate a JWT token for the session
         const token = jwt.sign(
-            { id, username },
+            { id, username, name },
             process.env.JWT_SECRET,
             { expiresIn: "1h" } // Session expires in 1 hour
         );
