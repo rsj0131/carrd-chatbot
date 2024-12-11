@@ -88,7 +88,7 @@ export default async function handler(req, res) {
         res.setHeader("Set-Cookie", `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict`);
 
         // Redirect the user back to the Carrd page with the login status and username
-        res.redirect(`https://doublevchan.carrd.co/?logged_in=true&username=${encodeURIComponent(username)}`);
+        res.redirect(`https://vivianchatter.carrd.co/?logged_in=true&username=${encodeURIComponent(username)}`);
     } catch (error) {
         console.error("OAuth Callback Error:", error);
         res.status(500).json({ error: "Authentication failed" });
