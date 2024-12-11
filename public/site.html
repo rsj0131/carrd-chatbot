@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat with Vivian</title>
-    <link rel="stylesheet" href="main.css">
+    <!-- Link to Google Fonts for Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Set Inter as the default font */
+        }
+
         header {
             display: flex;
             align-items: center;
@@ -13,9 +18,11 @@
         }
 
         header h1 {
+            font-family: 'Inter', sans-serif; /* Apply Inter specifically to the header */
+            font-weight: 600; /* Choose a bold weight for emphasis */
+            font-size: 2rem; /* Adjust the font size */
             color: white;
-            font-size: 2rem;
-            margin: 0;
+            margin: 0; /* Remove default margin */
         }
 
         .avatar {
