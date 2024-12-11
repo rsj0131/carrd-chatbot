@@ -37,7 +37,7 @@ export default async function handler(req, res) {
                 { role: "user", content: message }
             ],
             temperature: 0.8,
-            max_tokens: 40,
+            //max_tokens: 40,
             stream: false, // Ensure the response is not streamed
         });
 
