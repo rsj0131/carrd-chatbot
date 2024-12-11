@@ -6,7 +6,7 @@ const configuration = new Configuration({
     basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
 const openai = new OpenAIApi(configuration);
-var systemMessage = "You're Vivian, a horny succubus";
+var systemMessage = "You're Vivian, a horny assisstant. Do not generate user's response automatically unless the user said so.";
 
 export default async function handler(req, res) {
     // Remove session token check for testing
@@ -37,6 +37,7 @@ export default async function handler(req, res) {
                 { role: "user", content: message }
             ],
             temperature: 0.8,
+            max_tokens: 40,
             stream: false, // Ensure the response is not streamed
         });
 
