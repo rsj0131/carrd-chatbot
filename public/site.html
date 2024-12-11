@@ -8,11 +8,11 @@
     <style>
         header h1 {
             color: white;
-            font-size: 2rem; /* Adjust the font size */
-            text-align: left; /* Center align the title */
-            margin: 0; /* Remove default margin */
+            font-size: 2rem;
+            text-align: left;
+            margin: 0;
         }
-        
+
         #chat-window {
             background-color: transparent;
             padding: 1rem;
@@ -23,18 +23,18 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
-            gap: 0.5rem; /* Space between messages */
+            gap: 0.5rem;
         }
-        
+
         .message-container {
             display: flex;
-            justify-content: flex-start; /* Align messages to the left by default */
+            justify-content: flex-start;
         }
-        
+
         .message-container.user {
-            justify-content: flex-end; /* Align user messages to the right */
+            justify-content: flex-end;
         }
-        
+
         .user-message,
         .bot-message {
             display: inline-block;
@@ -45,25 +45,26 @@
             max-width: 80%;
             width: fit-content;
         }
-        
+
         .user-message {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
         }
-        
+
         .bot-message {
             background-color: rgba(135, 206, 235, 0.5);
             color: white;
         }
+
         form {
             display: flex;
-            gap: 0.5rem; /* Spacing between textarea and button */
-            width: 100%; /* Match container width */
-            margin: 0; /* Reset any default margin */
+            gap: 0.5rem;
+            width: 100%;
+            margin: 0;
         }
 
         textarea {
-            flex: 1; /* Ensure textarea fills available space */
+            flex: 1;
             padding: 0.75rem;
             border-radius: 0.5rem;
             border: none;
@@ -71,8 +72,8 @@
             color: white;
             font-family: 'Inter', sans-serif;
             resize: none;
-            margin: 0; /* Remove default margin */
-            box-sizing: border-box; /* Include padding in width */
+            margin: 0;
+            box-sizing: border-box;
         }
 
         textarea::placeholder {
@@ -87,7 +88,7 @@
             border-radius: 0.5rem;
             cursor: pointer;
             font-family: 'Inter', sans-serif;
-            margin: 0; /* Ensure button aligns with textarea */
+            margin: 0;
         }
 
         button:hover {
@@ -113,83 +114,81 @@
     <script>
         document.getElementById("chatForm").addEventListener("submit", async (e) => {
             e.preventDefault();
-        
+            sendMessage();
+        });
+    
+        document.getElementById("message").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        function scrollToBottom() {
+            const messagesDiv = document.getElementById("messages");
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+    
+        async function sendMessage() {
             const inputElement = document.getElementById("message");
             const message = inputElement.value;
-        
-            if (!message.trim()) return; // Skip if message is empty or just spaces
-        
+    
+            if (!message.trim()) return;
+    
             const messagesDiv = document.getElementById("messages");
-        
+    
             // Add user message
             const userMessageContainer = document.createElement("div");
             userMessageContainer.className = "message-container user";
-        
+    
             const userMessage = document.createElement("div");
             userMessage.className = "user-message";
             userMessage.innerText = message;
-        
+    
             userMessageContainer.appendChild(userMessage);
             messagesDiv.appendChild(userMessageContainer);
-        
-            // Clear the input field
+    
             inputElement.value = "";
-        
-            // Scroll to the bottom
-            scrollToBottom(messagesDiv);
-        
+            scrollToBottom();
+    
             try {
-                // Send message to the backend
                 const response = await fetch("https://carrd-chatbot.vercel.app/api/reply", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message }),
                 });
-        
+    
                 const data = await response.json();
-        
-                // Clean bot reply
                 const cleanedReply = data.reply
-                    .replace(/\\n/g, "<br>") // Replace new line characters with <br>
+                    .replace(/\\n/g, "\n") // Handle newlines in replies
                     .replace(/<s>/g, "") // Remove <s> tags
-                    .trim(); // Trim any leading/trailing spaces
-        
-                // Add bot reply
+                    .trim();
+    
                 const botMessageContainer = document.createElement("div");
                 botMessageContainer.className = "message-container bot";
-        
+    
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
-                botMessage.innerHTML = cleanedReply; // Use innerHTML to render <br> as line breaks
-        
+                botMessage.innerText = cleanedReply;
+    
                 botMessageContainer.appendChild(botMessage);
                 messagesDiv.appendChild(botMessageContainer);
-        
-                // Scroll to the bottom
-                scrollToBottom(messagesDiv);
+    
+                scrollToBottom();
             } catch (error) {
-                // Handle errors
                 const botMessageContainer = document.createElement("div");
                 botMessageContainer.className = "message-container bot";
-        
+    
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
                 botMessage.innerText = "Error: Unable to connect to the server.";
-        
+    
                 botMessageContainer.appendChild(botMessage);
                 messagesDiv.appendChild(botMessageContainer);
-        
-                // Scroll to the bottom
-                scrollToBottom(messagesDiv);
+    
+                scrollToBottom();
             }
-        });
-        
-        // Utility function to scroll to the bottom of the chat window
-        function scrollToBottom(container) {
-            container.scrollTop = container.scrollHeight;
         }
     </script>
-
-
 </body>
 </html>
