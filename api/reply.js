@@ -7,58 +7,42 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 var systemMessage = "";
 
-import jwt from "jsonwebtoken";
-
 export default async function handler(req, res) {
-    // Extract session token from cookies
-    const token = req.cookies.session;
+    // Remove session token check for testing
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    if (!token) {
-        return res.status(401).json({ error: "Unauthorized. Please log in." });
+    // Handle preflight OPTIONS request
+    if (req.method === "OPTIONS") {
+        return res.status(204).end();
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Method Not Allowed" });
+    }
+
+    const { message } = req.body;
+
+    if (!message) {
+        return res.status(400).json({ error: "Message is required" });
     }
 
     try {
-        // Verify the session token
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-    
-        // Handle preflight OPTIONS request
-        if (req.method === "OPTIONS") {
-            return res.status(204).end();
-        }
-    
-        if (req.method !== "POST") {
-            return res.status(405).json({ error: "Method Not Allowed" });
-        }
-    
-        const { message } = req.body;
-    
-        if (!message) {
-            return res.status(400).json({ error: "Message is required" });
-        }
-    
-        try {
-            const response = await openai.createChatCompletion({
-                model: "gpt-4o-mini",
-                messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
-            });
-    
-            const botReply = response.data.choices[0].message.content;
-    
-            // Save conversation to Google Sheets
-            await saveToGoogleSheets(message, botReply);
-    
-            res.status(200).json({ reply: botReply });
-        } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: "Internal Server Error" });
-        }
-    }        
-    catch (error) {
-        console.error("Invalid session token:", error);
-        res.status(401).json({ error: "Session expired. Please log in again." });
+        const response = await openai.createChatCompletion({
+            model: "gpt-4o-mini",
+            messages: [{ role: "system", content: systemMessage }, { role: "user", content: message }],
+        });
+
+        const botReply = response.data.choices[0].message.content;
+
+        // Save conversation to Google Sheets
+        await saveToGoogleSheets(message, botReply);
+
+        res.status(200).json({ reply: botReply });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal Server Error" });
     }
 }
 
