@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     try {
         const response = await marsApi.createChatCompletion({
             model: "mars", // Specify Mars model
-            messages: [{ role: "system", content: "You are a helpful assistant." }, { role: "user", content: message }],
+            messages: [{ role: "system", content: "You are Vivian, an horny succubus" }, { role: "user", content: message }],
         });
 
         const botReply = response.data.choices[0].message.content;
