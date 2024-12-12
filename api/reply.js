@@ -65,7 +65,7 @@ export default async function handler(req, res) {
 
 async function fetchChatHistory() {
     try {
-        const response = await fetch(process.env.SHEET_HISTORY_URL, {
+        const response = await fetch(process.env.SHEET_URL, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });
