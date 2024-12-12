@@ -6,11 +6,16 @@ const configuration = new Configuration({
     basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
 const openai = new OpenAIApi(configuration);
-var systemMessage = "You're Vivian, a horny assistant. Do not generate user's response automatically unless the user said so.";
 
 async function getCharacterDetails(characterId) {
-    const characters = await fetchCharacterInfo();
-    return characters.find(char => char.id === characterId) || {};
+    try {
+        const characters = await fetchCharacterInfo();
+        console.log("Fetched characters:", characters); // Debug logging
+        return characters.find(char => char.id === characterId) || {};
+    } catch (error) {
+        console.error("Error fetching character details:", error);
+        return {};
+    }
 }
 
 // Main handler function
@@ -39,6 +44,10 @@ export default async function handler(req, res) {
         // Fetch character details
         const characterDetails = await getCharacterDetails(characterId);
         const characterName = characterDetails.name || "assistant";
+
+        if (!characterDetails.name) {
+            console.warn(`Character with ID ${characterId} not found, using default assistant.`); // Debug logging
+        }
 
         // Construct system prompt dynamically
         const dynamicSystemMessage = `
@@ -93,7 +102,6 @@ export default async function handler(req, res) {
     }
 }
 
-
 async function fetchChatHistory() {
     try {
         const response = await fetch(process.env.SHEET_BACKEND_URL, {
@@ -127,6 +135,7 @@ async function fetchCharacterInfo() {
         }
 
         const data = await response.json();
+        console.log("Character data received:", data.characters); // Debug logging
         return data.characters || [];
     } catch (error) {
         console.error("Error fetching character info:", error);
