@@ -40,12 +40,16 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Message is required" });
     }
 
-    // Start timing
+    // Start overall timing
     const startTime = Date.now();
 
     try {
-        // Fetch character details
+        // Measure time to fetch character details
+        const characterStartTime = Date.now();
         const characterDetails = await getCharacterDetails(characterId);
+        const characterFetchTime = Date.now() - characterStartTime;
+        console.log(`Character details fetched in ${characterFetchTime} ms`);
+
         const characterName = characterDetails.name || "assistant";
 
         if (!characterDetails.name) {
@@ -60,7 +64,7 @@ export default async function handler(req, res) {
             second: '2-digit',
             hour12: false,
         }).format(new Date());
-        
+
         // Construct system prompt dynamically
         const dynamicSystemMessage = `
             Name: ${characterName}.
@@ -80,8 +84,11 @@ export default async function handler(req, res) {
             Current Time: ${currentTimeInArgentina}.
         `;
 
-        // Fetch the latest 30 messages from Google Sheets
+        // Measure time to fetch chat history
+        const chatHistoryStartTime = Date.now();
         const history = await fetchChatHistory();
+        const chatHistoryFetchTime = Date.now() - chatHistoryStartTime;
+        console.log(`Chat history fetched in ${chatHistoryFetchTime} ms`);
 
         // Construct messages for the prompt
         const messages = [
@@ -94,31 +101,32 @@ export default async function handler(req, res) {
         ];
 
         console.log("Constructed messages:", JSON.stringify(messages, null, 2));
-      
+
+        // Measure time for generating the bot reply
+        const replyStartTime = Date.now();
         const response = await openai.createChatCompletion({
             model: "mixtral",
             messages,
             temperature: 0.8,
             stream: false,
         });
-
-        // Calculate elapsed time
-        const elapsedTime = Date.now() - startTime;
-        console.log(`Reply generated in ${elapsedTime} ms`);
-
-        // Log the response to inspect its structure
-        console.log("API Response:", JSON.stringify(response.data, null, 2));
+        const replyGenerationTime = Date.now() - replyStartTime;
+        console.log(`Reply generated in ${replyGenerationTime} ms`);
 
         // Adjust based on the Mars API response format
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
 
         botReply = botReply.replace(/\\n/g, '\n'); // Replace \\n in botReply
-        
+
         // Replace {{char}} with the character name
         botReply = botReply.replace(/{{char}}/g, characterName);
 
         // Save conversation to Google Sheets
         await saveToGoogleSheets(message, botReply);
+
+        // Measure overall time
+        const overallElapsedTime = Date.now() - startTime;
+        console.log(`Overall processing time: ${overallElapsedTime} ms`);
 
         res.status(200).json({ reply: botReply });
     } catch (error) {
