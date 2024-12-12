@@ -5,10 +5,10 @@ import { Configuration, OpenAIApi } from "openai";
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
 async function connectToDatabase() {
-    if (!mongoClient.isConnected()) {
+    if (!mongoClient.topology || !mongoClient.topology.isConnected()) {
         await mongoClient.connect();
     }
-    return mongoClient.db("VivioDB"); // Replace with your database name
+    return mongoClient.db("Vivio"); // Replace with your database name
 }
 
 // OpenAI Configuration
