@@ -117,6 +117,13 @@
             }
         }
 
+        .timestamp {
+            font-size: 0.8rem; /* Smaller font size */
+            color: white; /* White text color */
+            display: block; /* Ensure it appears below the message */
+            margin-top: 0.2rem; /* Small margin to separate from the message */
+        }
+
         form {
             display: flex;
             gap: 0.5rem;
@@ -176,18 +183,22 @@
     </div>
 
     <script>
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
         document.getElementById("chatForm").addEventListener("submit", async (e) => {
             e.preventDefault();
             sendMessage();
         });
-    
+        
         document.getElementById("message").addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
-    
+        
         async function sendMessage() {
             const inputElement = document.getElementById("message");
             const message = inputElement.value;
@@ -196,7 +207,7 @@
             if (!message.trim()) return;
         
             const messagesDiv = document.getElementById("messages");
-            const userTime = new Date().toLocaleTimeString();
+            const userTime = formatTime(new Date());
         
             // Add user message
             const userMessageContainer = document.createElement("div");
@@ -243,7 +254,7 @@
         
                 const botTimestamp = document.createElement("small");
                 botTimestamp.className = "timestamp";
-                botTimestamp.innerText = new Date().toLocaleTimeString();
+                botTimestamp.innerText = formatTime(new Date());
         
                 botMessageContainer.appendChild(botMessage);
                 botMessageContainer.appendChild(botTimestamp);
@@ -258,7 +269,7 @@
         
                 const botTimestamp = document.createElement("small");
                 botTimestamp.className = "timestamp";
-                botTimestamp.innerText = new Date().toLocaleTimeString();
+                botTimestamp.innerText = formatTime(new Date());
         
                 botMessageContainer.appendChild(botMessage);
                 botMessageContainer.appendChild(botTimestamp);
@@ -266,6 +277,7 @@
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
         }
+
     </script>
 
 </body>
