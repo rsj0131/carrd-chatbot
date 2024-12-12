@@ -53,6 +53,7 @@ export default async function handler(req, res) {
         const dynamicSystemMessage = `
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
+            Gender: ${characterDetails.gender || "none"}.
             Birthday: ${characterDetails.birthday || "none"}.
             Height: ${characterDetails.height || "none"}.
             Weight: ${characterDetails.weight || "none"}.
