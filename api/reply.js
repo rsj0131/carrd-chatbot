@@ -1,3 +1,24 @@
+import { Configuration, OpenAIApi } from "openai";
+
+// Configure Mars API
+const configuration = new Configuration({
+    apiKey: process.env.CHUB_API_KEY, // Replace with your Mars API key
+    basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
+});
+const openai = new OpenAIApi(configuration);
+
+async function getCharacterDetails(characterId) {
+    try {
+        const characters = await fetchCharacterInfo();
+        console.log("Fetched characters:", characters); // Debug logging
+        return characters.find(char => String(char.id) === String(characterId)) || {};
+    } catch (error) {
+        console.error("Error fetching character details:", error);
+        return {};
+    }
+}
+
+// Main handler function
 export default async function handler(req, res) {
     // Remove session token check for testing
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -103,5 +124,63 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+
+async function fetchChatHistory() {
+    try {
+        const response = await fetch(process.env.SHEET_BACKEND_URL, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            console.error("Failed to fetch chat history:", response.statusText);
+            return [];
+        }
+
+        const data = await response.json();
+        return data.history || [];
+    } catch (error) {
+        console.error("Error fetching chat history:", error);
+        return [];
+    }
+}
+
+async function fetchCharacterInfo() {
+    try {
+        const response = await fetch(`${process.env.SHEET_BACKEND_URL}?sheet=characters`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            console.error("Failed to fetch character info:", response.statusText);
+            return [];
+        }
+
+        const data = await response.json();
+        console.log("Character data received:", data.characters); // Debug logging
+        return data.characters || [];
+    } catch (error) {
+        console.error("Error fetching character info:", error);
+        return [];
+    }
+}
+
+async function saveToGoogleSheets(userMessage, botReply) {
+    try {
+        const response = await fetch(process.env.SHEET_BACKEND_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userMessage, botReply }),
+        });
+
+        if (!response.ok) {
+            console.error("Failed to save to Google Sheets:", response.statusText);
+        }
+    } catch (error) {
+        console.error("Error saving to Google Sheets:", error);
     }
 }
