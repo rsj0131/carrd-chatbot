@@ -8,7 +8,7 @@ async function connectToDatabase() {
     if (!mongoClient.topology || !mongoClient.topology.isConnected()) {
         await mongoClient.connect();
     }
-    return mongoClient.db("Vivio"); // Replace with your database name
+    return mongoClient.db("caard-bot"); // Replace with your database name
 }
 
 // OpenAI Configuration
