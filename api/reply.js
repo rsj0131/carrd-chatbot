@@ -11,7 +11,8 @@ async function getCharacterDetails(characterId) {
     try {
         const characters = await fetchCharacterInfo();
         console.log("Fetched characters:", characters); // Debug logging
-        return characters.find(char => char.id === characterId) || {};
+        // Convert both characterId and row.id to strings for comparison
+        return characters.find(char => String(char.id) === String(characterId)) || {};
     } catch (error) {
         console.error("Error fetching character details:", error);
         return {};
