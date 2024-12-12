@@ -92,15 +92,24 @@ async function summarizeChatHistory() {
             model: "mixtral",
             messages: prompt,
             temperature: 0.7,
-            stream: true,
+            stream: true, // Enable streaming
         });
 
-        console.log("Summary Response:", response.data);
+        let summary = "";
+        const decoder = new TextDecoder("utf-8");
 
-        const summary = response.data.choices?.[0]?.message?.content || "Summary could not be generated.";
-        console.log("Generated summary:", summary);
+        for await (const chunk of response.data) {
+            const text = decoder.decode(chunk);
+            const parsedChunk = JSON.parse(text);
 
-        await saveSummaryToMongoDB(summary);
+            if (parsedChunk.choices && parsedChunk.choices[0].delta && parsedChunk.choices[0].delta.content) {
+                summary += parsedChunk.choices[0].delta.content;
+            }
+        }
+
+        console.log("Generated summary:", summary || "Summary could not be generated.");
+
+        await saveSummaryToMongoDB(summary || "Summary could not be generated.");
     } catch (error) {
         console.error("Error summarizing chat history:", error);
     }
