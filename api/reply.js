@@ -62,7 +62,7 @@ export default async function handler(req, res) {
             Personality: ${characterDetails.personality || "Neutral"}.
             Likes: ${characterDetails.likes || "none"}.
             Dislikes: ${characterDetails.dislikes || "none"}.
-            Other Description: ${characterDetails.other || "none"}.
+            Other Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
         `;
