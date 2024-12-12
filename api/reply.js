@@ -65,7 +65,7 @@ export default async function handler(req, res) {
 
 async function fetchChatHistory() {
     try {
-        const response = await fetch(process.env.SHEET_URL, {
+        const response = await fetch(process.env.SHEET_BACKEND_URL, {
             method: "GET",
             headers: { "Content-Type": "application/json" },
         });
@@ -85,7 +85,7 @@ async function fetchChatHistory() {
 
 async function saveToGoogleSheets(userMessage, botReply) {
     try {
-        const response = await fetch(process.env.SHEET_URL, {
+        const response = await fetch(process.env.SHEET_BACKEND_URL, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userMessage, botReply }),
