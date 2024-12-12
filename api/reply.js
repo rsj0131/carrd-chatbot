@@ -105,6 +105,8 @@ export default async function handler(req, res) {
         // Adjust based on the Mars API response format
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
 
+        botReply = botReply.replace(/\\n/g, '\n'); // Replace \\n in botReply
+        
         // Replace {{char}} with the character name
         botReply = botReply.replace(/{{char}}/g, characterName);
 
