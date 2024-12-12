@@ -191,7 +191,8 @@
         async function sendMessage() {
             const inputElement = document.getElementById("message");
             const message = inputElement.value;
-        
+            const characterId = "1"; // Hardcoded character ID
+            
             if (!message.trim()) return;
         
             const messagesDiv = document.getElementById("messages");
@@ -228,7 +229,7 @@
                 const response = await fetch("https://carrd-chatbot.vercel.app/api/reply", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message }),
+                    body: JSON.stringify({ message, characterId }), // Include characterId in payload
                 });
         
                 const data = await response.json();
