@@ -230,11 +230,15 @@
         
             const botMessageContainer = document.createElement("div");
             botMessageContainer.className = "message-container bot";
+            // Add typing indicator
             const typingIndicator = document.createElement("div");
-            typingIndicator.className = "typing-indicator";
-            typingIndicator.innerText = "Typing...";
-            botMessageContainer.appendChild(typingIndicator);
-            messagesDiv.appendChild(botMessageContainer);
+            typingIndicator.className = "message-container bot typing-indicator";
+            typingIndicator.innerHTML = `
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            `;
+            messagesDiv.appendChild(typingIndicator);
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
         
             try {
