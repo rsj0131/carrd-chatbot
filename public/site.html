@@ -1,89 +1,304 @@
-async function sendMessage() {
-    const inputElement = document.getElementById("message");
-    const message = inputElement.value;
-    const characterId = "1";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Vivian</title>
+    <!-- Link to Google Fonts for Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif; /* Set Inter as the default font */
+        }
 
-    if (!message.trim()) return;
+        header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Space between avatar and title */
+        }
 
-    const messagesDiv = document.getElementById("messages");
-    const userTime = formatTime(new Date());
+        header h1 {
+            font-family: 'Inter', sans-serif; /* Apply Inter specifically to the header */
+            font-weight: 600; /* Choose a bold weight for emphasis */
+            font-size: 2rem; /* Adjust the font size */
+            color: white;
+            margin: 0; /* Remove default margin */
+        }
 
-    // Add user message
-    const userMessageContainer = document.createElement("div");
-    userMessageContainer.className = "message-container user";
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%; /* Makes the image circular */
+            object-fit: cover; /* Ensures the image fits inside the circle */
+            border: 2px solid white; /* Optional: Add a white border for styling */
+        }
 
-    const userMessage = document.createElement("div");
-    userMessage.className = "user-message";
-    userMessage.innerText = message;
+        #chat-window {
+            background-color: transparent;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 10px; /* Add margin to move the chat window down */
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
 
-    const userTimestamp = document.createElement("small");
-    userTimestamp.className = "timestamp";
-    userTimestamp.innerText = userTime;
+        .message-container {
+            display: flex;
+            justify-content: flex-start;
+        }
 
-    userMessageContainer.appendChild(userMessage);
-    userMessageContainer.appendChild(userTimestamp);
-    messagesDiv.appendChild(userMessageContainer);
+        .message-container.user {
+            justify-content: flex-end;
+        }
 
-    inputElement.value = "";
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        .user-message,
+        .bot-message {
+            display: inline-block;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            word-wrap: break-word;
+            word-break: break-word;
+            max-width: 80%;
+            width: fit-content;
+        }
 
-    const botMessageContainer = document.createElement("div");
-    botMessageContainer.className = "message-container bot";
+        .user-message {
+            background-color: rgba(135, 206, 235, 0.8);
+            color: white;
+        }
 
-    // Add typing indicator
-    const typingIndicator = document.createElement("div");
-    typingIndicator.className = "message-container bot typing-indicator";
-    typingIndicator.innerHTML = `
-        <div class="dot"></div>
-        <div class="dot"></div>
-        <div class="dot"></div>
-    `;
-    messagesDiv.appendChild(typingIndicator);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        .bot-message {
+            background-color: rgba(135, 206, 235, 0.5);
+            color: white;
+        }
 
-    try {
-        const response = await fetch("https://carrd-chatbot.vercel.app/api/reply", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message, characterId }),
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            background-color: rgba(135, 206, 235, 0.5);
+            color: white;
+            font-size: 1rem;
+            width: fit-content;
+        }
+    
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            animation: blink 1.2s infinite;
+        }
+    
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+    
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    
+        @keyframes blink {
+            0%, 20% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.2;
+            }
+        }
+
+        .timestamp {
+            font-size: 0.8rem; /* Smaller font size */
+            color: white; /* White text color */
+            margin-top: 0.2rem; /* Small margin to separate from the message */
+        }
+        
+        .message-container.user .timestamp {
+            text-align: right; /* Align user timestamp to the right */
+            display: block; /* Ensure it's below the bubble */
+        }
+        
+        .message-container.bot .timestamp {
+            text-align: left; /* Align bot timestamp to the left */
+            display: block; /* Ensure it's below the bubble */
+        }
+
+        form {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+            margin: 0;
+        }
+
+        textarea {
+            flex: 1;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            background-color: transparent;
+            color: white;
+            font-family: 'Inter', sans-serif;
+            resize: none;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        textarea::placeholder {
+            color: white;
+        }
+
+        button {
+            background-color: rgba(135, 206, 235, 0.8);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+        }
+
+        button:hover {
+            background-color: rgba(135, 206, 235, 1);
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <header>
+            <img src="https://github.com/rsj0131/carrd-chatbot/blob/9125199bd4f0817fa49bea8cfdb1dcc3379a62a3/resources/avatar.jpg?raw=true" 
+                 alt="Vivian Avatar" 
+                 class="avatar">
+            <h1>Vivian</h1>
+        </header>
+
+        <div id="chat-window">
+            <div id="messages"></div>
+        </div>
+        <form id="chatForm">
+            <textarea id="message" placeholder="Type your message..." required></textarea>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        function formatTime(date) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        document.getElementById("chatForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            sendMessage();
         });
+        
+        document.getElementById("message").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        async function sendMessage() {
+            const inputElement = document.getElementById("message");
+            const message = inputElement.value;
+            const characterId = "1";
+        
+            if (!message.trim()) return;
+        
+            const messagesDiv = document.getElementById("messages");
+            const userTime = formatTime(new Date());
+        
+            // Add user message
+            const userMessageContainer = document.createElement("div");
+            userMessageContainer.className = "message-container user";
+        
+            const userMessage = document.createElement("div");
+            userMessage.className = "user-message";
+            userMessage.innerText = message;
+        
+            const userTimestamp = document.createElement("small");
+            userTimestamp.className = "timestamp";
+            userTimestamp.innerText = userTime;
+        
+            userMessageContainer.appendChild(userMessage);
+            userMessageContainer.appendChild(userTimestamp);
+            messagesDiv.appendChild(userMessageContainer);
+        
+            inputElement.value = "";
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+            const botMessageContainer = document.createElement("div");
+            botMessageContainer.className = "message-container bot";
+        
+            // Add typing indicator
+            const typingIndicator = document.createElement("div");
+            typingIndicator.className = "message-container bot typing-indicator";
+            typingIndicator.innerHTML = `
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            `;
+            messagesDiv.appendChild(typingIndicator);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        
+            try {
+                const response = await fetch("https://carrd-chatbot.vercel.app/api/reply", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message, characterId }),
+                });
+        
+                const data = await response.json();
+        
+                typingIndicator.remove();
+        
+                const botMessage = document.createElement("div");
+                botMessage.className = "bot-message";
+                botMessage.innerText = data.reply || "Error: " + data.error;
+        
+                const botTimestamp = document.createElement("small");
+                botTimestamp.className = "timestamp";
+                botTimestamp.innerText = formatTime(new Date());
+        
+                botMessageContainer.appendChild(botMessage);
+                botMessageContainer.appendChild(botTimestamp);
+        
+                // Append the botMessageContainer to messagesDiv
+                messagesDiv.appendChild(botMessageContainer);
+        
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            } catch (error) {
+                typingIndicator.remove();
+        
+                const botMessage = document.createElement("div");
+                botMessage.className = "bot-message";
+                botMessage.innerText = "Error: Unable to connect to the server.";
+        
+                const botTimestamp = document.createElement("small");
+                botTimestamp.className = "timestamp";
+                botTimestamp.innerText = formatTime(new Date());
+        
+                botMessageContainer.appendChild(botMessage);
+                botMessageContainer.appendChild(botTimestamp);
+        
+                // Append the botMessageContainer to messagesDiv
+                messagesDiv.appendChild(botMessageContainer);
+        
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }
+        }
 
-        const data = await response.json();
+    </script>
 
-        typingIndicator.remove();
-
-        const botMessage = document.createElement("div");
-        botMessage.className = "bot-message";
-        botMessage.innerText = data.reply || "Error: " + data.error;
-
-        const botTimestamp = document.createElement("small");
-        botTimestamp.className = "timestamp";
-        botTimestamp.innerText = formatTime(new Date());
-
-        botMessageContainer.appendChild(botMessage);
-        botMessageContainer.appendChild(botTimestamp);
-
-        // Append the botMessageContainer to messagesDiv
-        messagesDiv.appendChild(botMessageContainer);
-
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    } catch (error) {
-        typingIndicator.remove();
-
-        const botMessage = document.createElement("div");
-        botMessage.className = "bot-message";
-        botMessage.innerText = "Error: Unable to connect to the server.";
-
-        const botTimestamp = document.createElement("small");
-        botTimestamp.className = "timestamp";
-        botTimestamp.innerText = formatTime(new Date());
-
-        botMessageContainer.appendChild(botMessage);
-        botMessageContainer.appendChild(botTimestamp);
-
-        // Append the botMessageContainer to messagesDiv
-        messagesDiv.appendChild(botMessageContainer);
-
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-    }
-}
+</body>
+</html>
