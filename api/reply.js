@@ -49,6 +49,15 @@ export default async function handler(req, res) {
             console.warn(`Character with ID ${characterId} not found, using default assistant.`); // Debug logging
         }
 
+        // Get current time in Argentina
+        const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
+            timeZone: 'America/Argentina/Buenos_Aires',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false,
+        }).format(new Date());
+        
         // Construct system prompt dynamically
         const dynamicSystemMessage = `
             Name: ${characterName}.
@@ -65,6 +74,7 @@ export default async function handler(req, res) {
             Other Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
+            Current Time: ${currentTimeInArgentina}.
         `;
 
         // Fetch the latest 30 messages from Google Sheets
