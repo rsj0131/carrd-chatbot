@@ -8,6 +8,12 @@ const configuration = new Configuration({
 const openai = new OpenAIApi(configuration);
 var systemMessage = "You're Vivian, a horny assistant. Do not generate user's response automatically unless the user said so.";
 
+async function getCharacterDetails(characterId) {
+    const characters = await fetchCharacterInfo();
+    return characters.find(char => char.id === characterId) || {};
+}
+
+// Main handler function
 export default async function handler(req, res) {
     // Remove session token check for testing
     res.setHeader("Access-Control-Allow-Origin", "*");
@@ -23,19 +29,40 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const { message } = req.body;
+    const { message, characterId } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: "Message is required" });
     }
 
     try {
+        // Fetch character details
+        const characterDetails = await getCharacterDetails(characterId);
+        const characterName = characterDetails.name || "assistant";
+
+        // Construct system prompt dynamically
+        const dynamicSystemMessage = `
+            Name: ${characterName}.
+            Age: ${characterDetails.age || "none"}.
+            Birthday: ${characterDetails.birthday || "none"}.
+            Height: ${characterDetails.height || "none"}.
+            Weight: ${characterDetails.weight || "none"}.
+            Measurements: ${characterDetails.measurements || "none"}.
+            Appearance: ${characterDetails.appearance || "none"}.
+            Personality: ${characterDetails.personality || "Neutral"}.
+            Likes: ${characterDetails.likes || "none"}.
+            Dislikes: ${characterDetails.dislikes || "none"}.
+            Other Description: ${characterDetails.other || "none"}.
+            Scenario: ${characterDetails.scenario || "A general chat session"}.
+            Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
+        `;
+
         // Fetch the latest 30 messages from Google Sheets
         const history = await fetchChatHistory();
 
         // Construct messages for the prompt
         const messages = [
-            { role: "system", content: systemMessage },
+            { role: "system", content: dynamicSystemMessage },
             ...history.map(entry => ({ role: "user", content: entry.userMessage })),
             { role: "user", content: message }
         ];
@@ -51,7 +78,10 @@ export default async function handler(req, res) {
         console.log("API Response:", JSON.stringify(response.data, null, 2));
 
         // Adjust based on the Mars API response format
-        const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+        let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+
+        // Replace {{char}} with the character name
+        botReply = botReply.replace(/{{char}}/g, characterName);
 
         // Save conversation to Google Sheets
         await saveToGoogleSheets(message, botReply);
@@ -62,6 +92,7 @@ export default async function handler(req, res) {
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
+
 
 async function fetchChatHistory() {
     try {
@@ -79,6 +110,26 @@ async function fetchChatHistory() {
         return data.history || [];
     } catch (error) {
         console.error("Error fetching chat history:", error);
+        return [];
+    }
+}
+
+async function fetchCharacterInfo() {
+    try {
+        const response = await fetch(`${process.env.SHEET_BACKEND_URL}?sheet=characters`, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            console.error("Failed to fetch character info:", response.statusText);
+            return [];
+        }
+
+        const data = await response.json();
+        return data.characters || [];
+    } catch (error) {
+        console.error("Error fetching character info:", error);
         return [];
     }
 }
