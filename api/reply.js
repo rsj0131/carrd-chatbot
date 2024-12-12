@@ -47,6 +47,51 @@ async function fetchChatHistory() {
     }
 }
 
+// Save summarized text to MongoDB
+async function saveSummaryToMongoDB(summary) {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("summaries");
+        await collection.insertOne({
+            timestamp: new Date(),
+            summary,
+        });
+        console.log("Summary saved to MongoDB.");
+    } catch (error) {
+        console.error("Error saving summary to MongoDB:", error);
+    }
+}
+
+// Summarize chat history
+async function summarizeChatHistory() {
+    try {
+        const chatHistory = await fetchChatHistory();
+        const messages = chatHistory.flatMap(entry => [
+            { role: "user", content: entry.userMessage },
+            { role: "assistant", content: entry.botReply },
+        ]);
+
+        // Add system instruction for summarization
+        const prompt = [
+            { role: "system", content: "Summarize the following chat history concisely." },
+            ...messages,
+        ];
+
+        const response = await openai.createChatCompletion({
+            model: "mixtral",
+            messages: prompt,
+            temperature: 0.7,
+        });
+
+        const summary = response.data.choices?.[0]?.message?.content || "No summary available.";
+        console.log("Generated summary:", summary);
+
+        await saveSummaryToMongoDB(summary);
+    } catch (error) {
+        console.error("Error summarizing chat history:", error);
+    }
+}
+
 async function saveToMongoDB(userMessage, botReply) {
     try {
         const db = await connectToDatabase();
@@ -144,6 +189,9 @@ export default async function handler(req, res) {
 
         await saveToMongoDB(message, botReply);
 
+        // Trigger chat summarization after saving the reply
+        await summarizeChatHistory();
+        
         const overallElapsedTime = Date.now() - startTime;
         console.log(`Overall processing time: ${overallElapsedTime} ms`);
 
