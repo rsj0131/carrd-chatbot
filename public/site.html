@@ -321,16 +321,19 @@
                 const resultDiv = document.getElementById("test-result");
                 resultDiv.textContent = "Testing MongoDB, please wait...";
                 try {
-                    const response = await fetch("https://carrd-chatbot.vercel.app/api/test-mongodb", {
+                    const response = await fetch("/api/test-mongodb", {
                         method: "GET",
                         headers: { "Content-Type": "application/json" },
                     });
+            
                     const data = await response.json();
                     resultDiv.textContent = `MongoDB Test: ${data.message}`;
                 } catch (error) {
+                    console.error("Error during MongoDB test:", error);
                     resultDiv.textContent = `MongoDB Test Failed: ${error.message}`;
                 }
             });
+
         </script>
 
 </body>
