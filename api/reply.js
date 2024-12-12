@@ -71,10 +71,21 @@ async function summarizeChatHistory() {
             { role: "assistant", content: entry.botReply },
         ]);
 
-        // Add system instruction for summarization
+        // Check token count and truncate if necessary
+        const MAX_TOKENS = 3000;
+        let tokenCount = 0;
+        const trimmedMessages = [];
+
+        for (const msg of messages) {
+            const tokenEstimate = msg.content.length / 4; // Approx. 4 chars per token
+            if (tokenCount + tokenEstimate > MAX_TOKENS) break;
+            tokenCount += tokenEstimate;
+            trimmedMessages.push(msg);
+        }
+
         const prompt = [
-            { role: "system", content: "Summarize the following chat history concisely." },
-            ...messages,
+            { role: "system", content: "You are an assistant summarizing chat histories concisely for records. Summarize the key points of the following conversation history." },
+            ...trimmedMessages,
         ];
 
         const response = await openai.createChatCompletion({
@@ -83,7 +94,9 @@ async function summarizeChatHistory() {
             temperature: 0.7,
         });
 
-        const summary = response.data.choices?.[0]?.message?.content || "No summary available.";
+        console.log("Summary Response:", response.data);
+
+        const summary = response.data.choices?.[0]?.message?.content || "Summary could not be generated.";
         console.log("Generated summary:", summary);
 
         await saveSummaryToMongoDB(summary);
@@ -91,6 +104,7 @@ async function summarizeChatHistory() {
         console.error("Error summarizing chat history:", error);
     }
 }
+
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
