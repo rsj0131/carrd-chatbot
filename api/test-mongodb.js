@@ -22,15 +22,22 @@ async function testMongoDB(req, res) {
         // Test read operation
         const readResult = await collection.findOne({ _id: writeResult.insertedId });
 
+        console.log("MongoDB Test Successful:", readResult);
+
         // Send success response
-        res.status(200).json({
+        return res.status(200).json({
             message: `Write and read successful. Message: ${readResult.message}`,
         });
     } catch (error) {
-        console.error("MongoDB Test Error:", error);
-        res.status(500).json({ message: "MongoDB test failed." });
+        console.error("MongoDB Test Error:", error.message);
+
+        // Send error response with a valid JSON format
+        return res.status(500).json({
+            message: `MongoDB test failed. Error: ${error.message}`,
+        });
     } finally {
         await client.close();
+        console.log("MongoDB connection closed.");
     }
 }
 
@@ -38,6 +45,6 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
         return await testMongoDB(req, res);
     } else {
-        res.status(405).json({ message: "Method not allowed" });
+        return res.status(405).json({ message: "Method not allowed" });
     }
 }
