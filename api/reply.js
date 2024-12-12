@@ -1,6 +1,17 @@
+import { MongoClient } from "mongodb";
 import { Configuration, OpenAIApi } from "openai";
 
-// Configure Mars API
+// MongoDB Configuration
+const mongoClient = new MongoClient(process.env.MONGODB_URI);
+
+async function connectToDatabase() {
+    if (!mongoClient.isConnected()) {
+        await mongoClient.connect();
+    }
+    return mongoClient.db("VivioDB"); // Replace with your database name
+}
+
+// OpenAI Configuration
 const configuration = new Configuration({
     apiKey: process.env.CHUB_API_KEY, // Replace with your Mars API key
     basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
@@ -9,23 +20,54 @@ const openai = new OpenAIApi(configuration);
 
 async function getCharacterDetails(characterId) {
     try {
-        const characters = await fetchCharacterInfo();
-        console.log("Fetched characters:", characters); // Debug logging
-        return characters.find(char => String(char.id) === String(characterId)) || {};
+        const db = await connectToDatabase();
+        const collection = db.collection("characters");
+        const character = await collection.findOne({ id: characterId });
+        console.log("Fetched character:", character);
+        return character || {};
     } catch (error) {
-        console.error("Error fetching character details:", error);
+        console.error("Error fetching character details from MongoDB:", error);
         return {};
+    }
+}
+
+async function fetchChatHistory() {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("chatHistory");
+        const history = await collection.find().sort({ timestamp: -1 }).limit(30).toArray();
+        console.log("Fetched chat history:", history);
+        return history.map(entry => ({
+            userMessage: entry.userMessage,
+            botReply: entry.botReply,
+        }));
+    } catch (error) {
+        console.error("Error fetching chat history from MongoDB:", error);
+        return [];
+    }
+}
+
+async function saveToMongoDB(userMessage, botReply) {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("chatHistory");
+        await collection.insertOne({
+            timestamp: new Date(),
+            userMessage,
+            botReply,
+        });
+        console.log("Saved conversation to MongoDB.");
+    } catch (error) {
+        console.error("Error saving conversation to MongoDB:", error);
     }
 }
 
 // Main handler function
 export default async function handler(req, res) {
-    // Remove session token check for testing
     res.setHeader("Access-Control-Allow-Origin", "*");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
     res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-    // Handle preflight OPTIONS request
     if (req.method === "OPTIONS") {
         return res.status(204).end();
     }
@@ -40,23 +82,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Message is required" });
     }
 
-    // Start overall timing
     const startTime = Date.now();
 
     try {
-        // Measure time to fetch character details
         const characterStartTime = Date.now();
         const characterDetails = await getCharacterDetails(characterId);
-        const characterFetchTime = Date.now() - characterStartTime;
-        console.log(`Character details fetched in ${characterFetchTime} ms`);
+        console.log(`Character details fetched in ${Date.now() - characterStartTime} ms`);
 
         const characterName = characterDetails.name || "assistant";
 
-        if (!characterDetails.name) {
-            console.warn(`Character with ID ${characterId} not found, using default assistant.`);
-        }
-
-        // Get current time in Argentina
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
             hour: '2-digit',
@@ -65,7 +99,6 @@ export default async function handler(req, res) {
             hour12: false,
         }).format(new Date());
 
-        // Construct system prompt dynamically
         const dynamicSystemMessage = `
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
@@ -84,13 +117,10 @@ export default async function handler(req, res) {
             Current Time: ${currentTimeInArgentina}.
         `;
 
-        // Measure time to fetch chat history
         const chatHistoryStartTime = Date.now();
         const history = await fetchChatHistory();
-        const chatHistoryFetchTime = Date.now() - chatHistoryStartTime;
-        console.log(`Chat history fetched in ${chatHistoryFetchTime} ms`);
+        console.log(`Chat history fetched in ${Date.now() - chatHistoryStartTime} ms`);
 
-        // Construct messages for the prompt
         const messages = [
             { role: "system", content: dynamicSystemMessage },
             ...history.flatMap(entry => [
@@ -100,9 +130,6 @@ export default async function handler(req, res) {
             { role: "user", content: message },
         ];
 
-        console.log("Constructed messages:", JSON.stringify(messages, null, 2));
-
-        // Measure time for generating the bot reply
         const replyStartTime = Date.now();
         const response = await openai.createChatCompletion({
             model: "mixtral",
@@ -110,21 +137,13 @@ export default async function handler(req, res) {
             temperature: 0.8,
             stream: false,
         });
-        const replyGenerationTime = Date.now() - replyStartTime;
-        console.log(`Reply generated in ${replyGenerationTime} ms`);
+        console.log(`Reply generated in ${Date.now() - replyStartTime} ms`);
 
-        // Adjust based on the Mars API response format
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+        botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
 
-        botReply = botReply.replace(/\\n/g, '\n'); // Replace \\n in botReply
+        await saveToMongoDB(message, botReply);
 
-        // Replace {{char}} with the character name
-        botReply = botReply.replace(/{{char}}/g, characterName);
-
-        // Save conversation to Google Sheets
-        await saveToGoogleSheets(message, botReply);
-
-        // Measure overall time
         const overallElapsedTime = Date.now() - startTime;
         console.log(`Overall processing time: ${overallElapsedTime} ms`);
 
@@ -132,62 +151,5 @@ export default async function handler(req, res) {
     } catch (error) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
-    }
-}
-
-
-async function fetchChatHistory() {
-    try {
-        const response = await fetch(process.env.SHEET_BACKEND_URL, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) {
-            console.error("Failed to fetch chat history:", response.statusText);
-            return [];
-        }
-
-        const data = await response.json();
-        return data.history || [];
-    } catch (error) {
-        console.error("Error fetching chat history:", error);
-        return [];
-    }
-}
-
-async function fetchCharacterInfo() {
-    try {
-        const response = await fetch(`${process.env.SHEET_BACKEND_URL}?sheet=characters`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        });
-
-        if (!response.ok) {
-            console.error("Failed to fetch character info:", response.statusText);
-            return [];
-        }
-
-        const data = await response.json();
-        return data.characters || [];
-    } catch (error) {
-        console.error("Error fetching character info:", error);
-        return [];
-    }
-}
-
-async function saveToGoogleSheets(userMessage, botReply) {
-    try {
-        const response = await fetch(process.env.SHEET_BACKEND_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userMessage, botReply }),
-        });
-
-        if (!response.ok) {
-            console.error("Failed to save to Google Sheets:", response.statusText);
-        }
-    } catch (error) {
-        console.error("Error saving to Google Sheets:", error);
     }
 }
