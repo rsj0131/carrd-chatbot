@@ -169,7 +169,6 @@ async function fetchCharacterInfo() {
         }
 
         const data = await response.json();
-        console.log("Character data received:", data.characters); // Debug logging
         return data.characters || [];
     } catch (error) {
         console.error("Error fetching character info:", error);
