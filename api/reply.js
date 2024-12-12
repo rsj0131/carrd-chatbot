@@ -11,7 +11,6 @@ async function getCharacterDetails(characterId) {
     try {
         const characters = await fetchCharacterInfo();
         console.log("Fetched characters:", characters); // Debug logging
-        // Convert both characterId and row.id to strings for comparison
         return characters.find(char => String(char.id) === String(characterId)) || {};
     } catch (error) {
         console.error("Error fetching character details:", error);
@@ -73,10 +72,15 @@ export default async function handler(req, res) {
         // Construct messages for the prompt
         const messages = [
             { role: "system", content: dynamicSystemMessage },
-            ...history.map(entry => ({ role: "user", content: entry.userMessage })),
-            { role: "user", content: message }
+            ...history.flatMap(entry => [
+                { role: "user", content: entry.userMessage },
+                { role: "assistant", content: entry.botReply },
+            ]),
+            { role: "user", content: message },
         ];
 
+        console.log("Constructed messages:", JSON.stringify(messages, null, 2));
+      
         const response = await openai.createChatCompletion({
             model: "mixtral",
             messages,
