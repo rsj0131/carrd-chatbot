@@ -121,16 +121,17 @@
             font-size: 0.8rem; /* Smaller font size */
             color: white; /* White text color */
             margin-top: 0.2rem; /* Small margin to separate from the message */
+            display: block; /* Ensure it's on its own line */
         }
         
-        .message-container.user .timestamp {
-            text-align: right; /* Align user timestamp to the right */
-            display: block; /* Ensure it's below the bubble */
+        .message-container.user {
+            flex-direction: column; /* Stack user message and timestamp vertically */
+            align-items: flex-end; /* Align content to the right */
         }
         
-        .message-container.bot .timestamp {
-            text-align: left; /* Align bot timestamp to the left */
-            display: block; /* Ensure it's below the bubble */
+        .message-container.bot {
+            flex-direction: column; /* Stack bot message and timestamp vertically */
+            align-items: flex-start; /* Align content to the left */
         }
 
         form {
@@ -242,7 +243,7 @@
         
             // Add typing indicator
             const typingIndicator = document.createElement("div");
-            typingIndicator.className = "message-container bot typing-indicator";
+            typingIndicator.className = "typing-indicator";
             typingIndicator.innerHTML = `
                 <div class="dot"></div>
                 <div class="dot"></div>
@@ -297,6 +298,7 @@
                 messagesDiv.scrollTop = messagesDiv.scrollHeight;
             }
         }
+
 
     </script>
 
