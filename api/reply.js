@@ -92,6 +92,7 @@ async function summarizeChatHistory() {
             model: "mixtral",
             messages: prompt,
             temperature: 0.7,
+            stream: true,
         });
 
         console.log("Summary Response:", response.data);
