@@ -6,7 +6,7 @@ const configuration = new Configuration({
     basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
 const openai = new OpenAIApi(configuration);
-var systemMessage = "You're Vivian, a horny assisstant. Do not generate user's response automatically unless the user said so.";
+var systemMessage = "You're Vivian, a horny assistant. Do not generate user's response automatically unless the user said so.";
 
 export default async function handler(req, res) {
     // Remove session token check for testing
@@ -30,15 +30,21 @@ export default async function handler(req, res) {
     }
 
     try {
+        // Fetch the latest 30 messages from Google Sheets
+        const history = await fetchChatHistory();
+
+        // Construct messages for the prompt
+        const messages = [
+            { role: "system", content: systemMessage },
+            ...history.map(entry => ({ role: "user", content: entry.userMessage })),
+            { role: "user", content: message }
+        ];
+
         const response = await openai.createChatCompletion({
-            model: "mixtral", // Ensure this model is available with Mars
-            messages: [
-                { role: "system", content: systemMessage }, 
-                { role: "user", content: message }
-            ],
+            model: "mixtral",
+            messages,
             temperature: 0.8,
-            //max_tokens: 40,
-            stream: false, // Ensure the response is not streamed
+            stream: false,
         });
 
         // Log the response to inspect its structure
@@ -46,14 +52,34 @@ export default async function handler(req, res) {
 
         // Adjust based on the Mars API response format
         const botReply = response.data.choices?.[0]?.message?.content || "No response available.";
-        
+
         // Save conversation to Google Sheets
         await saveToGoogleSheets(message, botReply);
-        
+
         res.status(200).json({ reply: botReply });
     } catch (error) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
+    }
+}
+
+async function fetchChatHistory() {
+    try {
+        const response = await fetch(process.env.SHEET_HISTORY_URL, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+        });
+
+        if (!response.ok) {
+            console.error("Failed to fetch chat history:", response.statusText);
+            return [];
+        }
+
+        const data = await response.json();
+        return data.history || [];
+    } catch (error) {
+        console.error("Error fetching chat history:", error);
+        return [];
     }
 }
 
