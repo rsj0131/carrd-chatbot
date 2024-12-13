@@ -283,10 +283,10 @@ async function processFunctionCall(botReply) {
 // Function trigger logic
 async function triggerFunction(keyword, botReply) {
     switch (keyword) {
-        case "<share-twitter>":
+        case "[share-twitter]":
             console.log("Appending Twitter link to the response...");
             return await shareTwitterLink(keyword, botReply);
-        case "<share-patreon>":
+        case "[share-patreon]":
             console.log("Appending Patreon link to the response...");
             return await sharePatreonLink(keyword, botReply);
         default:
