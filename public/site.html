@@ -257,25 +257,40 @@
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
     
-        // Show/Hide Scroll to Bottom Button
+        // Chat Window Scroll Logic
         const chatWindow = document.getElementById("chat-window");
         const scrollToBottomButton = document.getElementById("scrollToBottom");
     
-        chatWindow.addEventListener("scroll", () => {
-            // Show the button only when the user scrolls up
-            if (chatWindow.scrollTop < chatWindow.scrollHeight - chatWindow.clientHeight - 50) {
+        function checkScrollPosition() {
+            const isAtBottom =
+                chatWindow.scrollTop >= chatWindow.scrollHeight - chatWindow.clientHeight - 50;
+            
+            if (!isAtBottom) {
                 scrollToBottomButton.style.display = "block";
             } else {
                 scrollToBottomButton.style.display = "none";
             }
-        });
+    
+            // Debugging Scroll Values
+            console.log({
+                scrollTop: chatWindow.scrollTop,
+                scrollHeight: chatWindow.scrollHeight,
+                clientHeight: chatWindow.clientHeight,
+            });
+        }
+    
+        chatWindow.addEventListener("scroll", checkScrollPosition);
     
         // Attach the click event to the button
-        scrollToBottomButton.addEventListener("click", scrollToBottom);
+        scrollToBottomButton.addEventListener("click", () => {
+            scrollToBottom();
+            checkScrollPosition(); // Ensure button updates after scrolling
+        });
     
-        // Ensure the chat auto-scrolls when a new message is added
+        // Ensure the chat auto-scrolls and button visibility updates when a new message is added
         function autoScroll() {
             scrollToBottom();
+            checkScrollPosition();
         }
     
         document.getElementById("chatForm").addEventListener("submit", async (e) => {
@@ -283,11 +298,12 @@
             sendMessage();
             autoScroll(); // Scroll to bottom after sending a message
         });
-
+    
         document.getElementById("message").addEventListener("keydown", (e) => {
             if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
+                autoScroll();
             }
         });
         
