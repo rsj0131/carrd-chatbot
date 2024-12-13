@@ -258,6 +258,10 @@
                 sendMessage();
             }
         });
+        function parseLinks(text) {
+            const urlRegex = /https?:\/\/[^\s]+/g; // Match URLs starting with http:// or https://
+            return text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+        }
         
         async function sendMessage() {
             const inputElement = document.getElementById("message");
@@ -312,10 +316,11 @@
                 const data = await response.json();
         
                 typingIndicator.remove();
-        
+
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
-                botMessage.innerHTML = data.reply || "Error: " + data.error;
+                // Use innerHTML to allow rendering links
+                botMessage.innerHTML = parseLinks(data.reply || "Error: " + data.error);
         
                 const botTimestamp = document.createElement("small");
                 botTimestamp.className = "timestamp";
