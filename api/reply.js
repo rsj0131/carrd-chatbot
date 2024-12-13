@@ -50,6 +50,8 @@ async function fetchChatHistory() {
 }
 
 async function checkAndSummarizeChatHistory() {
+    const startSummaryTime = Date.now(); // Start timer for summarization
+
     try {
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
@@ -121,8 +123,12 @@ async function checkAndSummarizeChatHistory() {
         console.log("Older messages summarized and deleted.");
     } catch (error) {
         console.error("Error checking and summarizing chat history:", error);
+    } finally {
+        const summaryElapsedTime = Date.now() - startSummaryTime; // End timer for summarization
+        console.log(`Time taken for summarization: ${summaryElapsedTime} ms`);
     }
 }
+
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
