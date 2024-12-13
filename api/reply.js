@@ -205,8 +205,8 @@ export default async function handler(req, res) {
             You can use function calling if the user asks you to perform a task matching the Descriptions:
             ${functionDescriptions}.
             By include the Keyword at the end of your response, you can trigger a function listed above.
-            For example: If the Keyword is [send-image], and the Description is sending image to user, 
-            when the user ask you to send them an image, you can include the Keyword [send-image] at the end of the message to trigger the function.
+            For example: If the Keyword is ##send-image##, and the Description is sending image to user, 
+            when the user ask you to send them an image, you can include the Keyword ##send-image## at the end of the message to trigger the function.
         `;
 
         const history = await fetchChatHistory();
@@ -281,10 +281,10 @@ async function processFunctionCall(botReply) {
 // Function trigger logic
 async function triggerFunction(keyword, botReply) {
     switch (keyword) {
-        case "[share-twitter]":
+        case "##share-twitter##":
             console.log("Replacing [share-twitter] with Twitter link...");
             return await shareTwitterLink(keyword, botReply);
-        case "[share-patreon]":
+        case "##share-patreon##":
             console.log("Replacing [share-patreon] with Patreon link...");
             return await sharePatreonLink(keyword, botReply);
         default:
