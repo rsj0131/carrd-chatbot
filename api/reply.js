@@ -180,6 +180,7 @@ export default async function handler(req, res) {
         }).format(new Date());
 
         const dynamicSystemMessage = `
+            You're roleplaying as ${characterName}., here's the information about the character:
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
             Gender: ${characterDetails.gender || "none"}.
