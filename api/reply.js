@@ -85,7 +85,10 @@ async function summarizeChatHistory() {
         }
 
         const prompt = [
-            { role: "system", content: "You are an assistant summarizing chat histories concisely for records. Summarize the key points of the following conversation history." },
+            {
+                role: "system",
+                content: "You are an assistant summarizing chat histories concisely for records. Summarize the key points of the following conversation history in 5 sentences or less. Ensure the summary is direct and avoids unnecessary detail.",
+            },
             ...trimmedMessages,
         ];
 
@@ -98,7 +101,8 @@ async function summarizeChatHistory() {
             body: JSON.stringify({
                 model: "mixtral",
                 messages: prompt,
-                temperature: 0.7,
+                temperature: 0.5, // Lower temperature for concise output
+                max_tokens: 200, // Limit the output length
                 stream: true, // Enable streaming
             }),
         });
@@ -120,8 +124,7 @@ async function summarizeChatHistory() {
 
                 const jsonData = cleanLine.substring(5).trim(); // Remove 'data:' prefix
                 if (jsonData === "[DONE]") {
-                    // End of stream
-                    reader.destroy();
+                    reader.destroy(); // End of stream
                     break;
                 }
 
@@ -145,6 +148,7 @@ async function summarizeChatHistory() {
         console.error("Error summarizing chat history:", error);
     }
 }
+
 
 
 async function saveToMongoDB(userMessage, botReply) {
