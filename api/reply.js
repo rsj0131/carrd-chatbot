@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import { Configuration, OpenAIApi } from "openai";
+import fetch from "node-fetch"; // Add this if not already installed: npm install node-fetch
 
 // MongoDB Configuration
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
@@ -62,7 +63,6 @@ async function saveSummaryToMongoDB(summary) {
     }
 }
 
-// Summarize chat history
 async function summarizeChatHistory() {
     try {
         const chatHistory = await fetchChatHistory();
@@ -88,19 +88,35 @@ async function summarizeChatHistory() {
             ...trimmedMessages,
         ];
 
-        const response = await openai.createChatCompletion({
-            model: "mixtral",
-            messages: prompt,
-            temperature: 0.7,
-            stream: true, // Enable streaming
+        // Use fetch to handle streaming manually
+        const response = await fetch("https://mars.chub.ai/mixtral/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${process.env.CHUB_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: "mixtral",
+                messages: prompt,
+                temperature: 0.7,
+                stream: true, // Enable streaming
+            }),
         });
 
-        let summary = "";
+        if (!response.body) {
+            throw new Error("No response body available for streaming.");
+        }
 
-        // Handle the stream
-        for await (const chunk of response.body) {
-            const textChunk = chunk.toString(); // Convert Buffer to string
-            const lines = textChunk.split("\n");
+        let summary = "";
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+
+        while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const text = decoder.decode(value, { stream: true });
+            const lines = text.split("\n");
 
             for (const line of lines) {
                 if (line.trim() === "") continue;
@@ -117,12 +133,12 @@ async function summarizeChatHistory() {
         }
 
         console.log("Generated summary:", summary || "Summary could not be generated.");
-
         await saveSummaryToMongoDB(summary || "Summary could not be generated.");
     } catch (error) {
         console.error("Error summarizing chat history:", error);
     }
 }
+
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
