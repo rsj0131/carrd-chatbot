@@ -189,18 +189,21 @@
             color: white;
         }
 
-        button {
+        #scrollToBottom {
+            position: absolute;
+            bottom: 10px; /* Position it 10px above the bottom of #chat-window */
+            left: 50%; /* Center it horizontally */
+            transform: translateX(-50%); /* Adjust for centering */
+            padding: 10px 20px;
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
             border: none;
-            padding: 0.75rem 1rem;
-            border-radius: 0.5rem;
+            border-radius: 5px;
             cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            margin: 0;
+            z-index: 10; /* Ensure it stays above other elements */
         }
-
-        button:hover {
+        
+        #scrollToBottom:hover {
             background-color: rgba(135, 206, 235, 1);
         }
 
@@ -240,9 +243,8 @@
 
         <div id="chat-window">
             <div id="messages"></div>
+            <button id="scrollToBottom" style="display: none;">Scroll to Bottom</button>
         </div>
-
-        <button id="scrollToBottom" style="display: none;">Scroll to Bottom</button>
         
         <form id="chatForm">
             <textarea id="message" placeholder="Type your message..." required></textarea>
