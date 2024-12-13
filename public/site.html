@@ -191,9 +191,10 @@
         }
 
         #scrollToBottom {
-            position: absolute;
-            bottom: 40px; /* Adjust the distance from the bottom of the chat window */
-            right: 40px; /* Adjust the distance from the right edge of the chat window */
+            position: absolute; /* Absolute positioning relative to #chat-window */
+            bottom: 20px; /* Adjust the distance from the bottom of the #chat-window */
+            left: 50%; /* Center the button horizontally */
+            transform: translateX(-50%); /* Center alignment correction */
             width: 40px; /* Set width for a circle */
             height: 40px; /* Set height for a circle */
             background-color: rgba(135, 206, 235, 0.8); /* Background color */
@@ -211,6 +212,7 @@
         #scrollToBottom:hover {
             background-color: rgba(135, 206, 235, 1); /* Darker on hover */
         }
+
 
 
         /* Media query for mobile devices */
