@@ -9,22 +9,39 @@
     <style>
         body {
             font-family: 'Inter', sans-serif; /* Set Inter as the default font */
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4; /* Optional background color */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
         }
-
+    
+        #chat-container {
+            width: 100%;
+            max-width: 600px; /* Limit width for larger screens */
+            padding: 1rem;
+            box-sizing: border-box;
+            background-color: rgba(0, 0, 0, 0.7); /* Background for contrast */
+            border-radius: 0.5rem;
+        }
+    
         header {
             display: flex;
             align-items: center;
             gap: 0.5rem; /* Space between avatar and title */
         }
-
+    
         header h1 {
             font-family: 'Inter', sans-serif; /* Apply Inter specifically to the header */
             font-weight: 600; /* Choose a bold weight for emphasis */
-            font-size: 2rem; /* Adjust the font size */
+            font-size: 1.5rem; /* Adjust font size for smaller screens */
             color: white;
             margin: 0; /* Remove default margin */
         }
-
+    
         .avatar {
             width: 50px;
             height: 50px;
@@ -32,7 +49,7 @@
             object-fit: cover; /* Ensures the image fits inside the circle */
             border: 2px solid white; /* Optional: Add a white border for styling */
         }
-
+    
         #chat-window {
             background-color: transparent;
             padding: 1rem;
@@ -45,36 +62,30 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            scrollbar-width: thin; /* For Firefox */
-            scrollbar-color: rgba(235, 235, 235, 0.8) transparent; /* Thumb and track colors */
         }
-
+    
         #chat-window::-webkit-scrollbar {
-            width: 8px; /* Scroll bar width */
+            width: 8px;
         }
-
+    
         #chat-window::-webkit-scrollbar-track {
-            background: transparent; /* Scrollbar track background */
+            background: transparent;
         }
     
         #chat-window::-webkit-scrollbar-thumb {
-            background-color: rgba(200, 200, 200, 0.8); /* Scrollbar thumb color */
-            border-radius: 4px; /* Round edges */
+            background-color: rgba(200, 200, 200, 0.8);
+            border-radius: 4px;
         }
     
-        #chat-window::-webkit-scrollbar-thumb:hover {
-            background-color: rgba(245, 245, 245, 1); /* Change thumb color on hover */
-        }
-        
         .message-container {
             display: flex;
             justify-content: flex-start;
         }
-
+    
         .message-container.user {
             justify-content: flex-end;
         }
-
+    
         .user-message,
         .bot-message {
             display: inline-block;
@@ -85,81 +96,24 @@
             max-width: 80%;
             width: fit-content;
         }
-
+    
         .user-message {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
         }
-
+    
         .bot-message {
             background-color: rgba(135, 206, 235, 0.5);
             color: white;
         }
-
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-            gap: 0.2rem;
-            padding: 0.5rem;
-            border-radius: 0.5rem;
-            background-color: rgba(135, 206, 235, 0.5);
-            color: white;
-            font-size: 1rem;
-            width: fit-content;
-        }
     
-        .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: white;
-            animation: blink 1.2s infinite;
-        }
-    
-        .dot:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-    
-        .dot:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-    
-        @keyframes blink {
-            0%, 20% {
-                opacity: 0.2;
-            }
-            50% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0.2;
-            }
-        }
-
-        .timestamp {
-            font-size: 0.8rem; /* Smaller font size */
-            color: white; /* White text color */
-            margin-top: 0.2rem; /* Small margin to separate from the message */
-            display: block; /* Ensure it's on its own line */
-        }
-        
-        .message-container.user {
-            flex-direction: column; /* Stack user message and timestamp vertically */
-            align-items: flex-end; /* Align content to the right */
-        }
-        
-        .message-container.bot {
-            flex-direction: column; /* Stack bot message and timestamp vertically */
-            align-items: flex-start; /* Align content to the left */
-        }
-
         form {
             display: flex;
             gap: 0.5rem;
             width: 100%;
             margin: 0;
         }
-
+    
         textarea {
             flex: 1;
             padding: 0.75rem;
@@ -172,11 +126,11 @@
             margin: 0;
             box-sizing: border-box;
         }
-
+    
         textarea::placeholder {
             color: white;
         }
-
+    
         button {
             background-color: rgba(135, 206, 235, 0.8);
             color: white;
@@ -187,11 +141,31 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
         }
-
+    
         button:hover {
             background-color: rgba(135, 206, 235, 1);
         }
+    
+        /* Media query for mobile devices */
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 1.2rem; /* Adjust title font size */
+            }
+    
+            #chat-container {
+                padding: 0.5rem;
+            }
+    
+            textarea {
+                padding: 0.5rem;
+            }
+    
+            button {
+                padding: 0.5rem;
+            }
+        }
     </style>
+
 </head>
 <body>
     <div id="chat-container">
