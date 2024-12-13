@@ -49,47 +49,40 @@ async function fetchChatHistory() {
     }
 }
 
-// Save summarized text to MongoDB
-async function saveSummaryToMongoDB(summary) {
+async function checkAndSummarizeChatHistory() {
     try {
         const db = await connectToDatabase();
-        const collection = db.collection("summaries");
-        await collection.insertOne({
-            timestamp: new Date(),
-            summary,
-        });
-        console.log("Summary saved to MongoDB.");
-    } catch (error) {
-        console.error("Error saving summary to MongoDB:", error);
-    }
-}
+        const collection = db.collection("chatHistory");
 
-async function summarizeChatHistory() {
-    try {
-        const chatHistory = await fetchChatHistory();
-        const messages = chatHistory.flatMap(entry => [
-            { role: "user", content: entry.userMessage },
-            { role: "assistant", content: entry.botReply },
-        ]);
-
-        // Check token count and truncate if necessary
-        const MAX_TOKENS = 3000;
-        let tokenCount = 0;
-        const trimmedMessages = [];
-
-        for (const msg of messages) {
-            const tokenEstimate = msg.content.length / 4; // Approx. 4 chars per token
-            if (tokenCount + tokenEstimate > MAX_TOKENS) break;
-            tokenCount += tokenEstimate;
-            trimmedMessages.push(msg);
+        // Fetch all chat history
+        const allHistory = await collection.find().sort({ timestamp: 1 }).toArray();
+        if (allHistory.length < 10) {
+            console.log("Not enough messages for summarization.");
+            return; // Skip summarization if history count < 10
         }
 
+        // Separate older messages from the latest 5
+        const latestMessages = allHistory.slice(-5);
+        const olderMessages = allHistory.slice(0, -5);
+
+        // Summarize older messages
+        const messagesToSummarize = olderMessages.map(entry => ({
+            role: "user",
+            content: entry.userMessage,
+        })).concat(
+            olderMessages.map(entry => ({
+                role: "assistant",
+                content: entry.botReply,
+            }))
+        );
+
+        // Create the prompt for summarization
         const prompt = [
             {
                 role: "system",
                 content: "You are an assistant summarizing chat histories concisely for records. Summarize the key points of the following conversation history in 5 sentences or less. Ensure the summary is direct and avoids unnecessary detail.",
             },
-            ...trimmedMessages,
+            ...messagesToSummarize,
         ];
 
         const response = await fetch("https://mars.chub.ai/mixtral/v1/chat/completions", {
@@ -101,55 +94,35 @@ async function summarizeChatHistory() {
             body: JSON.stringify({
                 model: "mixtral",
                 messages: prompt,
-                temperature: 0.5, // Lower temperature for concise output
-                max_tokens: 200, // Limit the output length
-                stream: true, // Enable streaming
+                temperature: 0.5,
+                max_tokens: 200,
+                stream: false, // Stream is unnecessary for small summary
             }),
         });
 
-        if (!response.body) {
-            throw new Error("No response body available for streaming.");
-        }
+        const result = await response.json();
+        const summary = result.choices?.[0]?.message?.content || "Summary could not be generated.";
 
-        let summary = "";
-        const reader = Readable.from(response.body);
+        console.log("Generated summary:", summary);
 
-        reader.on("data", chunk => {
-            const text = chunk.toString("utf-8");
-            const lines = text.split("\n");
-
-            for (const line of lines) {
-                const cleanLine = line.trim();
-                if (!cleanLine || !cleanLine.startsWith("data:")) continue;
-
-                const jsonData = cleanLine.substring(5).trim(); // Remove 'data:' prefix
-                if (jsonData === "[DONE]") {
-                    reader.destroy(); // End of stream
-                    break;
-                }
-
-                try {
-                    const parsedChunk = JSON.parse(jsonData);
-                    const deltaContent = parsedChunk.choices?.[0]?.delta?.content;
-                    if (deltaContent) {
-                        summary += deltaContent;
-                    }
-                } catch (error) {
-                    console.error("Error parsing streamed chunk:", error, jsonData);
-                }
-            }
+        // Save the summary back to chatHistory
+        await collection.insertOne({
+            timestamp: new Date(),
+            userMessage: "System: Summary of older chat messages.",
+            botReply: summary,
         });
 
-        await new Promise(resolve => reader.on("end", resolve));
+        console.log("Summary saved to chat history.");
 
-        console.log("Generated summary:", summary || "Summary could not be generated.");
-        await saveSummaryToMongoDB(summary || "Summary could not be generated.");
+        // Delete older messages that were summarized
+        const olderIds = olderMessages.map(msg => msg._id);
+        await collection.deleteMany({ _id: { $in: olderIds } });
+
+        console.log("Older messages summarized and deleted.");
     } catch (error) {
-        console.error("Error summarizing chat history:", error);
+        console.error("Error checking and summarizing chat history:", error);
     }
 }
-
-
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
@@ -189,10 +162,7 @@ export default async function handler(req, res) {
     const startTime = Date.now();
 
     try {
-        const characterStartTime = Date.now();
         const characterDetails = await getCharacterDetails(characterId);
-        console.log(`Character details fetched in ${Date.now() - characterStartTime} ms`);
-
         const characterName = characterDetails.name || "assistant";
 
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
@@ -221,9 +191,7 @@ export default async function handler(req, res) {
             Current Time: ${currentTimeInArgentina}.
         `;
 
-        const chatHistoryStartTime = Date.now();
         const history = await fetchChatHistory();
-        console.log(`Chat history fetched in ${Date.now() - chatHistoryStartTime} ms`);
 
         const messages = [
             { role: "system", content: dynamicSystemMessage },
@@ -234,23 +202,21 @@ export default async function handler(req, res) {
             { role: "user", content: message },
         ];
 
-        const replyStartTime = Date.now();
         const response = await openai.createChatCompletion({
             model: "mixtral",
             messages,
             temperature: 0.8,
             stream: false,
         });
-        console.log(`Reply generated in ${Date.now() - replyStartTime} ms`);
 
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
 
         await saveToMongoDB(message, botReply);
 
-        // Trigger chat summarization after saving the reply
-        await summarizeChatHistory();
-        
+        // Check and summarize chat history
+        await checkAndSummarizeChatHistory();
+
         const overallElapsedTime = Date.now() - startTime;
         console.log(`Overall processing time: ${overallElapsedTime} ms`);
 
@@ -260,3 +226,4 @@ export default async function handler(req, res) {
         res.status(500).json({ error: "Internal Server Error" });
     }
 }
+
