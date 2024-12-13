@@ -283,7 +283,14 @@
             sendMessage();
             autoScroll(); // Scroll to bottom after sending a message
         });
-    
+
+        document.getElementById("message").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
         function parseMessage(text) {
             return text.replace(/\n/g, '<br>');
         }
