@@ -267,14 +267,12 @@ async function processFunctionCall(botReply) {
     const db = await connectToDatabase();
     const functionsCollection = db.collection("functions");
 
-    // Fetch all functions from the database
     const functions = await functionsCollection.find().toArray();
-
-    // Check for matching keywords and trigger the appropriate function
     for (const func of functions) {
         if (botReply.includes(func.keyword)) {
-            console.log(`Triggering function: ${func.keyword}`);
+            console.log(`Detected keyword: ${func.keyword} in botReply`);
             botReply = await triggerFunction(func.keyword, botReply);
+            console.log("Final botReply after replacements:", botReply);
         }
     }
     return botReply;
@@ -296,16 +294,16 @@ async function triggerFunction(keyword, botReply) {
 }
 
 // Function List
-// Function to append the Twitter link to the bot's message
 async function shareTwitterLink(keyword, botReply) {
     const link = "https://x.com/doublev_nsfw";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
-    return botReply.replace(keyword, replacement);
+    const regex = new RegExp(`\\b${keyword}\\b`, 'g'); // Match exact keyword with word boundaries
+    return botReply.replace(regex, replacement);
 }
 
-// Function to append the Patreon link to the bot's message
 async function sharePatreonLink(keyword, botReply) {
     const link = "https://patreon.com/doublev_chan";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`;
-    return botReply.replace(keyword, replacement);
+    const regex = new RegExp(`\\b${keyword}\\b`, 'g'); // Match exact keyword with word boundaries
+    return botReply.replace(regex, replacement);
 }
