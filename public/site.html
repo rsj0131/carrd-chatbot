@@ -265,13 +265,7 @@
         });
         
         function parseMessage(text) {
-            // Match URLs starting with http:// or https://
-            const urlRegex = /https?:\/\/[^\s]+/g;
-            // Replace URLs with hyperlink HTML
-            let parsedText = text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
-            // Replace newlines with <br>
-            parsedText = parsedText.replace(/\n/g, '<br>');
-            return parsedText;
+            return text.replace(/\n/g, '<br>');
         }
 
         async function sendMessage() {
