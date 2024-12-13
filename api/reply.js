@@ -295,6 +295,6 @@ async function triggerFunction(keyword, botReply) {
 // Function to append the Twitter link to the bot's message
 async function shareTwitterLink(botReply) {
     const twitterLink = "https://x.com/doublev_nsfw";
-    return `${botReply}\n\nHere’s the link: [Twitter Link](${twitterLink})`;
+    return `${botReply}\n\[Twitter Link](${twitterLink})`;
 }
 
