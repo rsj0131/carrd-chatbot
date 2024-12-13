@@ -297,21 +297,16 @@ async function triggerFunction(keyword, botReply) {
 
 // Function List
 // Function to append the Twitter link to the bot's message
+// Function to append the Twitter link to the bot's message
 async function shareTwitterLink(keyword, botReply) {
     const link = "https://x.com/doublev_nsfw";
-    // Replace the keyword with the actual link in the response
-    return botReply.replace(
-        keyword,
-        `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`
-    );
+    const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
+    return botReply.replace(keyword, replacement);
 }
 
 // Function to append the Patreon link to the bot's message
 async function sharePatreonLink(keyword, botReply) {
     const link = "https://patreon.com/doublev_chan";
-    // Replace the keyword with the actual link in the response
-    return botReply.replace(
-        keyword,
-        `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`
-    );
+    const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`;
+    return botReply.replace(keyword, replacement);
 }
