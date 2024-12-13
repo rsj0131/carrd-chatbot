@@ -20,48 +20,6 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// Fetch functions from the database
-async function fetchFunctions() {
-    try {
-        const db = await connectToDatabase();
-        const collection = db.collection("functions");
-        return await collection.find().toArray();
-    } catch (error) {
-        console.error("Error fetching functions from MongoDB:", error);
-        return [];
-    }
-}
-
-// Process message for function calls
-async function processFunctionCall(message) {
-    const db = await connectToDatabase();
-    const functionsCollection = db.collection("functions");
-
-    // Detect if any keyword matches
-    const functions = await functionsCollection.find().toArray();
-    for (const func of functions) {
-        if (message.includes(func.keyword)) {
-            console.log(`Triggering function: ${func.functionName}`);
-            // Trigger the respective function
-            const updatedMessage = await triggerFunction(func.functionName, message);
-            message = updatedMessage.replace(func.keyword, "").trim(); // Remove the keyword
-        }
-    }
-    return message;
-}
-
-// Example function trigger logic
-async function triggerFunction(functionName) {
-    switch (functionName) {
-        case "shareTwitterLink":
-            console.log("Appending Twitter link to the response...");
-            return await shareTwitterLink(botReply);
-        default:
-            console.log(`Function ${functionName} not implemented.`);
-            break;
-    }
-}
-
 async function getCharacterDetails(characterId) {
     try {
         const db = await connectToDatabase();
@@ -289,8 +247,51 @@ export default async function handler(req, res) {
     }
 }
 
-//Functions List
+//Functions
 
+// Fetch functions from the database
+async function fetchFunctions() {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("functions");
+        return await collection.find().toArray();
+    } catch (error) {
+        console.error("Error fetching functions from MongoDB:", error);
+        return [];
+    }
+}
+
+// Process message for function calls
+async function processFunctionCall(message) {
+    const db = await connectToDatabase();
+    const functionsCollection = db.collection("functions");
+
+    // Detect if any keyword matches
+    const functions = await functionsCollection.find().toArray();
+    for (const func of functions) {
+        if (message.includes(func.keyword)) {
+            console.log(`Triggering function: ${func.keyword}`);
+            // Trigger the respective function
+            const updatedMessage = await triggerFunction(func.keyword, message);
+            message = updatedMessage.replace(func.keyword, "").trim(); // Remove the keyword
+        }
+    }
+    return message;
+}
+
+// Example function trigger logic
+async function triggerFunction(keyword, botReply) {
+    switch (keyword) {
+        case "<share-twitter>":
+            console.log("Appending Twitter link to the response...");
+            return await shareTwitterLink(botReply);
+        default:
+            console.log(`Function ${functionName} not implemented.`);
+            return botReply; // Ensure botReply is returned even if no function is implemented
+    }
+}
+
+// Function List
 // Function to append the Twitter link to the bot's message
 async function shareTwitterLink(botReply) {
     const twitterLink = "https://x.com/doublev_nsfw";
