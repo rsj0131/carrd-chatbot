@@ -89,7 +89,6 @@ async function summarizeChatHistory() {
             ...trimmedMessages,
         ];
 
-        // Use fetch to handle streaming manually
         const response = await fetch("https://mars.chub.ai/mixtral/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -116,15 +115,24 @@ async function summarizeChatHistory() {
             const lines = text.split("\n");
 
             for (const line of lines) {
-                if (line.trim() === "") continue;
+                const cleanLine = line.trim();
+                if (!cleanLine || !cleanLine.startsWith("data:")) continue;
+
+                const jsonData = cleanLine.substring(5).trim(); // Remove 'data:' prefix
+                if (jsonData === "[DONE]") {
+                    // End of stream
+                    reader.destroy();
+                    break;
+                }
+
                 try {
-                    const parsed = JSON.parse(line);
-                    const deltaContent = parsed.choices?.[0]?.delta?.content;
+                    const parsedChunk = JSON.parse(jsonData);
+                    const deltaContent = parsedChunk.choices?.[0]?.delta?.content;
                     if (deltaContent) {
                         summary += deltaContent;
                     }
                 } catch (error) {
-                    console.error("Error parsing streamed chunk:", error);
+                    console.error("Error parsing streamed chunk:", error, jsonData);
                 }
             }
         });
@@ -137,6 +145,7 @@ async function summarizeChatHistory() {
         console.error("Error summarizing chat history:", error);
     }
 }
+
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
