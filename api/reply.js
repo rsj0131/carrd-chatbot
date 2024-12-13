@@ -285,6 +285,9 @@ async function triggerFunction(keyword, botReply) {
         case "<share-twitter>":
             console.log("Appending Twitter link to the response...");
             return await shareTwitterLink(botReply);
+        case "<share-patreon>":
+            console.log("Appending Patreon link to the response...");
+            return await sharePatreonLink(botReply);
         default:
             console.log(`Function ${functionName} not implemented.`);
             return botReply; // Ensure botReply is returned even if no function is implemented
@@ -294,7 +297,11 @@ async function triggerFunction(keyword, botReply) {
 // Function List
 // Function to append the Twitter link to the bot's message
 async function shareTwitterLink(botReply) {
-    const twitterLink = "https://x.com/doublev_nsfw";
-    return `${botReply}\n\nTwitter Link: ${twitterLink}`;
+    const link = "https://x.com/doublev_nsfw";
+    return `${botReply}\n\nTwitter Link: ${link}`;
 }
 
+async function sharePatreonLink(botReply) {
+    const link = "https://patreon.com/doublev_chan";
+    return `${botReply}\n\nPatreon Link: ${link}`;
+}
