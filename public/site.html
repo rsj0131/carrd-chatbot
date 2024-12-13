@@ -272,7 +272,7 @@
             // Add user message
             const userMessageContainer = document.createElement("div");
             userMessageContainer.className = "message-container user";
-        
+            
             const userMessage = document.createElement("div");
             userMessage.className = "user-message";
             userMessage.innerText = message;
@@ -315,7 +315,7 @@
         
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
-                botMessage.innerText = data.reply || "Error: " + data.error;
+                botMessage.innerHTML = data.reply || "Error: " + data.error;
         
                 const botTimestamp = document.createElement("small");
                 botTimestamp.className = "timestamp";
