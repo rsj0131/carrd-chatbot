@@ -20,6 +20,48 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+// Fetch functions from the database
+async function fetchFunctions() {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("functions");
+        return await collection.find().toArray();
+    } catch (error) {
+        console.error("Error fetching functions from MongoDB:", error);
+        return [];
+    }
+}
+
+// Process message for function calls
+async function processFunctionCall(message) {
+    const db = await connectToDatabase();
+    const functionsCollection = db.collection("functions");
+
+    // Detect if any keyword matches
+    const functions = await functionsCollection.find().toArray();
+    for (const func of functions) {
+        if (message.includes(func.keyword)) {
+            console.log(`Triggering function: ${func.functionName}`);
+            // Trigger the respective function
+            const updatedMessage = await triggerFunction(func.functionName, message);
+            message = updatedMessage.replace(func.keyword, "").trim(); // Remove the keyword
+        }
+    }
+    return message;
+}
+
+// Example function trigger logic
+async function triggerFunction(functionName) {
+    switch (functionName) {
+        case "shareTwitterLink":
+            console.log("Appending Twitter link to the response...");
+            return await shareTwitterLink(botReply);
+        default:
+            console.log(`Function ${functionName} not implemented.`);
+            break;
+    }
+}
+
 async function getCharacterDetails(characterId) {
     try {
         const db = await connectToDatabase();
@@ -171,6 +213,11 @@ export default async function handler(req, res) {
         const characterDetails = await getCharacterDetails(characterId);
         const characterName = characterDetails.name || "assistant";
 
+        const functions = await fetchFunctions();
+        const functionDescriptions = functions.map(
+            func => `Keyword: ${func.keyword}, Description: ${func.description}`
+        ).join("\n")
+        
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
             hour: '2-digit',
@@ -196,6 +243,11 @@ export default async function handler(req, res) {
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
             Current Time: ${currentTimeInArgentina}.
+            You can use the following functions if the user asks you to perform a task matching the Descriptions:
+            ${functionDescriptions}.
+            Always include the Keyword at the end of your response to trigger a function.
+            For example: If the Keyword is <send-image>, and the Description is sending image to user, 
+            when the user ask you to send them an image, you can include the Keyword <send-image> at the end of the message to trigger the function.
         `;
 
         const history = await fetchChatHistory();
@@ -218,7 +270,10 @@ export default async function handler(req, res) {
 
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
-
+        
+        // Process the bot reply for function calls
+        botReply = await processFunctionCall(botReply);
+        
         await saveToMongoDB(message, botReply);
 
         // Check and summarize chat history
@@ -232,5 +287,13 @@ export default async function handler(req, res) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
+}
+
+//Functions List
+
+// Function to append the Twitter link to the bot's message
+async function shareTwitterLink(botReply) {
+    const twitterLink = "https://x.com/doublev_nsfw";
+    return `${botReply}\n\nHere’s the link: [Twitter Link](${twitterLink})`;
 }
 
