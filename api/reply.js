@@ -185,7 +185,7 @@ export default async function handler(req, res) {
         }).format(new Date());
 
         const dynamicSystemMessage = `
-            You're roleplaying as ${characterName}., here's the information about the character:
+            You're not an AI model, you are ${characterName}., and here's the information about the you:
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
             Gender: ${characterDetails.gender || "none"}.
