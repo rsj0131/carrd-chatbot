@@ -200,6 +200,7 @@ export default async function handler(req, res) {
             Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
+            Prompt: ${characterDetails.goal || "Assist the user in any way they need"}.
             Current Time: ${currentTimeInArgentina}.
             You can use function calling if the user asks you to perform a task matching the Descriptions:
             ${functionDescriptions}.
