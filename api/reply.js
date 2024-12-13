@@ -282,14 +282,14 @@ async function processFunctionCall(botReply) {
 async function triggerFunction(keyword, botReply) {
     switch (keyword) {
         case "[share-twitter]":
-            console.log("Appending Twitter link to the response...");
+            console.log("Replacing [share-twitter] with Twitter link...");
             return await shareTwitterLink(keyword, botReply);
         case "[share-patreon]":
-            console.log("Appending Patreon link to the response...");
+            console.log("Replacing [share-patreon] with Patreon link...");
             return await sharePatreonLink(keyword, botReply);
         default:
-            console.log(`Function for keyword ${keyword} not implemented.`);
-            return botReply; // Return the original message if no function is implemented
+            console.log(`No function implemented for keyword: ${keyword}`);
+            return botReply;
     }
 }
 
@@ -297,16 +297,16 @@ async function triggerFunction(keyword, botReply) {
 async function shareTwitterLink(keyword, botReply) {
     const link = "https://x.com/doublev_nsfw";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
-    // Match the exact keyword, ensuring it is not part of another word
-    const regex = new RegExp(`(\\s|^|\\W)${keyword}(\\s|$|\\W)`, 'g');
-    return botReply.replace(regex, `$1${replacement}$2`); // Preserve surrounding characters
+    // Use exact match for the keyword
+    const regex = new RegExp(`\\[${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g');
+    return botReply.replace(regex, replacement);
 }
 
 async function sharePatreonLink(keyword, botReply) {
     const link = "https://patreon.com/doublev_chan";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`;
-    // Match the exact keyword, ensuring it is not part of another word
-    const regex = new RegExp(`(\\s|^|\\W)${keyword}(\\s|$|\\W)`, 'g');
-    return botReply.replace(regex, `$1${replacement}$2`); // Preserve surrounding characters
+    // Use exact match for the keyword
+    const regex = new RegExp(`\\[${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g');
+    return botReply.replace(regex, replacement);
 }
 
