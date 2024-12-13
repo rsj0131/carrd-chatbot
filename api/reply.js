@@ -263,46 +263,55 @@ async function fetchFunctions() {
 }
 
 // Process message for function calls
-async function processFunctionCall(message) {
+async function processFunctionCall(botReply) {
     const db = await connectToDatabase();
     const functionsCollection = db.collection("functions");
 
-    // Detect if any keyword matches
+    // Fetch all functions from the database
     const functions = await functionsCollection.find().toArray();
+
+    // Check for matching keywords and trigger the appropriate function
     for (const func of functions) {
-        if (message.includes(func.keyword)) {
+        if (botReply.includes(func.keyword)) {
             console.log(`Triggering function: ${func.keyword}`);
-            // Trigger the respective function
-            const updatedMessage = await triggerFunction(func.keyword, message);
-            message = updatedMessage.replace(func.keyword, "").trim(); // Remove the keyword
+            botReply = await triggerFunction(func.keyword, botReply);
         }
     }
-    return message;
+    return botReply;
 }
 
-// Example function trigger logic
+// Function trigger logic
 async function triggerFunction(keyword, botReply) {
     switch (keyword) {
         case "<share-twitter>":
             console.log("Appending Twitter link to the response...");
-            return await shareTwitterLink(botReply);
+            return await shareTwitterLink(keyword, botReply);
         case "<share-patreon>":
             console.log("Appending Patreon link to the response...");
-            return await sharePatreonLink(botReply);
+            return await sharePatreonLink(keyword, botReply);
         default:
-            console.log(`Function ${functionName} not implemented.`);
-            return botReply; // Ensure botReply is returned even if no function is implemented
+            console.log(`Function for keyword ${keyword} not implemented.`);
+            return botReply; // Return the original message if no function is implemented
     }
 }
 
 // Function List
 // Function to append the Twitter link to the bot's message
-async function shareTwitterLink(botReply) {
+async function shareTwitterLink(keyword, botReply) {
     const link = "https://x.com/doublev_nsfw";
-    return `${botReply}\n\nTwitter Link: ${link}`;
+    // Replace the keyword with the actual link in the response
+    return botReply.replace(
+        keyword,
+        `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`
+    );
 }
 
-async function sharePatreonLink(botReply) {
+// Function to append the Patreon link to the bot's message
+async function sharePatreonLink(keyword, botReply) {
     const link = "https://patreon.com/doublev_chan";
-    return `${botReply}\n\nPatreon Link: ${link}`;
+    // Replace the keyword with the actual link in the response
+    return botReply.replace(
+        keyword,
+        `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`
+    );
 }
