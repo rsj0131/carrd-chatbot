@@ -229,8 +229,11 @@ export default async function handler(req, res) {
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
         
-        // Process the bot reply for function calls
-        botReply = await processFunctionCall(botReply);
+        if (response.data.choices?.[0]?.message?.function_call) {
+            botReply = await processFunctionCall(response.data);
+        } else {
+            botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+        }
         
         await saveToMongoDB(message, botReply);
 
@@ -278,13 +281,14 @@ async function processFunctionCall(response) {
 
             // Trigger the function dynamically
             const result = await executeFunction(name, parsedArgs);
-            return result || "Function executed successfully.";
+            console.log(`Function ${name} executed. Result: ${result}`);
+            return result; // Return the result as the bot's reply
         } catch (error) {
             console.error("Error processing function call:", error);
             return "Error occurred while executing the function.";
         }
     }
-    return choice?.message?.content || "No response.";
+    return response.choices?.[0]?.message?.content || "No response.";
 }
 
 async function executeFunction(name, args) {
