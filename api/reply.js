@@ -172,9 +172,6 @@ export default async function handler(req, res) {
         const characterName = characterDetails.name || "assistant";
 
         const functions = await fetchFunctions();
-        const functionDescriptions = functions.map(
-            func => `Keyword: ${func.keyword}, Description: ${func.description}`
-        ).join("\n")
         
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
@@ -203,11 +200,9 @@ export default async function handler(req, res) {
             Trivia: ${characterDetails.trivia || "none"}.
             ** Important Notice: ${characterDetails.prompt || "none"}. **
             Current Time: ${currentTimeInArgentina}.
-            You can use function calling if the user asks you to perform a task matching the Descriptions:
-            ${functionDescriptions}.
-            By include the Keyword at the end of your response, you can trigger a function listed above.
-            For example: If the Keyword is ##send-image##, and the Description is sending image to user, 
-            when the user ask you to send them an image, you can include the Keyword ##send-image## at the end of the message to trigger the function.
+            You can use the available functions listed below when needed:
+            ${functions.map(func => `${func.name}: ${func.description}`).join("\n")}
+            If a user query matches a function, call it with the appropriate parameters.
         `;
 
         const history = await fetchChatHistory();
@@ -224,6 +219,7 @@ export default async function handler(req, res) {
         const response = await openai.createChatCompletion({
             model: "mixtral",
             messages,
+            functions,
             temperature: 0.8,
             stream: false,
         });
@@ -258,7 +254,13 @@ async function fetchFunctions() {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("functions");
-        return await collection.find().toArray();
+        const functions = await collection.find().toArray();
+
+        return functions.map(func => ({
+            name: func.name,
+            description: func.description,
+            parameters: func.parameters
+        }));
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
         return [];
@@ -266,55 +268,38 @@ async function fetchFunctions() {
 }
 
 // Process message for function calls
-async function processFunctionCall(botReply) {
-    const db = await connectToDatabase();
-    const functionsCollection = db.collection("functions");
+async function processFunctionCall(response) {
+    const choice = response.choices?.[0];
+    if (choice?.message?.function_call) {
+        const { name, arguments: args } = choice.message.function_call;
+        try {
+            const parsedArgs = JSON.parse(args);
+            console.log(`Calling function: ${name} with arguments:`, parsedArgs);
 
-    const functions = await functionsCollection.find().toArray();
-    for (const func of functions) {
-        if (botReply.includes(func.keyword)) {
-            console.log(`Detected keyword: ${func.keyword} in botReply`);
-            botReply = await triggerFunction(func.keyword, botReply);
-            console.log("Final botReply after replacements:", botReply);
+            // Trigger the function dynamically
+            const result = await executeFunction(name, parsedArgs);
+            return result || "Function executed successfully.";
+        } catch (error) {
+            console.error("Error processing function call:", error);
+            return "Error occurred while executing the function.";
         }
     }
-    return botReply;
+    return choice?.message?.content || "No response.";
 }
 
-// Function trigger logic
-async function triggerFunction(keyword, botReply) {
-    switch (keyword) {
-        case "##share-twitter##":
-            console.log("Replacing ##share-twitter## with Twitter link...");
-            return await shareTwitterLink(keyword, botReply);
-        case "##share-patreon##":
-            console.log("Replacing ##share-patreon## with Patreon link...");
-            return await sharePatreonLink(keyword, botReply);
-        case "##commission-info##":
-            console.log("Replacing ##commission-info## with Commission Info link...");
-            return await shareCommissionInfo(keyword, botReply);
+async function executeFunction(name, args) {
+    switch (name) {
+        case "shareTwitterLink":
+            return await shareTwitterLink(args);
         default:
-            console.log(`No function implemented for keyword: ${keyword}`);
-            return botReply;
+            console.warn(`No implementation found for function: ${name}`);
+            return "Function not implemented.";
     }
 }
 
 // Function List
-async function shareTwitterLink(keyword, botReply) {
-    const link = "https://x.com/doublev_nsfw";
-    const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
-    return botReply.replace(keyword, replacement);
+async function shareTwitterLink(args) {
+    return `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
 }
 
-async function sharePatreonLink(keyword, botReply) {
-    const link = "https://patreon.com/doublev_chan";
-    const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`;
-    return botReply.replace(keyword, replacement);
-}
-
-async function shareCommissionInfo(keyword, botReply) {
-    const link = "https://docs.google.com/document/d/1b0AyRWtcRudWjE9LCZ6evZERZuBF5qH2fJ0Wivm9VQM/edit?usp=sharing";
-    const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Commission Info</a>`;
-    return botReply.replace(keyword, replacement);
-}
 
