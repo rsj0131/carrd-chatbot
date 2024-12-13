@@ -297,16 +297,12 @@ async function triggerFunction(keyword, botReply) {
 async function shareTwitterLink(keyword, botReply) {
     const link = "https://x.com/doublev_nsfw";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
-    // Use exact match for the keyword
-    const regex = new RegExp(`\\[${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g');
-    return botReply.replace(regex, replacement);
+    return botReply.replace(keyword, replacement);
 }
 
 async function sharePatreonLink(keyword, botReply) {
     const link = "https://patreon.com/doublev_chan";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`;
-    // Use exact match for the keyword
-    const regex = new RegExp(`\\[${keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\]`, 'g');
-    return botReply.replace(regex, replacement);
+    return botReply.replace(keyword, replacement);
 }
 
