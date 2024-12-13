@@ -1,6 +1,7 @@
 import { MongoClient } from "mongodb";
 import { Configuration, OpenAIApi } from "openai";
-import fetch from "node-fetch"; // Add this if not already installed: npm install node-fetch
+import fetch from "node-fetch";
+import { Readable } from "stream";
 
 // MongoDB Configuration
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
@@ -108,14 +109,10 @@ async function summarizeChatHistory() {
         }
 
         let summary = "";
-        const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
+        const reader = Readable.from(response.body);
 
-        while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            const text = decoder.decode(value, { stream: true });
+        reader.on("data", chunk => {
+            const text = chunk.toString("utf-8");
             const lines = text.split("\n");
 
             for (const line of lines) {
@@ -130,7 +127,9 @@ async function summarizeChatHistory() {
                     console.error("Error parsing streamed chunk:", error);
                 }
             }
-        }
+        });
+
+        await new Promise(resolve => reader.on("end", resolve));
 
         console.log("Generated summary:", summary || "Summary could not be generated.");
         await saveSummaryToMongoDB(summary || "Summary could not be generated.");
@@ -138,7 +137,6 @@ async function summarizeChatHistory() {
         console.error("Error summarizing chat history:", error);
     }
 }
-
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
