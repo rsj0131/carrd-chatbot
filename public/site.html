@@ -192,9 +192,8 @@
 
         #scrollToBottom {
             position: absolute;
-            bottom: 10px; /* Position it slightly above the bottom of #chat-window */
-            left: 50%; /* Center it horizontally */
-            transform: translateX(-50%); /* Adjust for centering */
+            bottom: 20px; /* Adjust the distance from the bottom of the chat window */
+            right: 20px; /* Adjust the distance from the right edge of the chat window */
             width: 40px; /* Set width for a circle */
             height: 40px; /* Set height for a circle */
             background-color: rgba(135, 206, 235, 0.8); /* Background color */
@@ -208,10 +207,11 @@
             align-items: center; /* Center the arrow inside the circle */
             font-size: 18px; /* Arrow size */
         }
-                
+        
         #scrollToBottom:hover {
-            background-color: rgba(135, 206, 235, 1);
+            background-color: rgba(135, 206, 235, 1); /* Darker on hover */
         }
+
 
         /* Media query for mobile devices */
         @media (max-width: 300px) {
@@ -246,21 +246,23 @@
                  class="avatar">
             <h1>Vivian</h1>
         </header>
-
+    
         <div id="chat-window">
             <div id="messages"></div>
-            <button id="scrollToBottom" style="display: none;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M8 12a.5.5 0 0 1-.374-.155l-4-4a.5.5 0 1 1 .748-.66L8 10.793l3.626-3.626a.5.5 0 0 1 .748.66l-4 4A.5.5 0 0 1 8 12Z"/>
-                </svg>
-            </button>
         </div>
-        
+    
+        <button id="scrollToBottom" style="display: none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 12a.5.5 0 0 1-.374-.155l-4-4a.5.5 0 1 1 .748-.66L8 10.793l3.626-3.626a.5.5 0 0 1 .748.66l-4 4A.5.5 0 0 1 8 12Z"/>
+            </svg>
+        </button>
+    
         <form id="chatForm">
             <textarea id="message" placeholder="Type your message..." required></textarea>
             <button type="submit">Send</button>
         </form>
     </div>
+
 
     <script>
         // Scroll to Bottom Function
