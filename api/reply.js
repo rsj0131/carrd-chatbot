@@ -282,11 +282,14 @@ async function processFunctionCall(botReply) {
 async function triggerFunction(keyword, botReply) {
     switch (keyword) {
         case "##share-twitter##":
-            console.log("Replacing [share-twitter] with Twitter link...");
+            console.log("Replacing ##share-twitter## with Twitter link...");
             return await shareTwitterLink(keyword, botReply);
         case "##share-patreon##":
-            console.log("Replacing [share-patreon] with Patreon link...");
+            console.log("Replacing ##share-patreon## with Patreon link...");
             return await sharePatreonLink(keyword, botReply);
+        case "##commission-info##":
+            console.log("Replacing ##commission-info## with Commission Info link...");
+            return await shareCommissionInfo(keyword, botReply);
         default:
             console.log(`No function implemented for keyword: ${keyword}`);
             return botReply;
@@ -303,6 +306,12 @@ async function shareTwitterLink(keyword, botReply) {
 async function sharePatreonLink(keyword, botReply) {
     const link = "https://patreon.com/doublev_chan";
     const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Patreon Link</a>`;
+    return botReply.replace(keyword, replacement);
+}
+
+async function shareCommissionInfo(keyword, botReply) {
+    const link = "https://docs.google.com/document/d/1b0AyRWtcRudWjE9LCZ6evZERZuBF5qH2fJ0Wivm9VQM/edit?usp=sharing";
+    const replacement = `<a href="${link}" target="_blank" rel="noopener noreferrer">Commission Info</a>`;
     return botReply.replace(keyword, replacement);
 }
 
