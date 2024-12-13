@@ -104,7 +104,7 @@
         }
 
         .bot-message a {
-            color: #b8d2db; /* Set your desired color for the link */
+            color: #a6d0de; /* Set your desired color for the link */
             text-decoration: none; /* Removes underline */
         }
         
@@ -263,11 +263,15 @@
                 sendMessage();
             }
         });
-        function parseLinks(text) {
-            const urlRegex = /https?:\/\/[^\s]+/g; // Match URLs starting with http:// or https://
-            return text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
-        }
         
+        function parseMessage(text) {
+            const urlRegex = /https?:\/\/[^\s]+/g; // Match URLs starting with http:// or https://
+            // Replace URLs with hyperlink HTML
+            let parsedText = text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
+            // Replace newlines with <br>
+            parsedText = parsedText.replace(/\n/g, '<br>');
+            return parsedText;
+        }
         async function sendMessage() {
             const inputElement = document.getElementById("message");
             const message = inputElement.value;
@@ -325,7 +329,7 @@
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
                 // Use innerHTML to allow rendering links
-                botMessage.innerHTML = parseLinks(data.reply || "Error: " + data.error);
+                botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
         
                 const botTimestamp = document.createElement("small");
                 botTimestamp.className = "timestamp";
