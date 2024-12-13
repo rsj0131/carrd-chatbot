@@ -201,9 +201,9 @@ export default async function handler(req, res) {
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
             Current Time: ${currentTimeInArgentina}.
-            You can use the following functions if the user asks you to perform a task matching the Descriptions:
+            You can use function calling if the user asks you to perform a task matching the Descriptions:
             ${functionDescriptions}.
-            Always include the Keyword at the end of your response to trigger a function.
+            By include the Keyword at the end of your response, you can trigger a function listed above.
             For example: If the Keyword is <send-image>, and the Description is sending image to user, 
             when the user ask you to send them an image, you can include the Keyword <send-image> at the end of the message to trigger the function.
         `;
