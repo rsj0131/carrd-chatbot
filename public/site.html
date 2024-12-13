@@ -195,13 +195,18 @@
             bottom: 10px; /* Position it slightly above the bottom of #chat-window */
             left: 50%; /* Center it horizontally */
             transform: translateX(-50%); /* Adjust for centering */
-            padding: 10px 20px;
-            background-color: rgba(135, 206, 235, 0.8);
-            color: white;
+            width: 40px; /* Set width for a circle */
+            height: 40px; /* Set height for a circle */
+            background-color: rgba(135, 206, 235, 0.8); /* Background color */
+            color: white; /* Arrow color */
             border: none;
-            border-radius: 5px;
+            border-radius: 50%; /* Make it circular */
             cursor: pointer;
             z-index: 10; /* Ensure it stays above other elements */
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Center the arrow inside the circle */
+            font-size: 18px; /* Arrow size */
         }
                 
         #scrollToBottom:hover {
@@ -244,7 +249,11 @@
 
         <div id="chat-window">
             <div id="messages"></div>
-            <button id="scrollToBottom" style="display: none;">Scroll to Bottom</button>
+            <button id="scrollToBottom" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8 12a.5.5 0 0 1-.374-.155l-4-4a.5.5 0 1 1 .748-.66L8 10.793l3.626-3.626a.5.5 0 0 1 .748.66l-4 4A.5.5 0 0 1 8 12Z"/>
+                </svg>
+            </button>
         </div>
         
         <form id="chatForm">
