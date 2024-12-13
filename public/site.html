@@ -265,13 +265,15 @@
         });
         
         function parseMessage(text) {
-            const urlRegex = /https?:\/\/[^\s]+/g; // Match URLs starting with http:// or https://
+            // Match URLs starting with http:// or https://
+            const urlRegex = /https?:\/\/[^\s]+/g;
             // Replace URLs with hyperlink HTML
             let parsedText = text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`);
             // Replace newlines with <br>
             parsedText = parsedText.replace(/\n/g, '<br>');
             return parsedText;
         }
+
         async function sendMessage() {
             const inputElement = document.getElementById("message");
             const message = inputElement.value;
@@ -330,12 +332,14 @@
                 botMessage.className = "bot-message";
                 // Use innerHTML to allow rendering links
                 botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
+                
+                // Append to the bot message container
+                botMessageContainer.appendChild(botMessage);
         
                 const botTimestamp = document.createElement("small");
                 botTimestamp.className = "timestamp";
                 botTimestamp.innerText = formatTime(new Date());
         
-                botMessageContainer.appendChild(botMessage);
                 botMessageContainer.appendChild(botTimestamp);
         
                 // Append the botMessageContainer to messagesDiv
