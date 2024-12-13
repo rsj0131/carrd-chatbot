@@ -96,14 +96,23 @@ async function summarizeChatHistory() {
         });
 
         let summary = "";
-        const decoder = new TextDecoder("utf-8");
 
-        for await (const chunk of response.data) {
-            const text = decoder.decode(chunk);
-            const parsedChunk = JSON.parse(text);
+        // Handle the stream
+        for await (const chunk of response.body) {
+            const textChunk = chunk.toString(); // Convert Buffer to string
+            const lines = textChunk.split("\n");
 
-            if (parsedChunk.choices && parsedChunk.choices[0].delta && parsedChunk.choices[0].delta.content) {
-                summary += parsedChunk.choices[0].delta.content;
+            for (const line of lines) {
+                if (line.trim() === "") continue;
+                try {
+                    const parsed = JSON.parse(line);
+                    const deltaContent = parsed.choices?.[0]?.delta?.content;
+                    if (deltaContent) {
+                        summary += deltaContent;
+                    }
+                } catch (error) {
+                    console.error("Error parsing streamed chunk:", error);
+                }
             }
         }
 
@@ -114,7 +123,6 @@ async function summarizeChatHistory() {
         console.error("Error summarizing chat history:", error);
     }
 }
-
 
 async function saveToMongoDB(userMessage, botReply) {
     try {
