@@ -248,6 +248,7 @@ export default async function handler(req, res) {
         
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
+        let botReply;
         
         // Process function call if present
         if (response.data.choices?.[0]?.message?.function_call) {
