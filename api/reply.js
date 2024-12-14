@@ -202,7 +202,9 @@ export default async function handler(req, res) {
             Current Time: ${currentTimeInArgentina}.
             You can use the available functions listed below when needed:
             ${functions.map(func => `${func.name}: ${func.description}`).join("\n")}
-            If a user query matches a function, call it with the appropriate parameters.
+            When responding to the user, if a function can be used, always call the function instead of generating a textual response. 
+            Provide only the required input for the function, and use the function call mechanism. 
+            For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.
         `;
 
         const history = await fetchChatHistory();
@@ -215,14 +217,17 @@ export default async function handler(req, res) {
             ]),
             { role: "user", content: message },
         ];
-
+        
+        console.log("Available functions:", JSON.stringify(functions, null, 2));
+        
         const response = await openai.createChatCompletion({
             model: "mixtral",
             messages,
-            functions,
+            functions, // Ensure this contains the correct list of functions
             temperature: 0.8,
             stream: false,
         });
+
         
         console.log("API Response:", JSON.stringify(response.data, null, 2));
         
