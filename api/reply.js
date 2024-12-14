@@ -359,6 +359,35 @@ async function executeFunction(name, args) {
     }
 }
 
+async function shareProfileLink(link) {
+    const profileLinks = {
+        twitter: '<a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Page</a>',
+        patreon: '<a href="https://patreon.com/doublev_chan" target="_blank" rel="noopener noreferrer">Patreon Page</a>',
+        discord: 'Discord: doublev_chan',
+        commission: '<a href="https://docs.google.com/document/d/1b0AyRWtcRudWjE9LCZ6evZERZuBF5qH2fJ0Wivm9VQM/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Commission Info</a>',
+    };
+
+    if (link === "all") {
+        const allLinks = Object.values(profileLinks).join("<br>");
+        return {
+            result: `Here are the contact info of Vivio:<br>${allLinks}`,
+            hasMessage: true,
+        };
+    }
+
+    if (profileLinks[link]) {
+        return {
+            result: `Here is the ${profileLinks[link]}`,
+            hasMessage: true,
+        };
+    }
+
+    return {
+        result: "Invalid link type. Please provide 'twitter', 'patreon', 'discord', or 'all'.",
+        hasMessage: true,
+    };
+}
+
 // Delete all chat history in the "chatHistory" collection
 async function deleteAllChatHistory() {
     try {
