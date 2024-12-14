@@ -356,6 +356,19 @@ async function executeFunction(name, args) {
                 result: await deleteAllChatHistory(),
                 hasMessage: true,
             };
+        case "sendRandomImage":
+            const randomImage = await getRandomImage();
+            if (randomImage) {
+                return {
+                    result: `<img src="${randomImage.url}" alt="${randomImage.description}" style="max-width: 100%; border-radius: 10px;">`,
+                    hasMessage: true,
+                };
+            } else {
+                return {
+                    result: "No images available to send at the moment.",
+                    hasMessage: true,
+                };
+            }
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
@@ -407,5 +420,29 @@ async function deleteAllChatHistory() {
     } catch (error) {
         console.error("Error deleting chat history from MongoDB:", error);
         return "An error occurred while deleting chat history.";
+    }
+}
+
+async function getRandomImage() {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("images");
+
+        // Count total documents in the collection
+        const count = await collection.countDocuments();
+        if (count === 0) {
+            console.log("No images found in the database.");
+            return null;
+        }
+
+        // Generate a random offset
+        const randomIndex = Math.floor(Math.random() * count);
+
+        // Fetch the random image
+        const image = await collection.find().skip(randomIndex).limit(1).toArray();
+        return image[0] || null;
+    } catch (error) {
+        console.error("Error fetching random image from MongoDB:", error);
+        return null;
     }
 }
