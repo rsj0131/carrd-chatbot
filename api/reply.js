@@ -339,27 +339,23 @@ async function processFunctionCall(response) {
 // Example function execution
 async function executeFunction(name, args) {
     switch (name) {
-        case "shareTwitterLink":
-            return {
-                result: `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`,
-                hasMessage: true, // Explicitly indicates this is a user-facing message
-            };
+        case "shareProfileLink":
+            return await shareProfileLink(args); // Pass arguments to the function
         case "deleteAllChatHistory":
-            console.log("Logging analytics data:", args);
             return {
                 result: await deleteAllChatHistory(),
-                hasMessage: true, // Result is not user-facing
+                hasMessage: true,
             };
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
                 result: "Function not implemented.",
-                hasMessage: true, // Defaults to user-facing for unhandled cases
+                hasMessage: true,
             };
     }
 }
 
-async function shareProfileLink(link) {
+async function shareProfileLink({ link }) {
     const profileLinks = {
         twitter: '<a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Page</a>',
         patreon: '<a href="https://patreon.com/doublev_chan" target="_blank" rel="noopener noreferrer">Patreon Page</a>',
@@ -367,23 +363,28 @@ async function shareProfileLink(link) {
         commission: '<a href="https://docs.google.com/document/d/1b0AyRWtcRudWjE9LCZ6evZERZuBF5qH2fJ0Wivm9VQM/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Commission Info</a>',
     };
 
+    // Handle 'all' case
     if (link === "all") {
-        const allLinks = Object.values(profileLinks).join("<br>");
+        const allLinks = Object.entries(profileLinks)
+            .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`)
+            .join("<br>");
         return {
             result: `Here are the contact info of Vivio:<br>${allLinks}`,
             hasMessage: true,
         };
     }
 
+    // Handle specific cases
     if (profileLinks[link]) {
         return {
-            result: `Here is the ${profileLinks[link]}`,
+            result: `Here is the requested information: ${profileLinks[link]}`,
             hasMessage: true,
         };
     }
 
+    // Handle invalid parameter
     return {
-        result: "Invalid link type. Please provide 'twitter', 'patreon', 'discord', or 'all'.",
+        result: "Invalid link type. Please provide 'twitter', 'patreon', 'discord', 'commission', or 'all'.",
         hasMessage: true,
     };
 }
