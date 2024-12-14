@@ -258,8 +258,8 @@ export default async function handler(req, res) {
                 replies.push(result);
             }
 
-            // Generate a follow-up message after the function call
-            messages.push({ role: "system", content: `Function execution result: ${result}` });
+            // Generate a follow-up message
+            messages.push({ role: "system", content: `Function result: ${result}` });
             const followUpResponse = await openai.createChatCompletion({
                 model: "gpt-4o-mini",
                 messages,
@@ -313,6 +313,7 @@ async function fetchFunctions() {
 }
 
 // Process message for function calls
+// Process message for function calls
 async function processFunctionCall(response) {
     const choice = response.choices?.[0];
     if (choice?.message?.function_call) {
@@ -322,11 +323,11 @@ async function processFunctionCall(response) {
             console.log(`Calling function: ${name} with arguments:`, parsedArgs);
 
             // Execute the function dynamically
-            const result = await executeFunction(name, parsedArgs);
-            console.log(`Function ${name} executed. Result: ${result}`);
+            const { result, hasMessage } = await executeFunction(name, parsedArgs);
+            console.log(`Function ${name} executed. Result: ${result}, hasMessage: ${hasMessage}`);
 
-            // If the function returns a message, it will be included in the reply
-            return { hasMessage: !!result, result };
+            // Return the result and whether it should be treated as a message
+            return { hasMessage, result };
         } catch (error) {
             console.error("Error processing function call:", error);
             return { hasMessage: true, result: "Error occurred while executing the function." };
@@ -335,13 +336,26 @@ async function processFunctionCall(response) {
     return { hasMessage: false, result: null }; // No function call
 }
 
+// Example function execution
 async function executeFunction(name, args) {
     switch (name) {
         case "shareTwitterLink":
-            return `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
+            return {
+                result: `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`,
+                hasMessage: true, // Explicitly indicates this is a user-facing message
+            };
+        case "logAnalyticsData":
+            console.log("Logging analytics data:", args);
+            return {
+                result: "Analytics data logged successfully.",
+                hasMessage: false, // Result is not user-facing
+            };
         default:
             console.warn(`No implementation found for function: ${name}`);
-            return null; // Return null if no message should be generated
+            return {
+                result: "Function not implemented.",
+                hasMessage: true, // Defaults to user-facing for unhandled cases
+            };
     }
 }
 
