@@ -309,10 +309,12 @@ async function fetchFunctions() {
         const collection = db.collection("functions");
         const functions = await collection.find().toArray();
 
+        console.log("Loaded functions from DB:", functions); // Debugging
+
         return functions.map(func => ({
             name: func.name,
             description: func.description,
-            parameters: func.parameters
+            parameters: func.parameters || {}
         }));
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
@@ -320,7 +322,7 @@ async function fetchFunctions() {
     }
 }
 
-// Process message for function calls
+
 // Process message for function calls
 async function processFunctionCall(response) {
     const choice = response.choices?.[0];
@@ -371,28 +373,25 @@ async function shareProfileLink({ link }) {
         commission: '<a href="https://docs.google.com/document/d/1b0AyRWtcRudWjE9LCZ6evZERZuBF5qH2fJ0Wivm9VQM/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Commission Info</a>',
     };
 
-    // Handle 'all' case
     if (link === "all") {
         const allLinks = Object.entries(profileLinks)
             .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`)
             .join("<br>");
         return {
-            result: `Here are the contact info of Vivio:<br>${allLinks}`,
+            result: `Here are all the contact links:<br>${allLinks}`,
             hasMessage: true,
         };
     }
 
-    // Handle specific cases
-    if (profileLinks[link]) {
+    if (!profileLinks[link]) {
         return {
-            result: `Here is the requested information: ${profileLinks[link]}`,
+            result: "Invalid link type provided. Valid options are: twitter, patreon, discord, commission, or all.",
             hasMessage: true,
         };
     }
 
-    // Handle invalid parameter
     return {
-        result: "Invalid link type. Please provide 'twitter', 'patreon', 'discord', 'commission', or 'all'.",
+        result: `Here is the requested information: ${profileLinks[link]}`,
         hasMessage: true,
     };
 }
