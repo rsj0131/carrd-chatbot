@@ -2,6 +2,7 @@ import { MongoClient } from "mongodb";
 import { Configuration, OpenAIApi } from "openai";
 import fetch from "node-fetch";
 import { Readable } from "stream";
+import { encode } from "gpt-3-encoder";
 
 // MongoDB Configuration
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
@@ -231,8 +232,6 @@ export default async function handler(req, res) {
         
         console.log("Available functions:", JSON.stringify(functions, null, 2));
 
-        const { encode } = require("gpt-3-encoder");
-        
         const payload = {
             model: "gpt-4o-mini",
             messages,
@@ -240,7 +239,9 @@ export default async function handler(req, res) {
             temperature: 0.8,
             stream: false,
         };
-        const tokenCount = encode(JSON.stringify(payload)).length;
+        
+        const payloadString = JSON.stringify(payload);
+        const tokenCount = encode(payloadString).length; // Count the tokens
         console.log("Token count:", tokenCount);
         
         const response = await openai.createChatCompletion(payload);
