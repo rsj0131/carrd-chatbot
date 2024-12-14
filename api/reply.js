@@ -251,12 +251,13 @@ export default async function handler(req, res) {
         let botReply;
         
         // Process function call if present
-        if (response.data.choices?.[0]?.message?.function_call) {
+        const choice = response.data.choices?.[0]?.message;
+        if (choice?.function_call) {
             const functionResult = await processFunctionCall(response.data);
             console.log("Function Result:", functionResult);
 
             // Add a follow-up message
-            messages.push({ role: "assistant", content: functionResult });
+            messages.push({ role: "system", content: `Please tell the user about the function execution result: ${functionResult}` });
             const followUpResponse = await openai.createChatCompletion({
                 model: "gpt-4o-mini",
                 messages,
@@ -280,12 +281,6 @@ export default async function handler(req, res) {
             botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         }
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
-        
-        if (response.data.choices?.[0]?.message?.function_call) {
-            botReply = await processFunctionCall(response.data);
-        } else {
-            botReply = response.data.choices?.[0]?.message?.content || "No response available.";
-        }
         
         await saveToMongoDB(message, botReply);
 
@@ -348,7 +343,7 @@ async function processFunctionCall(response) {
 async function executeFunction(name, args) {
     switch (name) {
         case "shareTwitterLink":
-            return await shareTwitterLink(args);
+            return "Function shareTwitterLink executed.";
         default:
             console.warn(`No implementation found for function: ${name}`);
             return "Function not implemented.";
@@ -356,8 +351,9 @@ async function executeFunction(name, args) {
 }
 
 // Function List
-async function shareTwitterLink(args) {
-    return `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
+async function shareTwitterLink(args, res) {
+    const botReply = `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
+    res.status(200).json({ reply: botReply }); // Handle the response directly here
 }
 
 
