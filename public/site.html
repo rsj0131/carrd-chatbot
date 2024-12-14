@@ -340,7 +340,7 @@
             // Add user message
             const userMessageContainer = document.createElement("div");
             userMessageContainer.className = "message-container user";
-            
+        
             const userMessage = document.createElement("div");
             userMessage.className = "user-message";
             userMessage.innerText = message;
@@ -356,10 +356,6 @@
             inputElement.value = "";
             autoScroll();
         
-            const botMessageContainer = document.createElement("div");
-            botMessageContainer.className = "message-container bot";
-        
-            // Add typing indicator
             const typingIndicator = document.createElement("div");
             typingIndicator.className = "typing-indicator";
             typingIndicator.innerHTML = `
@@ -378,24 +374,48 @@
                 });
         
                 const data = await response.json();
-        
                 typingIndicator.remove();
-    
-                const botMessage = document.createElement("div");
-                botMessage.className = "bot-message";
-                botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
-                
-                botMessageContainer.appendChild(botMessage);
         
-                const botTimestamp = document.createElement("small");
-                botTimestamp.className = "timestamp";
-                botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                if (Array.isArray(data.replies)) {
+                    data.replies.forEach(reply => {
+                        const botMessageContainer = document.createElement("div");
+                        botMessageContainer.className = "message-container bot";
         
-                botMessageContainer.appendChild(botTimestamp);
-                messagesDiv.appendChild(botMessageContainer);
+                        const botMessage = document.createElement("div");
+                        botMessage.className = "bot-message";
+                        botMessage.innerHTML = parseMessage(reply);
+        
+                        const botTimestamp = document.createElement("small");
+                        botTimestamp.className = "timestamp";
+                        botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+                        botMessageContainer.appendChild(botMessage);
+                        botMessageContainer.appendChild(botTimestamp);
+                        messagesDiv.appendChild(botMessageContainer);
+                    });
+                } else {
+                    const botMessageContainer = document.createElement("div");
+                    botMessageContainer.className = "message-container bot";
+        
+                    const botMessage = document.createElement("div");
+                    botMessage.className = "bot-message";
+                    botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
+        
+                    const botTimestamp = document.createElement("small");
+                    botTimestamp.className = "timestamp";
+                    botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+                    botMessageContainer.appendChild(botMessage);
+                    botMessageContainer.appendChild(botTimestamp);
+                    messagesDiv.appendChild(botMessageContainer);
+                }
+        
                 autoScroll();
             } catch (error) {
                 typingIndicator.remove();
+        
+                const botMessageContainer = document.createElement("div");
+                botMessageContainer.className = "message-container bot";
         
                 const botMessage = document.createElement("div");
                 botMessage.className = "bot-message";
@@ -408,8 +428,10 @@
                 botMessageContainer.appendChild(botMessage);
                 botMessageContainer.appendChild(botTimestamp);
                 messagesDiv.appendChild(botMessageContainer);
+        
                 autoScroll();
             }
+        }
         }
     </script>
 
