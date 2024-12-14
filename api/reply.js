@@ -238,7 +238,8 @@ export default async function handler(req, res) {
             temperature: 0.8,
             stream: false,
         };
-        console.log("Payload size:", JSON.stringify(payload).length);
+        const tokenCount = encode(JSON.stringify(payload)).length;
+        console.log("Token count:", tokenCount);
         
         const response = await openai.createChatCompletion(payload);
         console.log("API Response:", JSON.stringify(response.data, null, 2));
