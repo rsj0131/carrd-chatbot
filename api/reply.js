@@ -241,6 +241,11 @@ export default async function handler(req, res) {
         console.log("API Response:", JSON.stringify(response.data, null, 2));
 
         const usage = response.data.usage || {};
+        const { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 } = usage;
+        const inputCost = prompt_tokens * INPUT_TOKEN_COST;
+        const outputCost = completion_tokens * OUTPUT_TOKEN_COST;
+        const totalCost = inputCost + outputCost;
+        
         const { prompt_tokens, completion_tokens, total_tokens } = usage;
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
