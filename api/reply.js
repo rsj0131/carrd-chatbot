@@ -20,6 +20,10 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
+// GPT-4o-mini Pricing
+const INPUT_TOKEN_COST = 0.150 / 1_000_000; // $0.150 per 1M input tokens
+const OUTPUT_TOKEN_COST = 0.600 / 1_000_000; // $0.600 per 1M output tokens
+
 async function getCharacterDetails(characterId) {
     try {
         const db = await connectToDatabase();
@@ -87,25 +91,31 @@ async function checkAndSummarizeChatHistory() {
             ...messagesToSummarize,
         ];
 
-        const response = await fetch("https://mars.chub.ai/mixtral/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${process.env.CHUB_API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "mixtral",
-                messages: prompt,
-                temperature: 0.5,
-                max_tokens: 200,
-                stream: false, // Stream is unnecessary for small summary
-            }),
+        // Call the OpenAI API for summarization
+        const response = await openai.createChatCompletion({
+            model: "gpt-4o-mini",
+            messages: prompt,
+            temperature: 0.5,
+            max_tokens: 200,
+            stream: false,
         });
 
-        const result = await response.json();
+        const result = response.data;
         const summary = result.choices?.[0]?.message?.content || "Summary could not be generated.";
 
         console.log("Generated summary:", summary);
+
+        // Token Usage and Pricing
+        const usage = result.usage || {};
+        const { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 } = usage;
+        const INPUT_TOKEN_COST = 0.150 / 1_000_000; // $0.150 per 1M input tokens
+        const OUTPUT_TOKEN_COST = 0.600 / 1_000_000; // $0.600 per 1M output tokens
+        const inputCost = prompt_tokens * INPUT_TOKEN_COST;
+        const outputCost = completion_tokens * OUTPUT_TOKEN_COST;
+        const totalCost = inputCost + outputCost;
+
+        console.log(`Token Usage for Summarization: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
+        console.log(`Summarization Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
 
         // Save the summary back to chatHistory
         await collection.insertOne({
@@ -128,6 +138,7 @@ async function checkAndSummarizeChatHistory() {
         console.log(`Time taken for summarization: ${summaryElapsedTime} ms`);
     }
 }
+
 
 
 async function saveToMongoDB(userMessage, botReply) {
@@ -232,6 +243,7 @@ export default async function handler(req, res) {
         const usage = response.data.usage || {};
         const { prompt_tokens, completion_tokens, total_tokens } = usage;
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
+        console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
         
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
