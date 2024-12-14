@@ -253,13 +253,13 @@ export default async function handler(req, res) {
         // Check if the response requires a function call
         const choice = response.data.choices?.[0]?.message;
         if (choice?.function_call) {
-            const functionResult = await processFunctionCall(response.data);
-            console.log("Function Result:", functionResult);
+            const { hasMessage, result } = await processFunctionCall(response.data);
+            if (hasMessage) {
+                replies.push(result);
+            }
 
-            replies.push(`Function executed successfully. Result: ${functionResult}`);
-
-            // Add a follow-up message
-            messages.push({ role: "system", content: `Please summarize the result: ${functionResult}` });
+            // Generate a follow-up message after the function call
+            messages.push({ role: "system", content: `Function execution result: ${result}` });
             const followUpResponse = await openai.createChatCompletion({
                 model: "gpt-4o-mini",
                 messages,
@@ -269,18 +269,6 @@ export default async function handler(req, res) {
 
             const followUpMessage = followUpResponse.data.choices?.[0]?.message?.content || "Follow-up not generated.";
             replies.push(followUpMessage);
-
-            console.log("Follow-Up Message:", followUpMessage);
-
-            // Log follow-up usage and pricing
-            const followUpUsage = followUpResponse.data.usage || {};
-            const { prompt_tokens: followUpPromptTokens = 0, completion_tokens: followUpCompletionTokens = 0 } = followUpUsage;
-            const followUpInputCost = followUpPromptTokens * INPUT_TOKEN_COST;
-            const followUpOutputCost = followUpCompletionTokens * OUTPUT_TOKEN_COST;
-            const followUpTotalCost = followUpInputCost + followUpOutputCost;
-
-            console.log(`Follow-Up Token Usage: Prompt=${followUpPromptTokens}, Completion=${followUpCompletionTokens}`);
-            console.log(`Follow-Up Cost: Input=$${followUpInputCost.toFixed(6)}, Output=$${followUpOutputCost.toFixed(6)}, Total=$${followUpTotalCost.toFixed(6)}`);
         } else {
             const botReply = choice?.content || "No response available.";
             replies.push(botReply);
@@ -333,34 +321,27 @@ async function processFunctionCall(response) {
             const parsedArgs = JSON.parse(args);
             console.log(`Calling function: ${name} with arguments:`, parsedArgs);
 
-            // Trigger the function dynamically
+            // Execute the function dynamically
             const result = await executeFunction(name, parsedArgs);
             console.log(`Function ${name} executed. Result: ${result}`);
 
-            // Return the result to the main handler
-            return result; // This will be used for generating the follow-up message in the handler
+            // If the function returns a message, it will be included in the reply
+            return { hasMessage: !!result, result };
         } catch (error) {
             console.error("Error processing function call:", error);
-            return "Error occurred while executing the function.";
+            return { hasMessage: true, result: "Error occurred while executing the function." };
         }
     }
-    return response.choices?.[0]?.message?.content || "No response.";
+    return { hasMessage: false, result: null }; // No function call
 }
 
 async function executeFunction(name, args) {
     switch (name) {
         case "shareTwitterLink":
-            return "Function shareTwitterLink executed.";
+            return `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
         default:
             console.warn(`No implementation found for function: ${name}`);
-            return "Function not implemented.";
+            return null; // Return null if no message should be generated
     }
 }
-
-// Function List
-async function shareTwitterLink(args, res) {
-    const botReply = `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`;
-    res.status(200).json({ reply: botReply }); // Handle the response directly here
-}
-
 
