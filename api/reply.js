@@ -344,11 +344,11 @@ async function executeFunction(name, args) {
                 result: `Here is the Twitter link you requested: <a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Link</a>`,
                 hasMessage: true, // Explicitly indicates this is a user-facing message
             };
-        case "logAnalyticsData":
+        case "deleteAllChatHistory":
             console.log("Logging analytics data:", args);
             return {
-                result: "Analytics data logged successfully.",
-                hasMessage: false, // Result is not user-facing
+                result: await deleteAllChatHistory(),
+                hasMessage: true, // Result is not user-facing
             };
         default:
             console.warn(`No implementation found for function: ${name}`);
@@ -359,3 +359,16 @@ async function executeFunction(name, args) {
     }
 }
 
+// Delete all chat history in the "chatHistory" collection
+async function deleteAllChatHistory() {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("chatHistory");
+        const deleteResult = await collection.deleteMany({});
+        console.log(`Deleted ${deleteResult.deletedCount} records from chatHistory.`);
+        return `All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`;
+    } catch (error) {
+        console.error("Error deleting chat history from MongoDB:", error);
+        return "An error occurred while deleting chat history.";
+    }
+}
