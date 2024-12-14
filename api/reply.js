@@ -90,7 +90,7 @@ async function checkAndSummarizeChatHistory() {
             },
             ...messagesToSummarize,
         ];
-
+        
         // Call the OpenAI API for summarization
         const response = await openai.createChatCompletion({
             model: "gpt-4o-mini",
@@ -230,6 +230,8 @@ export default async function handler(req, res) {
         ];
         
         console.log("Available functions:", JSON.stringify(functions, null, 2));
+
+        const { encode } = require("gpt-3-encoder");
         
         const payload = {
             model: "gpt-4o-mini",
