@@ -249,7 +249,35 @@ export default async function handler(req, res) {
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
         
-        let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+        // Process function call if present
+        if (response.data.choices?.[0]?.message?.function_call) {
+            const functionResult = await processFunctionCall(response.data);
+            console.log("Function Result:", functionResult);
+
+            // Add a follow-up message
+            messages.push({ role: "assistant", content: functionResult });
+            const followUpResponse = await openai.createChatCompletion({
+                model: "gpt-4o-mini",
+                messages,
+                temperature: 0.8,
+                max_tokens: 150,
+            });
+
+            botReply = followUpResponse.data.choices?.[0]?.message?.content || "Follow-up not generated.";
+            console.log("Follow-Up Message:", botReply);
+
+            // Log token usage and pricing for follow-up
+            const followUpUsage = followUpResponse.data.usage || {};
+            const { prompt_tokens: followUpPromptTokens = 0, completion_tokens: followUpCompletionTokens = 0 } = followUpUsage;
+            const followUpInputCost = followUpPromptTokens * INPUT_TOKEN_COST;
+            const followUpOutputCost = followUpCompletionTokens * OUTPUT_TOKEN_COST;
+            const followUpTotalCost = followUpInputCost + followUpOutputCost;
+
+            console.log(`Follow-Up Token Usage: Prompt=${followUpPromptTokens}, Completion=${followUpCompletionTokens}`);
+            console.log(`Follow-Up Cost: Input=$${followUpInputCost.toFixed(6)}, Output=$${followUpOutputCost.toFixed(6)}, Total=$${followUpTotalCost.toFixed(6)}`);
+        } else {
+            botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+        }
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
         
         if (response.data.choices?.[0]?.message?.function_call) {
@@ -305,7 +333,9 @@ async function processFunctionCall(response) {
             // Trigger the function dynamically
             const result = await executeFunction(name, parsedArgs);
             console.log(`Function ${name} executed. Result: ${result}`);
-            return result; // Return the result as the bot's reply
+
+            // Return the result to the main handler
+            return result; // This will be used for generating the follow-up message in the handler
         } catch (error) {
             console.error("Error processing function call:", error);
             return "Error occurred while executing the function.";
