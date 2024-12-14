@@ -246,7 +246,6 @@ export default async function handler(req, res) {
         const outputCost = completion_tokens * OUTPUT_TOKEN_COST;
         const totalCost = inputCost + outputCost;
         
-        const { prompt_tokens, completion_tokens, total_tokens } = usage;
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
         
