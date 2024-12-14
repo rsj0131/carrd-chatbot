@@ -231,13 +231,16 @@ export default async function handler(req, res) {
         
         console.log("Available functions:", JSON.stringify(functions, null, 2));
         
-        const response = await openai.createChatCompletion({
+        const payload = {
             model: "gpt-4o-mini",
             messages,
-            functions, // Ensure this contains the correct list of functions
+            functions,
             temperature: 0.8,
             stream: false,
-        });
+        };
+        console.log("Payload size:", JSON.stringify(payload).length);
+        
+        const response = await openai.createChatCompletion(payload);
         console.log("API Response:", JSON.stringify(response.data, null, 2));
 
         const usage = response.data.usage || {};
