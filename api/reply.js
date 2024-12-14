@@ -248,16 +248,18 @@ export default async function handler(req, res) {
         
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
-        let botReply;
-        
-        // Process function call if present
+        let replies = []; // Store multiple replies
+
+        // Check if the response requires a function call
         const choice = response.data.choices?.[0]?.message;
         if (choice?.function_call) {
             const functionResult = await processFunctionCall(response.data);
             console.log("Function Result:", functionResult);
 
+            replies.push(`Function executed successfully. Result: ${functionResult}`);
+
             // Add a follow-up message
-            messages.push({ role: "system", content: `Please tell the user about the function execution result: ${functionResult}` });
+            messages.push({ role: "system", content: `Please summarize the result: ${functionResult}` });
             const followUpResponse = await openai.createChatCompletion({
                 model: "gpt-4o-mini",
                 messages,
@@ -265,10 +267,12 @@ export default async function handler(req, res) {
                 max_tokens: 150,
             });
 
-            botReply = followUpResponse.data.choices?.[0]?.message?.content || "Follow-up not generated.";
-            console.log("Follow-Up Message:", botReply);
+            const followUpMessage = followUpResponse.data.choices?.[0]?.message?.content || "Follow-up not generated.";
+            replies.push(followUpMessage);
 
-            // Log token usage and pricing for follow-up
+            console.log("Follow-Up Message:", followUpMessage);
+
+            // Log follow-up usage and pricing
             const followUpUsage = followUpResponse.data.usage || {};
             const { prompt_tokens: followUpPromptTokens = 0, completion_tokens: followUpCompletionTokens = 0 } = followUpUsage;
             const followUpInputCost = followUpPromptTokens * INPUT_TOKEN_COST;
@@ -278,19 +282,22 @@ export default async function handler(req, res) {
             console.log(`Follow-Up Token Usage: Prompt=${followUpPromptTokens}, Completion=${followUpCompletionTokens}`);
             console.log(`Follow-Up Cost: Input=$${followUpInputCost.toFixed(6)}, Output=$${followUpOutputCost.toFixed(6)}, Total=$${followUpTotalCost.toFixed(6)}`);
         } else {
-            botReply = response.data.choices?.[0]?.message?.content || "No response available.";
+            const botReply = choice?.content || "No response available.";
+            replies.push(botReply);
         }
-        botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
-        
-        await saveToMongoDB(message, botReply);
 
-        // Check and summarize chat history
+        // Save the last bot reply for chat history purposes
+        const lastReply = replies[replies.length - 1] || "No response available.";
+        await saveToMongoDB(message, lastReply);
+
+        // Summarize and clean up chat history
         await checkAndSummarizeChatHistory();
 
         const overallElapsedTime = Date.now() - startTime;
         console.log(`Overall processing time: ${overallElapsedTime} ms`);
 
-        res.status(200).json({ reply: botReply });
+        // Return all replies
+        res.status(200).json({ replies });
     } catch (error) {
         console.error("API Error:", error);
         res.status(500).json({ error: "Internal Server Error" });
