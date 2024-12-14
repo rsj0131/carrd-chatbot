@@ -360,7 +360,7 @@ async function executeFunction(name, args) {
             const randomImage = await getRandomImage();
             if (randomImage) {
                 return {
-                    result: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 300px; max-height: 300px; border-radius: 10px; object-fit: contain;">`,
+                    result: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
                     hasMessage: true,
                 };
             } else {
