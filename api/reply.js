@@ -227,9 +227,11 @@ export default async function handler(req, res) {
             temperature: 0.8,
             stream: false,
         });
-
-        
         console.log("API Response:", JSON.stringify(response.data, null, 2));
+
+        const usage = response.data.usage || {};
+        const { prompt_tokens, completion_tokens, total_tokens } = usage;
+        console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         
         let botReply = response.data.choices?.[0]?.message?.content || "No response available.";
         botReply = botReply.replace(/\\n/g, '\n').replace(/{{char}}/g, characterName);
