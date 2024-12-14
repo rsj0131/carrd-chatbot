@@ -238,6 +238,42 @@
                 padding: 0.5rem; /* Reduce padding for smaller screens */
             }
         }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+    
+        .modal-content {
+            display: block;
+            margin: auto;
+            max-width: 90%;
+            max-height: 90%;
+        }
+    
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -265,8 +301,35 @@
         </form>
     </div>
 
-
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
     <script>
+        // Get the modal
+        const modal = document.getElementById("imageModal");
+        const modalImage = document.getElementById("modalImage");
+        const closeBtn = document.querySelector(".close");
+
+        // Open modal when an image is clicked
+        document.addEventListener("click", (event) => {
+            if (event.target.tagName === "IMG" && event.target.classList.contains("clickable-image")) {
+                modal.style.display = "block";
+                modalImage.src = event.target.src;
+            }
+        });
+        
+        // Close modal when the close button is clicked
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+        
+        // Close modal when clicking outside the image
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
         // Scroll to Bottom Function
         function scrollToBottom() {
             const chatWindow = document.getElementById("chat-window");
@@ -384,7 +447,18 @@
                         const botMessage = document.createElement("div");
                         botMessage.className = "bot-message";
                         botMessage.innerHTML = parseMessage(reply);
+
+                        // Check for images and add 'clickable-image' class
+                        const tempDiv = document.createElement("div");
+                        tempDiv.innerHTML = parseMessage(reply);
         
+                        const image = tempDiv.querySelector("img");
+                        if (image) {
+                            image.classList.add("clickable-image");
+                        }
+        
+                        botMessage.innerHTML = tempDiv.innerHTML;
+                        
                         const botTimestamp = document.createElement("small");
                         botTimestamp.className = "timestamp";
                         botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
