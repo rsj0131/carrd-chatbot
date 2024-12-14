@@ -15,8 +15,8 @@ async function connectToDatabase() {
 
 // OpenAI Configuration
 const configuration = new Configuration({
-    apiKey: process.env.CHUB_API_KEY, // Replace with your Mars API key
-    basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
+    apiKey: process.env.OPENAI_API_KEY, // Replace with your Mars API key
+    //basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
 const openai = new OpenAIApi(configuration);
 
@@ -221,7 +221,7 @@ export default async function handler(req, res) {
         console.log("Available functions:", JSON.stringify(functions, null, 2));
         
         const response = await openai.createChatCompletion({
-            model: "mixtral",
+            model: "gpt-4o-mini",
             messages,
             functions, // Ensure this contains the correct list of functions
             temperature: 0.8,
