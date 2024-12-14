@@ -243,6 +243,7 @@ export default async function handler(req, res) {
         const payloadString = JSON.stringify(payload);
         const tokenCount = encode(payloadString).length; // Count the tokens
         console.log("Token count:", tokenCount);
+        console.log("Payload sent to OpenAI:", JSON.stringify(payload, null, 2));
         
         const response = await openai.createChatCompletion(payload);
         console.log("API Response:", JSON.stringify(response.data, null, 2));
