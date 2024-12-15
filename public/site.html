@@ -9,13 +9,18 @@
     <style>
         body {
             font-family: 'Inter', sans-serif; /* Set Inter as the default font */
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent body scroll */
+            height: 100vh; /* Ensure the body fills the viewport */
         }
 
         #chat-container {
-            width: 100%;
-            max-width: 100%; /* Make sure it spans the full width */
-            padding: 1rem;
-            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            height: 100%; /* Full height for the chat container */
+            max-height: 100%; /* Prevent overflow */
+            overflow: hidden; /* Prevent content overflow */
         }
         
         header {
@@ -42,6 +47,9 @@
 
         #chat-window {
             background-color: transparent;
+            flex: 1; /* Allow chat window to grow and fill available space */
+            max-height: calc(100vh - 200px); /* Constrain to viewport height minus margins */
+            overflow-y: auto; /* Enable internal scrolling */
             padding: 1rem;
             border-radius: 0.5rem;
             max-height: calc(100vh - 200px); /* Dynamic height to fit within the viewport */
@@ -167,6 +175,7 @@
         }
 
         form {
+            flex-shrink: 0; /* Prevent form from shrinking */
             display: flex;
             gap: 0.5rem;
             width: 100%;
