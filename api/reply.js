@@ -261,9 +261,9 @@ export default async function handler(req, res) {
         // Check if the response requires a function call
         const choice = response.data.choices?.[0]?.message;
         if (choice?.function_call) {
-            const { hasMessage, result } = await processFunctionCall(response.data);
+            const { result, hasMessage, msgContent } = await processFunctionCall(response.data);
             if (hasMessage) {
-                replies.push(result);
+                replies.push(msgContent);
             }
 
             // Generate a follow-up message
@@ -333,17 +333,14 @@ async function processFunctionCall(response) {
             console.log(`Calling function: ${name} with arguments:`, parsedArgs);
 
             // Execute the function dynamically
-            const { result, hasMessage } = await executeFunction(name, parsedArgs);
-            console.log(`Function ${name} executed. Result: ${result}, hasMessage: ${hasMessage}`);
-
-            // Return the result and whether it should be treated as a message
-            return { hasMessage, result };
+            const { result, hasMessage, message, msgContent } = await executeFunction(name, parsedArgs);
+            console.log(`Function ${name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
         } catch (error) {
             console.error("Error processing function call:", error);
-            return { hasMessage: true, result: "Error occurred while executing the function." };
+            return { result: "Error occurred while executing the function.", hasMessage: true, msgContent: "null" };
         }
     }
-    return { hasMessage: false, result: null }; // No function call
+    return { hasMessage: false, result: null, msgContent: null }; // No function call
 }
 
 // Example function execution
@@ -354,26 +351,30 @@ async function executeFunction(name, args) {
         case "deleteAllChatHistory":
             return {
                 result: await deleteAllChatHistory(),
-                hasMessage: true,
+                hasMessage: false,
+                msgContent: null,
             };
         case "sendRandomImage":
             const randomImage = await getRandomImage();
             if (randomImage) {
                 return {
-                    result: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
+                    result: "You have successfully sent an image to the user",
                     hasMessage: true,
+                    msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
                 };
             } else {
                 return {
-                    result: "No images available to send at the moment.",
-                    hasMessage: true,
+                    result: "Tell the user no images available to send at the moment.",
+                    hasMessage: false,
+                    msgContent: null,
                 };
             }
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
-                result: "Function not implemented.",
-                hasMessage: true,
+                result: "Tell the user current action is unavailable.",
+                hasMessage: false,
+                msgContent: null,
             };
     }
 }
@@ -391,21 +392,24 @@ async function shareProfileLink({ link }) {
             .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`)
             .join("<br>");
         return {
-            result: `Here are all the contact links:<br>${allLinks}`,
+            result: "The message with link has been succesfully sent to user",
             hasMessage: true,
+            msgContent: `Here are all the contact links:<br>${allLinks}`,
         };
     }
 
     if (!profileLinks[link]) {
         return {
             result: "Invalid link type provided. Valid options are: twitter, patreon, discord, commission, or all.",
-            hasMessage: true,
+            hasMessage: false,
+            msgContent: null,
         };
     }
 
     return {
-        result: `Here is the requested information: ${profileLinks[link]}`,
+        result: "The message with link has been succesfully sent to user",
         hasMessage: true,
+        msgContent: `Here is the requested information: ${profileLinks[link]}`,
     };
 }
 
