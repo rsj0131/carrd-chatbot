@@ -199,6 +199,23 @@
             color: white;
         }
 
+        #sendButton {
+            background-color: rgba(255, 255, 255, 0.8);
+            border: none; /* Remove default button border */
+            border-radius: 50%; /* Make it circular */
+            width: 50px; /* Set width to make it circular */
+            height: 50px; /* Set height to make it circular */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            cursor: pointer; /* Show pointer cursor */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a slight shadow */
+            transition: background-color 0.3s ease; /* Add smooth hover effect */
+        }
+        
+        #sendButton:hover {
+            background-color: rgba(235, 235, 235, 1);
+        }
         #scrollToBottom {
             position: absolute; /* Absolute positioning relative to #chat-window */
             bottom: 15%; /* Adjust the distance from the bottom of the #chat-window */
@@ -222,7 +239,14 @@
             background-color: rgba(135, 206, 235, 1); /* Darker on hover */
         }
 
-
+        #sendButton svg {
+            fill: black; /* Set the arrow icon color */
+            transition: transform 0.3s ease; /* Smooth transition for icon animation */
+        }
+        
+        #sendButton:hover svg {
+            transform: scale(1.1); /* Slightly enlarge the arrow icon on hover */
+        }
 
         /* Media query for mobile devices */
         @media (max-width: 300px) {
@@ -306,7 +330,12 @@
     
         <form id="chatForm">
             <textarea id="message" placeholder="Type your message..." required></textarea>
-            <button type="submit">Send</button>
+            <button type="submit" id="sendButton" aria-label="Send">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
+                    <path d="M15.854 7.646a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L14.293 8 9.146 2.854a.5.5 0 1 1 .708-.708l6 6z"/>
+                    <path d="M0 8a.5.5 0 0 1 .5-.5h14.793a.5.5 0 0 1 0 1H.5A.5.5 0 0 1 0 8z"/>
+                </svg>
+            </button>
         </form>
     </div>
 
@@ -401,12 +430,18 @@
     
         async function sendMessage() {
             const inputElement = document.getElementById("message");
+            const sendButton = document.querySelector("#chatForm button");
+            const messagesDiv = document.getElementById("messages");
+        
             const message = inputElement.value;
             const characterId = "1";
         
             if (!message.trim()) return;
         
-            const messagesDiv = document.getElementById("messages");
+            // Disable input and send button
+            inputElement.disabled = true;
+            sendButton.disabled = true;
+        
             const userTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         
             // Add user message
@@ -425,7 +460,7 @@
             userMessageContainer.appendChild(userTimestamp);
             messagesDiv.appendChild(userMessageContainer);
         
-            inputElement.value = "";
+            inputElement.value = ""; // Clear input
             autoScroll();
         
             const typingIndicator = document.createElement("div");
@@ -456,18 +491,7 @@
                         const botMessage = document.createElement("div");
                         botMessage.className = "bot-message";
                         botMessage.innerHTML = parseMessage(reply);
-
-                        // Check for images and add 'clickable-image' class
-                        const tempDiv = document.createElement("div");
-                        tempDiv.innerHTML = parseMessage(reply);
         
-                        const image = tempDiv.querySelector("img");
-                        if (image) {
-                            image.classList.add("clickable-image");
-                        }
-        
-                        botMessage.innerHTML = tempDiv.innerHTML;
-                        
                         const botTimestamp = document.createElement("small");
                         botTimestamp.className = "timestamp";
                         botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -492,8 +516,6 @@
                     botMessageContainer.appendChild(botTimestamp);
                     messagesDiv.appendChild(botMessageContainer);
                 }
-        
-                autoScroll();
             } catch (error) {
                 typingIndicator.remove();
         
@@ -511,10 +533,14 @@
                 botMessageContainer.appendChild(botMessage);
                 botMessageContainer.appendChild(botTimestamp);
                 messagesDiv.appendChild(botMessageContainer);
-        
+            } finally {
+                // Re-enable input and send button
+                inputElement.disabled = false;
+                sendButton.disabled = false;
+                inputElement.focus(); // Focus back to input
                 autoScroll();
             }
-        }
+        ]
     </script>
 
 </body>
