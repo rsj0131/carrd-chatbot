@@ -435,7 +435,7 @@
     
         async function sendMessage() {
             const inputElement = document.getElementById("message");
-            const sendButton = document.querySelector("#chatForm button");
+            const sendButton = document.getElementById("sendButton");
             const messagesDiv = document.getElementById("messages");
         
             const message = inputElement.value;
@@ -545,7 +545,7 @@
                 inputElement.focus(); // Focus back to input
                 autoScroll();
             }
-        ]
+        }
     </script>
 
 </body>
