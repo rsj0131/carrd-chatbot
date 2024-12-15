@@ -381,10 +381,10 @@ async function executeFunction(name, args) {
 
 async function shareProfileLink({ link }) {
     const profileLinks = {
-        twitter: '<a href="https://x.com/doublev_nsfw" target="_blank" rel="noopener noreferrer">Twitter Page</a>',
-        patreon: '<a href="https://patreon.com/doublev_chan" target="_blank" rel="noopener noreferrer">Patreon Page</a>',
-        discord: 'Discord: doublev_chan',
-        commission: '<a href="https://docs.google.com/document/d/1b0AyRWtcRudWjE9LCZ6evZERZuBF5qH2fJ0Wivm9VQM/edit?usp=sharing" target="_blank" rel="noopener noreferrer">Commission Info</a>',
+        twitter: `<a href="${process.env.USER_TWITTER_URL}" target="_blank" rel="noopener noreferrer">Twitter Page</a>`,
+        patreon: `<a href="${process.env.USER_PATREON_URL}" target="_blank" rel="noopener noreferrer">Patreon Page</a>`,
+        discord: `Discord: ${process.env.USER_DISCORD_ID}`,
+        commission: `<a href="${process.env.USER_COMMS_URL}" target="_blank" rel="noopener noreferrer">Commission Info</a>`,
     };
 
     if (link === "all") {
