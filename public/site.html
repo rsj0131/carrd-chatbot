@@ -193,10 +193,16 @@
             resize: none;
             margin: 0;
             box-sizing: border-box;
+            outline: none; /* Hide the outline when focused */
         }
 
         textarea::placeholder {
             color: white;
+        }
+
+        textarea:focus {
+            outline: none; /* Ensure no border or outline appears when focused */
+            box-shadow: none; /* Prevent any shadow effects from appearing */
         }
 
         #sendButton {
