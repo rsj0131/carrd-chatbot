@@ -262,7 +262,8 @@ export default async function handler(req, res) {
         const choice = response.data.choices?.[0]?.message;
         if (choice?.function_call) {
             const { result, hasMessage, msgContent } = await processFunctionCall(response.data);
-            if (hasMessage) {
+            // If the function generates a message, add it directly
+            if (hasMessage && msgContent) {
                 replies.push(msgContent);
             }
 
@@ -335,6 +336,7 @@ async function processFunctionCall(response) {
             // Execute the function dynamically
             const { result, hasMessage, message, msgContent } = await executeFunction(name, parsedArgs);
             console.log(`Function ${name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
+            return { result, hasMessage, msgContent };
         } catch (error) {
             console.error("Error processing function call:", error);
             return { result: "Error occurred while executing the function.", hasMessage: true, msgContent: "null" };
