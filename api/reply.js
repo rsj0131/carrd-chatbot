@@ -180,6 +180,9 @@ export default async function handler(req, res) {
     const startTime = Date.now();
 
     try {
+
+        const knowledgeResponse = await getAnswer(message);
+        
         const characterDetails = await getCharacterDetails(characterId);
         const characterName = characterDetails.name || "assistant";
 
@@ -219,6 +222,11 @@ export default async function handler(req, res) {
             For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.
         `;
 
+        // Step 4: Append knowledge base response if available
+        if (knowledgeResponse && knowledgeResponse !== null) {
+            dynamicSystemMessage += `\n\nAdditionally, refer to the following knowledge base entry:\n${knowledgeResponse}`;
+        }
+        
         const history = await fetchChatHistory();
 
         const messages = [
@@ -381,38 +389,28 @@ async function executeFunction(name, args) {
     }
 }
 
-async function shareProfileLink({ link }) {
-    const profileLinks = {
-        twitter: `<a href="${process.env.USER_TWITTER_URL}" target="_blank" rel="noopener noreferrer">Twitter Page</a>`,
-        patreon: `<a href="${process.env.USER_PATREON_URL}" target="_blank" rel="noopener noreferrer">Patreon Page</a>`,
-        discord: `Discord: ${process.env.USER_DISCORD_ID}`,
-        commission: `<a href="${process.env.USER_COMMS_URL}" target="_blank" rel="noopener noreferrer">Commission Info</a>`,
-    };
+async function getAnswer(question) {
+    const db = await connectToDatabase();
+    const collection = db.collection("knowledge_base");
 
-    if (link === "all") {
-        const allLinks = Object.entries(profileLinks)
-            .map(([key, value]) => `${key.charAt(0).toUpperCase() + key.slice(1)}: ${value}`)
-            .join("<br>");
-        return {
-            result: "The message with link has been succesfully sent to user",
-            hasMessage: true,
-            msgContent: `Here are all the contact links:<br>${allLinks}`,
-        };
+    // Fetch the relevant Q&A entry
+    const entry = await collection.findOne({ question });
+    if (!entry) return null;
+
+    const { answer, guideline, links } = entry;
+
+    // Build the system message for the model
+    let systemMessage = `Refer to the provided answer and guideline below to craft a response in your own words:\n\n`;
+    systemMessage += `Answer: ${answer}\n`;
+    systemMessage += `Guideline: ${guideline}\n`;
+
+    if (links && links.length > 0) {
+        systemMessage += `Here are relevant links:\n`;
+        links.forEach(link => {
+            systemMessage += `- ${link.text}: ${link.url}\n`;
+        });
     }
-
-    if (!profileLinks[link]) {
-        return {
-            result: "Invalid link type provided. Valid options are: twitter, patreon, discord, commission, or all.",
-            hasMessage: false,
-            msgContent: null,
-        };
-    }
-
-    return {
-        result: "The message with link has been succesfully sent to user",
-        hasMessage: true,
-        msgContent: `Here is the requested information: ${profileLinks[link]}`,
-    };
+    return systemMessage;
 }
 
 // Delete all chat history in the "chatHistory" collection
