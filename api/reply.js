@@ -393,30 +393,6 @@ async function executeFunction(name, args) {
     }
 }
 
-async function getAnswer() {
-    const db = await connectToDatabase();
-    const collection = db.collection("knowledge_base");
-
-    // Fetch the relevant Q&A entry
-    const entry = await collection.findOne({  });
-    if (!entry) return null;
-
-    const { answer, guideline, links } = entry;
-
-    // Build the system message for the model
-    let systemMessage = `Refer to the provided answer and guideline below to craft a response in your own words:\n\n`;
-    systemMessage += `Answer: ${answer}\n`;
-    systemMessage += `Guideline: ${guideline}\n`;
-
-    if (links && links.length > 0) {
-        systemMessage += `Here are relevant links:\n`;
-        links.forEach(link => {
-            systemMessage += `- ${link.text}: ${link.url}\n`;
-        });
-    }
-    return systemMessage;
-}
-
 // Delete all chat history in the "chatHistory" collection
 async function deleteAllChatHistory() {
     try {
@@ -455,13 +431,11 @@ async function sendRandomImage() {
     }
 }
 
+// Vector Embeddings
 async function generateEmbeddings() {
     try {
         const db = await connectToDatabase();
         console.log("Connected to database:", db.databaseName);
-
-        const collections = await db.listCollections().toArray();
-        console.log("Available collections:", collections);
 
         const collection = db.collection("knowledge_base");
         const entries = await collection.find({}).toArray();
@@ -476,7 +450,22 @@ async function generateEmbeddings() {
             };
         }
 
+        // Pricing information
+        const MODEL = "text-embedding-ada-002"; // Change to the desired model
+        const PRICING = {
+            "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
+            "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
+            "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
+        };
+
+        const pricing = PRICING[MODEL];
+
+        if (!pricing) {
+            throw new Error(`Unsupported model: ${MODEL}`);
+        }
+
         let updatedCount = 0;
+        let totalCost = 0;
 
         for (const entry of entries) {
             const { _id, question, tags } = entry;
@@ -485,7 +474,7 @@ async function generateEmbeddings() {
 
             // Generate embedding
             const response = await openai.createEmbedding({
-                model: "text-embedding-ada-002",
+                model: MODEL,
                 input: inputText,
             });
 
@@ -494,6 +483,13 @@ async function generateEmbeddings() {
                 console.log("Failed to generate embedding for entry:", _id);
                 continue;
             }
+
+            // Calculate token cost
+            const tokenCount = encode(inputText).length;
+            const cost = tokenCount * pricing.input;
+            totalCost += cost;
+
+            console.log(`Cost for entry ${_id}: $${cost.toFixed(6)} (Tokens: ${tokenCount})`);
 
             // Update the document with the embedding
             const result = await collection.updateOne(
@@ -508,10 +504,11 @@ async function generateEmbeddings() {
         }
 
         console.log(`Updated embeddings for ${updatedCount} entries.`);
+        console.log(`Total cost for embedding generation: $${totalCost.toFixed(6)}`);
         return {
             result: `Successfully updated embeddings for ${updatedCount} knowledge base entries.`,
             hasMessage: true,
-            msgContent: `Embeddings generation completed. ${updatedCount} entries updated.`,
+            msgContent: `Embeddings generation completed. ${updatedCount} entries updated. Total cost: $${totalCost.toFixed(6)}`,
         };
     } catch (error) {
         console.error("Error generating embeddings:", error);
@@ -522,6 +519,86 @@ async function generateEmbeddings() {
         };
     } finally {
         await mongoClient.close();
+    }
+}
+
+/**
+ * Calculate cosine similarity between two vectors.
+ */
+function cosineSimilarity(vectorA, vectorB) {
+    const dotProduct = vectorA.reduce((sum, val, i) => sum + val * vectorB[i], 0);
+    const magnitudeA = Math.sqrt(vectorA.reduce((sum, val) => sum + val ** 2, 0));
+    const magnitudeB = Math.sqrt(vectorB.reduce((sum, val) => sum + val ** 2, 0));
+    return dotProduct / (magnitudeA * magnitudeB);
+}
+
+async function getAnswer(userQuery) {
+    const startTime = Date.now(); // Start the timer
+    const TOKEN_COST = 0.1 / 1_000_000; // Cost for ada-002: $0.1 per 1M tokens
+    let totalCost = 0;
+
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("knowledge_base");
+
+        // Step 1: Generate an embedding for the user query
+        const inputTokens = encode(userQuery).length;
+        const embeddingStartTime = Date.now(); // Timer for embedding generation
+        const embeddingResponse = await openai.createEmbedding({
+            model: "text-embedding-ada-002", // Use the same model used for storing embeddings
+            input: userQuery,
+        });
+        const queryEmbedding = embeddingResponse.data.data[0].embedding;
+        const embeddingDuration = Date.now() - embeddingStartTime;
+
+        // Calculate cost for generating the query embedding
+        const embeddingCost = inputTokens * TOKEN_COST;
+        totalCost += embeddingCost;
+        console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${embeddingCost.toFixed(6)}, Duration: ${embeddingDuration}ms`);
+
+        // Step 2: Fetch all knowledge base entries with embeddings
+        const entriesStartTime = Date.now(); // Timer for DB fetch
+        const entries = await collection.find({ embedding: { $exists: true } }).toArray();
+        const entriesDuration = Date.now() - entriesStartTime;
+
+        if (entries.length === 0) {
+            console.log("No entries with embeddings found in the knowledge base.");
+            return "I'm sorry, I couldn't find any relevant information.";
+        }
+        console.log(`Fetched ${entries.length} entries from the knowledge base. Duration: ${entriesDuration}ms`);
+
+        // Step 3: Calculate similarity scores
+        const similarityStartTime = Date.now(); // Timer for similarity calculation
+        const similarities = entries.map(entry => {
+            const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
+            return { entry, similarity };
+        });
+        const similarityDuration = Date.now() - similarityStartTime;
+        console.log(`Calculated similarity scores for ${entries.length} entries. Duration: ${similarityDuration}ms`);
+
+        // Step 4: Find the most relevant entry
+        const bestMatch = similarities.sort((a, b) => b.similarity - a.similarity)[0];
+        const threshold = 0.8; // Adjust this threshold based on desired precision
+        if (bestMatch.similarity < threshold) {
+            console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
+            return "I'm sorry, I couldn't find any relevant information.";
+        }
+
+        // Step 5: Build and return the response
+        const { answer, guideline, links } = bestMatch.entry;
+        let response = `Here's what I found:\n\n${answer}\n\nGuideline: ${guideline}\n`;
+        if (links && links.length > 0) {
+            response += "Relevant links:\n" + links.map(link => `- [${link.text}](${link.url})`).join("\n");
+        }
+
+        const totalDuration = Date.now() - startTime;
+        console.log(`Best match found with similarity ${bestMatch.similarity}:`, bestMatch.entry);
+        console.log(`Total cost: $${totalCost.toFixed(6)}, Total duration: ${totalDuration}ms`);
+
+        return response;
+    } catch (error) {
+        console.error("Error in getAnswer:", error);
+        return "An error occurred while retrieving the information. Please try again later.";
     }
 }
 
