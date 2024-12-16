@@ -586,9 +586,21 @@ async function getAnswer(userQuery) {
 
         // Step 5: Build and return the response
         const { answer, guideline, links } = bestMatch.entry;
-        let response = `Here's what I found:\n\n${answer}\n\nGuideline: ${guideline}\n`;
+
+        // Transform links into <a> tags
+        let formattedLinks = "";
         if (links && links.length > 0) {
-            response += "Relevant links:\n" + links.map(link => `- [${link.text}](${link.url})`).join("\n");
+            formattedLinks = links
+                .map(
+                    link =>
+                        `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.text}</a>`
+                )
+                .join("<br>");
+        }
+
+        let response = `Here's what I found:<br><br>${answer}<br><br>Guideline: ${guideline}<br>`;
+        if (formattedLinks) {
+            response += `Relevant links:<br>${formattedLinks}`;
         }
 
         const totalDuration = Date.now() - startTime;
@@ -601,4 +613,5 @@ async function getAnswer(userQuery) {
         return "An error occurred while retrieving the information. Please try again later.";
     }
 }
+
 
