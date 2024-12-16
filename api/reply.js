@@ -457,11 +457,11 @@ async function sendRandomImage() {
 
 async function generateEmbeddings() {
     try {
-        await mongoClient.connect();
-        const db = mongoClient.db("caard-bot");
+        const db = await connectToDatabase();
         const collection = db.collection("knowledge_base");
 
         const entries = await collection.find({}).toArray();
+        console.log("Fetched entries:", entries);
         let updatedCount = 0;
 
         for (const entry of entries) {
