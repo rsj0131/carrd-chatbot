@@ -196,7 +196,7 @@ export default async function handler(req, res) {
             hour12: false,
         }).format(new Date());
 
-        const dynamicSystemMessage = `
+        let dynamicSystemMessage = `
             You're not an AI model, you are ${characterName}., and here's the information about the you:
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
