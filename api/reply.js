@@ -486,7 +486,8 @@ async function sendImage(userMessage) {
 
 
 // Vector Embeddings
-async function generateEmbeddings(targetCollection) {
+// Vector Embeddings
+async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
     const startTime = Date.now();
     const MODEL = "text-embedding-ada-002"; // Specify the embedding model
     const PRICING = {
@@ -501,6 +502,10 @@ async function generateEmbeddings(targetCollection) {
     }
 
     try {
+        if (typeof targetCollection !== "string" || targetCollection.trim() === "") {
+            throw new Error("Invalid targetCollection parameter. Must be a non-empty string.");
+        }
+
         const db = await connectToDatabase();
         console.log("Connected to database:", db.databaseName);
 
@@ -589,6 +594,7 @@ async function generateEmbeddings(targetCollection) {
         await mongoClient.close();
     }
 }
+
 
 /**
  * Calculate cosine similarity between two vectors.
