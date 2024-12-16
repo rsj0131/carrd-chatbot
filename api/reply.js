@@ -358,31 +358,18 @@ async function processFunctionCall(response) {
 // Example function execution
 async function executeFunction(name, args) {
     switch (name) {
-        case "shareProfileLink":
-            return await shareProfileLink(args); // Pass arguments to the function
         case "deleteAllChatHistory":
             return {
                 result: await deleteAllChatHistory(),
                 hasMessage: false,
                 msgContent: null,
             };
-        case "sendRandomImage":
-            const randomImage = await sendRandomImage();
-            if (randomImage) {
-                return {
-                    result: "You have successfully sent an image to the user",
-                    hasMessage: true,
-                    msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
-                };
-            } else {
-                return {
-                    result: "Tell the user no images available to send at the moment.",
-                    hasMessage: false,
-                    msgContent: null,
-                };
-            }
+       case "sendImage":
+            const userMessage = args.message || ""; // Ensure the message is passed as input
+            return await sendImage(userMessage);
         case "generateEmbeddings":
-            return await generateEmbeddings(); // Execute the embeddings function    
+            const targetCollection = args.targetCollection || "knowledge_base"; // Default to 'knowledge_base' if not specified
+            return await generateEmbeddings({ targetCollection }); // Pass the targetCollection to generateEmbeddings
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
@@ -407,70 +394,149 @@ async function deleteAllChatHistory() {
     }
 }
 
-async function sendRandomImage() {
+async function sendImage(userMessage) {
+    const startTime = Date.now(); // Start the timer
+    const TOKEN_COST = 0.1 / 1_000_000; // Cost for ada-002: $0.1 per 1M tokens
+    let totalCost = 0;
+
     try {
         const db = await connectToDatabase();
         const collection = db.collection("images");
 
-        // Count total documents in the collection
-        const count = await collection.countDocuments();
-        if (count === 0) {
-            console.log("No images found in the database.");
-            return null;
+        // Step 1: Generate an embedding for the user message
+        const inputTokens = encode(userMessage).length;
+        const embeddingStartTime = Date.now(); // Timer for embedding generation
+        const embeddingResponse = await openai.createEmbedding({
+            model: "text-embedding-ada-002",
+            input: userMessage,
+        });
+        const queryEmbedding = embeddingResponse.data.data[0].embedding;
+        const embeddingDuration = Date.now() - embeddingStartTime;
+
+        // Calculate cost for generating the query embedding
+        const embeddingCost = inputTokens * TOKEN_COST;
+        totalCost += embeddingCost;
+        console.log(
+            `Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${embeddingCost.toFixed(
+                6
+            )}, Duration: ${embeddingDuration}ms`
+        );
+
+        // Step 2: Fetch all images with embeddings
+        const fetchStartTime = Date.now();
+        const images = await collection.find({ embedding: { $exists: true } }).toArray();
+        const fetchDuration = Date.now() - fetchStartTime;
+
+        if (images.length === 0) {
+            console.log("No images with embeddings found in the database.");
+            return {
+                result: "No images available that match your description.",
+                hasMessage: false,
+                msgContent: null,
+            };
+        }
+        console.log(`Fetched ${images.length} images. Duration: ${fetchDuration}ms`);
+
+        // Step 3: Calculate similarity scores
+        const similarityStartTime = Date.now();
+        const similarities = images.map(image => {
+            const similarity = cosineSimilarity(queryEmbedding, image.embedding);
+            return { image, similarity };
+        });
+        const similarityDuration = Date.now() - similarityStartTime;
+
+        console.log(`Calculated similarity scores for ${images.length} images. Duration: ${similarityDuration}ms`);
+
+        // Step 4: Filter images based on similarity threshold and pick one randomly
+        const threshold = 0.8; // Adjust this threshold based on desired precision
+        const matchingImages = similarities.filter(({ similarity }) => similarity >= threshold);
+
+        if (matchingImages.length === 0) {
+            console.log("No images found matching the similarity threshold.");
+            return {
+                result: "No matching images found.",
+                hasMessage: false,
+                msgContent: null,
+            };
         }
 
-        // Generate a random offset
-        const randomIndex = Math.floor(Math.random() * count);
+        const randomImage =
+            matchingImages[Math.floor(Math.random() * matchingImages.length)].image;
 
-        // Fetch the random image
-        const image = await collection.find().skip(randomIndex).limit(1).toArray();
-        return image[0] || null;
+        console.log(`Selected random image from ${matchingImages.length} matches.`);
+
+        const totalDuration = Date.now() - startTime;
+        console.log(`Total cost: $${totalCost.toFixed(6)}, Total duration: ${totalDuration}ms`);
+
+        // Step 5: Return the selected image
+        return {
+            result: "You have successfully sent an image to the user",
+            hasMessage: true,
+            msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
+        };
     } catch (error) {
-        console.error("Error fetching random image from MongoDB:", error);
-        return null;
+        console.error("Error in sendImage:", error);
+        return {
+            result: "An error occurred while finding an image.",
+            hasMessage: false,
+            msgContent: null,
+        };
     }
 }
 
+
 // Vector Embeddings
-async function generateEmbeddings() {
+async function generateEmbeddings(targetCollection) {
+    const startTime = Date.now();
+    const MODEL = "text-embedding-ada-002"; // Specify the embedding model
+    const PRICING = {
+        "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
+        "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
+        "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
+    };
+
+    const pricing = PRICING[MODEL];
+    if (!pricing) {
+        throw new Error(`Unsupported model: ${MODEL}`);
+    }
+
     try {
         const db = await connectToDatabase();
         console.log("Connected to database:", db.databaseName);
 
-        const collection = db.collection("knowledge_base");
+        const collection = db.collection(targetCollection);
         const entries = await collection.find({}).toArray();
-        console.log("Fetched entries:", entries);
+        console.log(`Fetched entries from ${targetCollection}:`, entries);
 
         if (entries.length === 0) {
-            console.log("No entries found in the knowledge_base collection.");
+            console.log(`No entries found in the ${targetCollection} collection.`);
             return {
-                result: "No entries found in the knowledge base.",
+                result: `No entries found in the ${targetCollection} collection.`,
                 hasMessage: true,
-                msgContent: "There are no entries to process for embedding generation.",
+                msgContent: `There are no entries to process for embedding generation in ${targetCollection}.`,
             };
-        }
-
-        // Pricing information
-        const MODEL = "text-embedding-ada-002"; // Change to the desired model
-        const PRICING = {
-            "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
-            "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
-            "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
-        };
-
-        const pricing = PRICING[MODEL];
-
-        if (!pricing) {
-            throw new Error(`Unsupported model: ${MODEL}`);
         }
 
         let updatedCount = 0;
         let totalCost = 0;
 
         for (const entry of entries) {
-            const { _id, question, tags } = entry;
-            const inputText = question + " " + (tags || []).join(" ");
-            console.log("Processing entry:", { _id, inputText });
+            const { _id } = entry;
+            let inputText = "";
+
+            // Prepare the input text based on the collection
+            if (targetCollection === "knowledge_base") {
+                const { question, tags } = entry;
+                inputText = question + " " + (tags || []).join(" ");
+            } else if (targetCollection === "images") {
+                const { description, tags } = entry;
+                inputText = description + " " + (tags || []).join(" ");
+            } else {
+                console.error(`Unsupported collection: ${targetCollection}`);
+                continue;
+            }
+
+            console.log(`Processing entry from ${targetCollection}:`, { _id, inputText });
 
             // Generate embedding
             const response = await openai.createEmbedding({
@@ -503,12 +569,14 @@ async function generateEmbeddings() {
             }
         }
 
-        console.log(`Updated embeddings for ${updatedCount} entries.`);
-        console.log(`Total cost for embedding generation: $${totalCost.toFixed(6)}`);
+        const duration = Date.now() - startTime;
+        console.log(`Updated embeddings for ${updatedCount} entries in ${targetCollection}.`);
+        console.log(`Total cost: $${totalCost.toFixed(6)}, Duration: ${duration}ms`);
+
         return {
-            result: `Successfully updated embeddings for ${updatedCount} knowledge base entries.`,
+            result: `Successfully updated embeddings for ${updatedCount} entries in ${targetCollection}.`,
             hasMessage: true,
-            msgContent: `Embeddings generation completed. ${updatedCount} entries updated. Total cost: $${totalCost.toFixed(6)}`,
+            msgContent: `Embeddings generation completed for ${targetCollection}. ${updatedCount} entries updated. Total cost: $${totalCost.toFixed(6)}. Duration: ${duration}ms`,
         };
     } catch (error) {
         console.error("Error generating embeddings:", error);
