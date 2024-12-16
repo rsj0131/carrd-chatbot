@@ -458,28 +458,53 @@ async function sendRandomImage() {
 async function generateEmbeddings() {
     try {
         const db = await connectToDatabase();
-        const collection = db.collection("knowledge_base");
+        console.log("Connected to database:", db.databaseName);
 
+        const collections = await db.listCollections().toArray();
+        console.log("Available collections:", collections);
+
+        const collection = db.collection("knowledge_base");
         const entries = await collection.find({}).toArray();
         console.log("Fetched entries:", entries);
+
+        if (entries.length === 0) {
+            console.log("No entries found in the knowledge_base collection.");
+            return {
+                result: "No entries found in the knowledge base.",
+                hasMessage: true,
+                msgContent: "There are no entries to process for embedding generation.",
+            };
+        }
+
         let updatedCount = 0;
 
         for (const entry of entries) {
             const { _id, question, tags } = entry;
             const inputText = question + " " + (tags || []).join(" ");
+            console.log("Processing entry:", { _id, inputText });
+
+            // Generate embedding
             const response = await openai.createEmbedding({
                 model: "text-embedding-ada-002",
                 input: inputText,
             });
 
-            const embedding = response.data.data[0].embedding;
+            const embedding = response.data.data[0]?.embedding;
+            if (!embedding) {
+                console.log("Failed to generate embedding for entry:", _id);
+                continue;
+            }
 
-            // Update the entry with the embedding
-            await collection.updateOne(
+            // Update the document with the embedding
+            const result = await collection.updateOne(
                 { _id },
                 { $set: { embedding } }
             );
-            updatedCount++;
+            console.log(`Update result for ${_id}:`, result);
+
+            if (result.modifiedCount > 0) {
+                updatedCount++;
+            }
         }
 
         console.log(`Updated embeddings for ${updatedCount} entries.`);
@@ -491,7 +516,7 @@ async function generateEmbeddings() {
     } catch (error) {
         console.error("Error generating embeddings:", error);
         return {
-            result: "Tell the user an error occurred while generating embeddings.",
+            result: "An error occurred while generating embeddings.",
             hasMessage: false,
             msgContent: null,
         };
@@ -499,3 +524,4 @@ async function generateEmbeddings() {
         await mongoClient.close();
     }
 }
+
