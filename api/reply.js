@@ -225,8 +225,10 @@ export default async function handler(req, res) {
         // Step 4: Append knowledge base response if available
         if (knowledgeResponse && knowledgeResponse !== null) {
             dynamicSystemMessage += `\n\nAdditionally, refer to the following knowledge base entry:\n${knowledgeResponse}`;
+            console.log("Knowledge response loaded: ", knowledgeResponse);
+        } else {
+            console.log("Knowledge response NOT loaded: ", knowledgeResponse);
         }
-        
         const history = await fetchChatHistory();
 
         const messages = [
