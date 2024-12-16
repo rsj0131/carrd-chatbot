@@ -367,7 +367,7 @@ async function executeFunction(name, args) {
                 msgContent: null,
             };
         case "sendRandomImage":
-            const randomImage = await getRandomImage();
+            const randomImage = await sendRandomImage();
             if (randomImage) {
                 return {
                     result: "You have successfully sent an image to the user",
@@ -381,6 +381,8 @@ async function executeFunction(name, args) {
                     msgContent: null,
                 };
             }
+        case "generateEmbeddings":
+            return await generateEmbeddings(); // Execute the embeddings function    
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
@@ -391,12 +393,12 @@ async function executeFunction(name, args) {
     }
 }
 
-async function getAnswer(question) {
+async function getAnswer() {
     const db = await connectToDatabase();
     const collection = db.collection("knowledge_base");
 
     // Fetch the relevant Q&A entry
-    const entry = await collection.findOne({ question });
+    const entry = await collection.findOne({  });
     if (!entry) return null;
 
     const { answer, guideline, links } = entry;
@@ -429,7 +431,7 @@ async function deleteAllChatHistory() {
     }
 }
 
-async function getRandomImage() {
+async function sendRandomImage() {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("images");
@@ -450,5 +452,50 @@ async function getRandomImage() {
     } catch (error) {
         console.error("Error fetching random image from MongoDB:", error);
         return null;
+    }
+}
+
+async function generateEmbeddings() {
+    try {
+        await mongoClient.connect();
+        const db = mongoClient.db("caard-bot");
+        const collection = db.collection("knowledge_base");
+
+        const entries = await collection.find({}).toArray();
+        let updatedCount = 0;
+
+        for (const entry of entries) {
+            const { _id, question, tags } = entry;
+            const inputText = question + " " + (tags || []).join(" ");
+            const response = await openai.createEmbedding({
+                model: "text-embedding-ada-002",
+                input: inputText,
+            });
+
+            const embedding = response.data.data[0].embedding;
+
+            // Update the entry with the embedding
+            await collection.updateOne(
+                { _id },
+                { $set: { embedding } }
+            );
+            updatedCount++;
+        }
+
+        console.log(`Updated embeddings for ${updatedCount} entries.`);
+        return {
+            result: `Successfully updated embeddings for ${updatedCount} knowledge base entries.`,
+            hasMessage: true,
+            msgContent: `Embeddings generation completed. ${updatedCount} entries updated.`,
+        };
+    } catch (error) {
+        console.error("Error generating embeddings:", error);
+        return {
+            result: "Tell the user an error occurred while generating embeddings.",
+            hasMessage: false,
+            msgContent: null,
+        };
+    } finally {
+        await mongoClient.close();
     }
 }
