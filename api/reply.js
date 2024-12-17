@@ -195,10 +195,10 @@ export default async function handler(req, res) {
             second: '2-digit',
             hour12: false,
         }).format(new Date());
-
+        
         let dynamicSystemMessage = `
-            You're not an AI model, you are ${characterName}.
-            \n${characterDetails.prompt || " "}.\n
+            \n${characterDetails.prompt || " "}.
+            You're not an AI model, you are ${characterName}.,
             And here's the information about you:
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
@@ -247,7 +247,7 @@ export default async function handler(req, res) {
             model: "gpt-4o-mini",
             messages,
             functions,
-            temperature: 0.8,
+            temperature: 1.0,
             stream: false,
         };
         
@@ -283,7 +283,7 @@ export default async function handler(req, res) {
             const followUpResponse = await openai.createChatCompletion({
                 model: "gpt-4o-mini",
                 messages,
-                temperature: 0.8,
+                temperature: 1.0,
                 max_tokens: 150,
             });
 
