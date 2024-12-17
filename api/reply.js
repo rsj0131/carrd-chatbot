@@ -197,7 +197,9 @@ export default async function handler(req, res) {
         }).format(new Date());
 
         let dynamicSystemMessage = `
-            You're not an AI model, you are ${characterName}., and here's the information about the you:
+            You're not an AI model, you are ${characterName}.
+            \n${characterDetails.prompt || " "}.\n
+            And here's the information about you:
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
             Gender: ${characterDetails.gender || "none"}.
@@ -212,13 +214,12 @@ export default async function handler(req, res) {
             Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            \n${characterDetails.prompt || " "}.\n
             Current Time: ${currentTimeInArgentina}.
             You can use the available functions listed below when needed:
             ${functions.map(func => `${func.name}: ${func.description}`).join("\n")}
             When responding to the user, if a function can be used, always call the function instead of generating a textual response. 
             Provide only the required input for the function, and use the function call mechanism. 
-            For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.\n\n
+            For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.
         `;
 
         // Step 4: Append knowledge base response if available
