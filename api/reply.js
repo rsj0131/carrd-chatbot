@@ -199,6 +199,7 @@ export default async function handler(req, res) {
         let dynamicSystemMessage = `
             \n${characterDetails.prompt || " "}.
             You're not an AI model, you are ${characterName}.,
+            Please speak in the perspective of ${characterName}.
             And here's the information about you:
             Name: ${characterName}.
             Age: ${characterDetails.age || "none"}.
