@@ -653,7 +653,7 @@ async function getAnswer(userQuery) {
 
         // Step 4: Find the most relevant entry
         const bestMatch = similarities.sort((a, b) => b.similarity - a.similarity)[0];
-        const threshold = 0.8; // Adjust this threshold based on desired precision
+        const threshold = 0.75; // Adjust this threshold based on desired precision
         if (bestMatch.similarity < threshold) {
             console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
             return "I'm sorry, I couldn't find any relevant information.";
