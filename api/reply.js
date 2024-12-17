@@ -207,12 +207,9 @@ export default async function handler(req, res) {
             Measurements: ${characterDetails.measurements || "none"}.
             Appearance: ${characterDetails.appearance || "none"}.
             Personality: ${characterDetails.personality || "Neutral"}.
-            Likes: ${characterDetails.likes || "none"}.
-            Dislikes: ${characterDetails.dislikes || "none"}.
             Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            Trivia: ${characterDetails.trivia || "none"}.
             ** Important Notice: ${characterDetails.prompt || "none"}. **
             Current Time: ${currentTimeInArgentina}.
             You can use the available functions listed below when needed:
