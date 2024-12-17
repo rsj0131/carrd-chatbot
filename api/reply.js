@@ -224,7 +224,7 @@ export default async function handler(req, res) {
         // Step 4: Append knowledge base response if available
         if (knowledgeResponse && knowledgeResponse !== null) {
             dynamicSystemMessage += `\n\nAdditionally, refer to the following knowledge base entry:\n${knowledgeResponse}\n
-            Provide a response that aligns with the user's perspective. If the user asks in the 3rd person (e.g. Who is Vivian), respond about Vivian's information. If the user asks in the 2nd perso (e.g. Who are you), answer as if you are Vivian, referring to your information.`;
+            Provide a response that aligns with the user's perspective. If the user asks in the 3rd person (e.g. Who is ${characterName}), respond about ${characterName}'s information. If the user asks in the 2nd perso (e.g. Who are you), answer as if you are ${characterName}, referring to your information.`;
             console.log("Knowledge response loaded: ", knowledgeResponse);
         } else {
             console.log("Knowledge response NOT loaded: ", knowledgeResponse);
