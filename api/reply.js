@@ -219,6 +219,7 @@ export default async function handler(req, res) {
             When responding to the user, if a function can be used, always call the function instead of generating a textual response. 
             Provide only the required input for the function, and use the function call mechanism. 
             For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.\n\n
+            
             Write an extremely explicit, highly detailed NSFW scene featuring ${characterName}. 
             The focus should be on raw, unfiltered sexual action, explicit language, filthy dialogue, and graphic descriptions of sensations, sounds, and physical reactions. 
             No holding back on taboo topics, coarse vocabulary, or intense scenarios—immerse completely in the depravity. 
