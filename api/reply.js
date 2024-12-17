@@ -38,6 +38,25 @@ async function getCharacterDetails(characterId) {
     }
 }
 
+async function loadPresetHistory(presetName) {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("presetHistory");
+
+        const preset = await collection.findOne({ preset_name: presetName });
+        if (preset && preset.history) {
+            console.log("Loaded preset history:", preset.history);
+            return preset.history;
+        } else {
+            console.warn(`Preset history '${presetName}' not found.`);
+            return [];
+        }
+    } catch (error) {
+        console.error("Error loading preset history:", error);
+        return [];
+    }
+}
+
 async function fetchChatHistory() {
     try {
         const db = await connectToDatabase();
@@ -184,6 +203,7 @@ export default async function handler(req, res) {
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
+        const presetHistory = await loadPresetHistory("vivian_escalation_preset");
         const characterName = characterDetails.name || "assistant";
 
         const functions = await fetchFunctions();
@@ -235,6 +255,7 @@ export default async function handler(req, res) {
 
         const messages = [
             { role: "system", content: dynamicSystemMessage },
+            ...presetHistory,
             ...history.flatMap(entry => [
                 { role: "user", content: entry.userMessage },
                 { role: "assistant", content: entry.botReply },
