@@ -16,7 +16,7 @@ async function connectToDatabase() {
 
 // OpenAI Configuration
 const configuration = new Configuration({
-    apiKey: process.env.OPENAI_API_KEY, // Replace with your Mars API key
+    apiKey: process.env.MODEL_API_KEY, // Replace with your Mars API key
     //basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
 });
 const openai = new OpenAIApi(configuration);
