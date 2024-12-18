@@ -641,7 +641,7 @@ async function getAnswer(userQuery) {
         const embeddingStartTime = Date.now(); // Timer for embedding generation
         const embeddingResponse = await openai.createEmbedding({
             model: EMBED_MODEL,
-            input: userQuery,
+            input: userQuery,});
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
         const embeddingDuration = Date.now() - embeddingStartTime;
 
