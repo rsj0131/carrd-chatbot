@@ -21,9 +21,38 @@ const configuration = new Configuration({
 });
 const openai = new OpenAIApi(configuration);
 
-// GPT-4o-mini Pricing
-const INPUT_TOKEN_COST = 0.150 / 1_000_000; // $0.150 per 1M input tokens
-const OUTPUT_TOKEN_COST = 0.600 / 1_000_000; // $0.600 per 1M output tokens
+// Pricing
+const MODEL = "gpt-4o-mini"; // Specify the model
+const EMBED_MODEL = "text-embedding-ada-002"; // Specify the embedding model
+const PRICING = {
+        "gpt-4o-mini": { input: 0.150 / 1_000_000, output: 0.600 / 1_000_000 },
+        "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
+        "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
+        "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
+        "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 },
+        "mistral-embed": { input: 0.100 / 1_000_000, output: 0.000 / 1_000_000 }
+    };
+
+function getPricingForModel(model) {
+    const pricing = PRICING[model];
+    if (!pricing) {
+        throw new Error(`Pricing not available for model: ${model}`);
+    }
+    return pricing;
+}
+
+// Example Usage: Replace this logic in relevant sections
+async function computeCostAndLog(usage, model) {
+    const { input, output } = getPricingForModel(model);
+    const inputCost = usage.prompt_tokens * input;
+    const outputCost = usage.completion_tokens * output;
+    const totalCost = inputCost + outputCost;
+
+    console.log(`Token Usage: Prompt=${usage.prompt_tokens}, Completion=${usage.completion_tokens}, Total=${usage.total_tokens}`);
+    console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
+
+    return { inputCost, outputCost, totalCost };
+}
 
 async function getCharacterDetails(characterId) {
     try {
@@ -128,11 +157,7 @@ async function checkAndSummarizeChatHistory() {
         // Token Usage and Pricing
         const usage = result.usage || {};
         const { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 } = usage;
-        const INPUT_TOKEN_COST = 0.150 / 1_000_000; // $0.150 per 1M input tokens
-        const OUTPUT_TOKEN_COST = 0.600 / 1_000_000; // $0.600 per 1M output tokens
-        const inputCost = prompt_tokens * INPUT_TOKEN_COST;
-        const outputCost = completion_tokens * OUTPUT_TOKEN_COST;
-        const totalCost = inputCost + outputCost;
+        const { inputCost, outputCost, totalCost } = await computeCostAndLog(usage, MODEL);
 
         console.log(`Token Usage for Summarization: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Summarization Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
@@ -266,7 +291,7 @@ export default async function handler(req, res) {
         console.log("Available functions:", JSON.stringify(functions, null, 2));
 
         const payload = {
-            model: "gpt-4o-mini",
+            model: MODEL,
             messages,
             functions,
             temperature: 1.0,
@@ -283,9 +308,7 @@ export default async function handler(req, res) {
 
         const usage = response.data.usage || {};
         const { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 } = usage;
-        const inputCost = prompt_tokens * INPUT_TOKEN_COST;
-        const outputCost = completion_tokens * OUTPUT_TOKEN_COST;
-        const totalCost = inputCost + outputCost;
+        const { inputCost, outputCost, totalCost } = await computeCostAndLog(usage, MODEL);
         
         console.log(`Token Usage: Prompt=${prompt_tokens}, Completion=${completion_tokens}, Total=${total_tokens}`);
         console.log(`Cost: Input=$${inputCost.toFixed(6)}, Output=$${outputCost.toFixed(6)}, Total=$${totalCost.toFixed(6)}`);
@@ -430,7 +453,7 @@ async function sendImage(userMessage) {
         const inputTokens = encode(userMessage).length;
         const embeddingStartTime = Date.now(); // Timer for embedding generation
         const embeddingResponse = await openai.createEmbedding({
-            model: "text-embedding-ada-002",
+            model: EMBED_MODEL,
             input: userMessage,
         });
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
@@ -509,17 +532,10 @@ async function sendImage(userMessage) {
 
 
 // Vector Embeddings
-// Vector Embeddings
 async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
     const startTime = Date.now();
-    const MODEL = "text-embedding-ada-002"; // Specify the embedding model
-    const PRICING = {
-        "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
-        "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
-        "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
-    };
 
-    const pricing = PRICING[MODEL];
+    const pricing = PRICING[EMBED_MODEL];
     if (!pricing) {
         throw new Error(`Unsupported model: ${MODEL}`);
     }
@@ -568,7 +584,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
 
             // Generate embedding
             const response = await openai.createEmbedding({
-                model: MODEL,
+                model: EMBED_MODEL,
                 input: inputText,
             });
 
