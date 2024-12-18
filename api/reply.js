@@ -627,9 +627,14 @@ async function getAnswer(userQuery) {
     const startTime = Date.now();
 
     try {
+        if (!userQuery || typeof userQuery !== "string") {
+            throw new Error("Invalid input: userQuery must be a non-empty string.");
+        }
         const db = await connectToDatabase();
         const collection = db.collection("knowledge_base");
 
+        console.log("Generating embedding for query:", userQuery);
+        
         const inputTokens = encode(userQuery).length;
         const embeddingResponse = await client.embeddings.create({
             model: EMBED_MODEL,
