@@ -141,7 +141,7 @@ async function checkAndSummarizeChatHistory() {
             ...messagesToSummarize,
         ];
         
-        // Call the OpenAI API for summarization
+        // Call the API for summarization
         const response = await ({
             model: MODEL,
             messages: prompt,
@@ -302,7 +302,7 @@ export default async function handler(req, res) {
         const payloadString = JSON.stringify(payload);
         const tokenCount = encode(payloadString).length; // Count the tokens
         console.log("Token count:", tokenCount);
-        console.log("Payload sent to OpenAI:", JSON.stringify(payload, null, 2));
+        console.log("Payload sent to Mistral:", JSON.stringify(payload, null, 2));
         
         const response = await client.chat.complete(payload);
         console.log("API Response:", JSON.stringify(response.data, null, 2));
