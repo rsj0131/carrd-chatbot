@@ -454,7 +454,7 @@ async function sendImage(userMessage) {
         const embeddingStartTime = Date.now(); // Timer for embedding generation
         const embeddingResponse = await client.embeddings.create({
             model: EMBED_MODEL,
-            input: userMessage,
+            inputs: userMessage,
         });
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
         const embeddingDuration = Date.now() - embeddingStartTime;
@@ -563,7 +563,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
             // Generate embedding
             const response = await client.embeddings.create({
                 model: EMBED_MODEL,
-                input: inputText,
+                inputs: inputText,
             });
 
             const embedding = response.data.data[0]?.embedding;
@@ -633,7 +633,7 @@ async function getAnswer(userQuery) {
         const inputTokens = encode(userQuery).length;
         const embeddingResponse = await client.embeddings.create({
             model: EMBED_MODEL,
-            input: userQuery,
+            inputs: userQuery,
         });
 
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
