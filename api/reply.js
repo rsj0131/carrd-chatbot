@@ -67,10 +67,14 @@ async function getCharacterDetails(characterId) {
     }
 }
 
-async function loadPresetHistory(presetName) {
+async function loadPresetHistory(presetNameFromEnv) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("presetHistory");
+
+        // Sanitize preset name from environment variable
+        const presetName = presetNameFromEnv?.trim().replace(/^["']|["']$/g, "");
+        console.log("Loading Preset History for:", presetName);
 
         const preset = await collection.findOne({ preset_name: presetName });
         if (preset && preset.history) {
@@ -85,6 +89,7 @@ async function loadPresetHistory(presetName) {
         return [];
     }
 }
+
 
 async function fetchChatHistory() {
     try {
