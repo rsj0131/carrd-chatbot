@@ -623,6 +623,7 @@ function cosineSimilarity(vectorA, vectorB) {
 }
 
 async function getAnswer(userQuery) {
+    console.log("API Key:", process.env.MODEL_API_KEY);
     const startTime = Date.now();
 
     try {
