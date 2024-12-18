@@ -18,7 +18,7 @@ async function connectToDatabase() {
 const configuration = new Configuration({
     apiKey: process.env.OPENAI_API_KEY, // Replace with your Mars API key
 });
-});
+
 const openai = new OpenAIApi(configuration);
 
 // Pricing
