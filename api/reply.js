@@ -18,8 +18,8 @@ const apiKey = process.env.MODEL_API_KEY;
 const client = new Mistral({apiKey: apiKey});
 
 // Pricing
-const MODEL = "gpt-4o-mini"; // Specify the model
-const EMBED_MODEL = "text-embedding-ada-002"; // Specify the embedding model
+const MODEL = "ministral-8b-latest"; // Specify the model
+const EMBED_MODEL = "ministral-8b-latest"; // Specify the embedding model
 const PRICING = {
         "gpt-4o-mini": { input: 0.150 / 1_000_000, output: 0.600 / 1_000_000 },
         "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
