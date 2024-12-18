@@ -203,7 +203,7 @@ export default async function handler(req, res) {
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
-        const presetHistory = await loadPresetHistory("process.env.PRESET_CHAT_ID");
+        const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
 
         const functions = await fetchFunctions();
