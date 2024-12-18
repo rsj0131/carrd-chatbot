@@ -147,7 +147,7 @@ async function checkAndSummarizeChatHistory() {
         
         // Call the OpenAI API for summarization
         const response = await openai.createChatCompletion({
-            model: ,
+            model: MODEL,
             messages: prompt,
             temperature: 0.5,
             max_tokens: 200,
