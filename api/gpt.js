@@ -631,6 +631,8 @@ async function getAnswer(userQuery) {
     const startTime = Date.now();
 
     try {
+        console.log("User Query:", userQuery);
+        
         const db = await connectToDatabase();
         const collection = db.collection("knowledge_base");
 
@@ -638,6 +640,9 @@ async function getAnswer(userQuery) {
         const embeddingResponse = await openai.createEmbedding({
             model: EMBED_MODEL,
             input: userQuery,
+        }).catch(error => {
+            console.error("Embedding API Error:", error);
+            throw new Error("Failed to generate embedding.");
         });
 
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
@@ -645,7 +650,8 @@ async function getAnswer(userQuery) {
         // Calculate cost dynamically
         const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
         const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-
+        console.log("Embedding Response:", embeddingResponse);
+        console.log("Database Results:", knowledgeBaseResult);
         console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}`);
 
         // Fetch knowledge base entries and continue processing...
