@@ -623,34 +623,80 @@ function cosineSimilarity(vectorA, vectorB) {
 }
 
 async function getAnswer(userQuery) {
-    console.log("API Key:", process.env.MODEL_API_KEY);
-    const startTime = Date.now();
+    const startTime = Date.now(); // Start the timer
+    const TOKEN_COST = PRICING[EMBED_MODEL]; // Cost for ada-002: $0.1 per 1M tokens
+    let totalCost = 0;
 
     try {
-        if (!userQuery || typeof userQuery !== "string") {
-            throw new Error("Invalid input: userQuery must be a non-empty string.");
-        }
         const db = await connectToDatabase();
         const collection = db.collection("knowledge_base");
 
-        console.log("Generating embedding for query:", userQuery);
-        
+        // Step 1: Generate an embedding for the user query
         const inputTokens = encode(userQuery).length;
+        const embeddingStartTime = Date.now(); // Timer for embedding generation
         const embeddingResponse = await client.embeddings.create({
             model: EMBED_MODEL,
             inputs: userQuery,
-        });
-
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
+        const embeddingDuration = Date.now() - embeddingStartTime;
 
-        // Calculate cost dynamically
-        const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-        const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+        // Calculate cost for generating the query embedding
+        const embeddingCost = inputTokens * TOKEN_COST;
+        totalCost += embeddingCost;
+        console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${embeddingCost.toFixed(6)}, Duration: ${embeddingDuration}ms`);
 
-        console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}`);
+        // Step 2: Fetch all knowledge base entries with embeddings
+        const entriesStartTime = Date.now(); // Timer for DB fetch
+        const entries = await collection.find({ embedding: { $exists: true } }).toArray();
+        const entriesDuration = Date.now() - entriesStartTime;
 
-        // Fetch knowledge base entries and continue processing...
-        // (The rest of the function remains unchanged)
+        if (entries.length === 0) {
+            console.log("No entries with embeddings found in the knowledge base.");
+            return "I'm sorry, I couldn't find any relevant information.";
+        }
+        console.log(`Fetched ${entries.length} entries from the knowledge base. Duration: ${entriesDuration}ms`);
+
+        // Step 3: Calculate similarity scores
+        const similarityStartTime = Date.now(); // Timer for similarity calculation
+        const similarities = entries.map(entry => {
+            const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
+            return { entry, similarity };
+        });
+        const similarityDuration = Date.now() - similarityStartTime;
+        console.log(`Calculated similarity scores for ${entries.length} entries. Duration: ${similarityDuration}ms`);
+
+        // Step 4: Find the most relevant entry
+        const bestMatch = similarities.sort((a, b) => b.similarity - a.similarity)[0];
+        const threshold = 0.75; // Adjust this threshold based on desired precision
+        if (bestMatch.similarity < threshold) {
+            console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
+            return "I'm sorry, I couldn't find any relevant information.";
+        }
+
+        // Step 5: Build and return the response
+        const { answer, guideline, links } = bestMatch.entry;
+
+        // Transform links into <a> tags
+        let formattedLinks = "";
+        if (links && links.length > 0) {
+            formattedLinks = links
+                .map(
+                    link =>
+                        `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.text}</a>`
+                )
+                .join("<br>");
+        }
+
+        let response = `Here's what I found:<br><br>${answer}<br><br>Guideline: ${guideline}<br>`;
+        if (formattedLinks) {
+            response += `Relevant links:<br>${formattedLinks}`;
+        }
+
+        const totalDuration = Date.now() - startTime;
+        console.log(`Best match found with similarity ${bestMatch.similarity}:`, bestMatch.entry);
+        console.log(`Total cost: $${totalCost.toFixed(6)}, Total duration: ${totalDuration}ms`);
+
+        return response;
     } catch (error) {
         console.error("Error in getAnswer:", error);
         return "An error occurred while retrieving the information. Please try again later.";
