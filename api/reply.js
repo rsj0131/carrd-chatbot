@@ -14,7 +14,7 @@ async function connectToDatabase() {
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
 
-const apiKey = process.env.MODEL_API_KEY,
+const apiKey = process.env.MODEL_API_KEY;
 const client = new Mistral({apiKey: apiKey});
 
 // Pricing
