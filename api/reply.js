@@ -16,15 +16,14 @@ async function connectToDatabase() {
 
 // OpenAI Configuration
 const configuration = new Configuration({
-    apiKey: process.env.MODEL_API_KEY, // Replace with your Mars API key
-    //basePath: "https://mars.chub.ai/mixtral/v1", // Correct Mars base path
+    apiKey: process.env.OPENAI_API_KEY, // Replace with your Mars API key
 });
 });
 const openai = new OpenAIApi(configuration);
 
 // Pricing
-const MODEL = "ministral-8b-latest"; // Specify the model
-const EMBED_MODEL = "mistral-embed"; // Specify the embedding model
+const MODEL = "gpt-4o-mini"; // Specify the model
+const EMBED_MODEL = "text-embedding-ada-002"; // Specify the embedding model
 const PRICING = {
         "gpt-4o-mini": { input: 0.150 / 1_000_000, output: 0.600 / 1_000_000 },
         "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
