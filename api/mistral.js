@@ -391,6 +391,8 @@ async function fetchFunctions() {
                 },
             },
         }));
+        // Log the formatted tools for debugging
+        console.log("Formatted tools for Mistral:", JSON.stringify(tools, null, 2));
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
         return [];
