@@ -405,19 +405,18 @@ async function fetchFunctions() {
 
 async function processToolCall(toolCall) {
     const { function: func, arguments: args } = toolCall;
-
     try {
-        // Parse the arguments if they are a valid JSON string
-        const parsedArgs = args ? JSON.parse(args) : {}; // Fallback to empty object
-        console.log(`Processing tool call: ${func.name} with parsed arguments:`, parsedArgs);
+        console.log("Raw arguments from toolCall:", args);
+        const parsedArgs = typeof args === "string" ? JSON.parse(args) : args || {};
+        console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
 
         // Dynamically execute the tool
         const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs);
-        console.log(`Tool ${func.name} executed. Result: ${result}`);
+        console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
         return { result, hasMessage, msgContent };
     } catch (error) {
         console.error("Error processing tool call:", error);
-        return { result: "Error occurred while executing the tool.", hasMessage: false, msgContent: null };
+        return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: null };
     }
 }
 
