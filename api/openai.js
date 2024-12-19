@@ -28,9 +28,7 @@ const PRICING = {
         "gpt-4o-mini": { input: 0.150 / 1_000_000, output: 0.600 / 1_000_000 },
         "text-embedding-3-small": { input: 0.020 / 1_000_000, output: 0.010 / 1_000_000 },
         "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
-        "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
-        "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 },
-        "mistral-embed": { input: 0.100 / 1_000_000, output: 0.000 / 1_000_000 }
+        "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 }
     };
 
 function getPricingForModel(model) {
