@@ -334,6 +334,7 @@ export default async function handler(req, res) {
         const choice = response.choices?.[0]?.message;
         if (choice?.toolCalls?.length > 0) {
             for (const toolCall of choice.toolCalls) {
+                console.log("Tool call structure:", toolCall);
                 const { result, hasMessage, msgContent } = await processToolCall(toolCall);
                 if (hasMessage && msgContent) {
                     replies.push(msgContent);
@@ -342,6 +343,7 @@ export default async function handler(req, res) {
                 // Add tool result as a system message for follow-ups
                 messages.push({ role: "system", content: `You have used a tool. Inform the user about result: ${result}` });
             }
+            
             const followUpResponse = await client.chat.complete({
                 model: MODEL,
                 messages,
@@ -404,13 +406,18 @@ async function fetchFunctions() {
 }
 
 async function processToolCall(toolCall) {
-    const { function: func, arguments: args } = toolCall;
     try {
+        const { function: func, arguments: args } = toolCall;
+
+        // Debugging logs
+        console.log("Tool call received:", toolCall);
         console.log("Raw arguments from toolCall:", args);
+
+        // Parse arguments safely
         const parsedArgs = typeof args === "string" ? JSON.parse(args) : args || {};
         console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
 
-        // Dynamically execute the tool
+        // Execute the tool
         const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs);
         console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
         return { result, hasMessage, msgContent };
@@ -419,6 +426,7 @@ async function processToolCall(toolCall) {
         return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: null };
     }
 }
+
 
 // Example function execution
 async function executeFunction(name, args) {
