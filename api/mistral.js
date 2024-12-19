@@ -336,7 +336,7 @@ export default async function handler(req, res) {
         if (choice?.toolCalls?.length > 0) {
             for (const toolCall of choice.toolCalls) {
                 console.log("Tool call structure:", toolCall);
-                const { result, hasMessage, msgContent } = await processToolCall(toolCall);
+                const { result, hasMessage, msgContent } = await processToolCall(toolCall, message);
                 if (hasMessage && msgContent) {
                     replies.push(msgContent);
                 }
@@ -406,7 +406,7 @@ async function fetchFunctions() {
     }
 }
 
-async function processToolCall(toolCall) {
+async function processToolCall(toolCall, userMessage) {
     try {
         // Correctly access arguments from the `function` object
         const func = toolCall.function;
@@ -421,7 +421,7 @@ async function processToolCall(toolCall) {
         console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
 
         // Dynamically execute the tool
-        const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs);
+        const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs, userMessage);
         console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
         return { result, hasMessage, msgContent };
     } catch (error) {
@@ -433,13 +433,13 @@ async function processToolCall(toolCall) {
 
 
 // Example function execution
-async function executeFunction(name, args) {
+async function executeFunction(name, args, userMessage) {
     switch (name) {
         case "deleteAllChatHistory":
             return await deleteAllChatHistory();
             
         case "sendImage":
-            const userMessage = args.message || ""; // Ensure the message is passed as input
+            //const userMessage = args.message || ""; // Ensure the message is passed as input
             return await sendImage(userMessage);
             
         case "generateEmbeddings":
