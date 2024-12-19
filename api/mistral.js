@@ -534,7 +534,7 @@ async function sendImage(userMessage) {
         console.log(`Calculated similarity scores for ${images.length} images. Duration: ${similarityDuration}ms`);
 
         // Step 4: Filter images based on similarity threshold and pick one randomly
-        const threshold = 0.8; // Adjust this threshold based on desired precision
+        const threshold = 0.7; // Adjust this threshold based on desired precision
         const matchingImages = similarities.filter(({ similarity }) => similarity >= threshold);
 
         if (matchingImages.length === 0) {
