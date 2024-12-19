@@ -272,13 +272,6 @@ export default async function handler(req, res) {
             - If the user mentions deleting chat history, call the "deleteAllChatHistory" tool instead of generating a textual response.
             - If the user requests an image or any other action that aligns with a tool, call the tool.
             
-            Examples of how to respond:
-            - User: Can you delete the chat history?
-              Assistant: *invokes the deleteAllChatHistory tool*
-            
-            - User: Show me a picture related to cats.
-              Assistant: *invokes the sendImage tool*
-            
             If a tool can fulfill the user's request, always invoke it.
             Tools available:
             ${tools.map(tool => `${tool.function.name}: ${tool.function.description}`).join("\n")}
@@ -313,7 +306,7 @@ export default async function handler(req, res) {
             tools,
             tool_choice: "auto",
             messages,
-            temperature: 0.6,
+            temperature: 0.2,
             stream: false,
         };
         
