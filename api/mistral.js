@@ -131,7 +131,7 @@ async function checkAndSummarizeChatHistory() {
             }))
         );
 
-        // Create the prompt for summarization
+        // Ensure the last message is from a user
         const prompt = [
             {
                 role: "system",
@@ -139,7 +139,15 @@ async function checkAndSummarizeChatHistory() {
             },
             ...messagesToSummarize,
         ];
-        
+
+        // Add a user prompt if the last role is assistant
+        if (prompt[prompt.length - 1].role === "assistant") {
+            prompt.push({
+                role: "user",
+                content: "Please summarize the above conversation.",
+            });
+        }
+
         // Call the API for summarization
         const response = await client.chat.complete({
             model: MODEL,
@@ -183,7 +191,6 @@ async function checkAndSummarizeChatHistory() {
         console.log(`Time taken for summarization: ${summaryElapsedTime} ms`);
     }
 }
-
 
 
 async function saveToMongoDB(userMessage, botReply) {
@@ -293,7 +300,7 @@ export default async function handler(req, res) {
         const payload = {
             model: MODEL,
             tools,
-            tool_choice: "auto",
+            tool_choice: "any",
             messages,
             temperature: 1.0,
             stream: false,
