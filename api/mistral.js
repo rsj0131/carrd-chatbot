@@ -336,7 +336,7 @@ export default async function handler(req, res) {
                 }
 
                 // Add tool result as a system message for follow-ups
-                messages.push({ role: "system", content: `Tool result: ${result}` });
+                messages.push({ role: "system", content: `Inform the user about the tool uage result: ${result}` });
             }
             const followUpResponse = await client.chat.complete({
                 model: MODEL,
