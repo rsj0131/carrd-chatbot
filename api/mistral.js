@@ -266,11 +266,11 @@ export default async function handler(req, res) {
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
             Current Time: ${currentTimeInArgentina}.
-            You can use the available functions listed below when needed:
+            You can use the available tools listed below when needed:
             ${tools.map(func => `${func.name}: ${func.description}`).join("\n")}
-            When responding to the user, if a function can be used, always call the function instead of generating a textual response. 
-            Provide only the required input for the function, and use the function call mechanism. 
-            For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.
+            When responding to the user, if a tool can be used, always call the tool instead of generating a textual response. 
+            Provide only the required input for the tool, and use the tool calling mechanism. 
+            For example, if a user asks you to delete all chat history, use the "deleteAllChatHistory" tool.
         `;
 
         // Step 4: Append knowledge base response if available
