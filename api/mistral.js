@@ -328,15 +328,16 @@ export default async function handler(req, res) {
 
         // Check if the response requires a function call
         const choice = response.choices?.[0]?.message;
-        if (choice?.function_call) {
-            const { result, hasMessage, msgContent } = await processFunctionCall(response);
-            // If the function generates a message, add it directly
-            if (hasMessage && msgContent) {
-                replies.push(msgContent);
-            }
+        if (choice?.toolCalls?.length > 0) {
+            for (const toolCall of choice.toolCalls) {
+                const { result, hasMessage, msgContent } = await processToolCall(toolCall);
+                if (hasMessage && msgContent) {
+                    replies.push(msgContent);
+                }
 
-            // Generate a follow-up message
-            messages.push({ role: "system", content: `Function result: ${result}` });
+                // Add tool result as a system message for follow-ups
+                messages.push({ role: "system", content: `Tool result: ${result}` });
+            }
             const followUpResponse = await client.chat.complete({
                 model: MODEL,
                 messages,
@@ -427,26 +428,20 @@ function formatParameters(parameters) {
     };
 }
 
+async function processToolCall(toolCall) {
+    const { function: func, arguments: args } = toolCall;
+    try {
+        const parsedArgs = JSON.parse(args);
+        console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
 
-// Process message for function calls
-async function processFunctionCall(response) {
-    const choice = response.choices?.[0];
-    if (choice?.message?.function_call) {
-        const { name, arguments: args } = choice.message.function_call;
-        try {
-            const parsedArgs = JSON.parse(args);
-            console.log(`Calling function: ${name} with arguments:`, parsedArgs);
-
-            // Execute the function dynamically
-            const { result, hasMessage, message, msgContent } = await executeFunction(name, parsedArgs);
-            console.log(`Function ${name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
-            return { result, hasMessage, msgContent };
-        } catch (error) {
-            console.error("Error processing function call:", error);
-            return { result: "Error occurred while executing the function.", hasMessage: true, msgContent: "null" };
-        }
+        // Dynamically execute the tool
+        const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs);
+        console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
+        return { result, hasMessage, msgContent };
+    } catch (error) {
+        console.error("Error processing tool call:", error);
+        return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: "null" };
     }
-    return { hasMessage: false, result: null, msgContent: null }; // No function call
 }
 
 // Example function execution
