@@ -671,7 +671,7 @@ async function getAnswer(userQuery) {
 
         if (entries.length === 0) {
             console.log("No entries with embeddings found in the knowledge base.");
-            return "I'm sorry, I couldn't find any relevant information.";
+            return null;
         }
         console.log(`Fetched ${entries.length} entries from the knowledge base. Duration: ${entriesDuration}ms`);
 
@@ -686,10 +686,10 @@ async function getAnswer(userQuery) {
 
         // Step 4: Find the most relevant entry
         const bestMatch = similarities.sort((a, b) => b.similarity - a.similarity)[0];
-        const threshold = 0.75; // Adjust this threshold based on desired precision
+        const threshold = 0.7; // Adjust this threshold based on desired precision
         if (bestMatch.similarity < threshold) {
             console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
-            return "I'm sorry, I couldn't find any relevant information.";
+            return null;
         }
 
         // Step 5: Build and return the response
