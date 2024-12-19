@@ -634,9 +634,15 @@ async function getAnswer(userQuery) {
         // Step 1: Generate an embedding for the user query
         const inputTokens = encode(userQuery).length;
         const embeddingStartTime = Date.now(); // Timer for embedding generation
-        const embeddingResponse = await client.embeddings.create({
-            model: EMBED_MODEL,
-            inputs: [userQuery]});
+        try {
+            const embeddingResponse = await client.embeddings.create({
+                model: EMBED_MODEL,
+                inputs: [userQuery],
+            });
+        } catch (error) {
+            console.error("Error generating embeddings:", error);
+            throw new Error("Failed to generate embedding.");
+        }
         
         if (!embeddingResponse?.data?.data || embeddingResponse.data.data.length === 0) {
             console.error("Embedding response data is missing or invalid:", embeddingResponse);
