@@ -362,8 +362,7 @@ export default async function handler(req, res) {
     }
 }
 
-//Functions
-
+// Functions
 // Fetch tools from the database and format them for Mistral
 async function fetchFunctions() {
     try {
@@ -375,9 +374,12 @@ async function fetchFunctions() {
 
         // Transform the fetched functions into Mistral's tool format
         const tools = functions.map(func => ({
-            name: func.name, // The tool's identifier
-            description: func.description, // A concise description of the tool
-            parameters: formatParameters(func.parameters), // Format the parameters as required by Mistral
+            type: "function", // Mistral's expected tool type
+            function: {
+                name: func.name, // The function's identifier
+                description: func.description, // A concise description of the function
+                parameters: formatParameters(func.parameters), // Format the parameters
+            },
         }));
 
         console.log("Formatted tools for Mistral:", tools); // Debugging
@@ -391,18 +393,31 @@ async function fetchFunctions() {
 // Helper function to format parameters
 function formatParameters(parameters) {
     if (!parameters || typeof parameters !== "object") {
-        return {}; // Return an empty object if parameters are undefined or invalid
+        return {
+            type: "object",
+            properties: {},
+            required: [],
+        }; // Return default structure if parameters are undefined or invalid
     }
 
     // Transform each parameter to include type and description
-    const formatted = {};
+    const formattedProperties = {};
+    const requiredFields = [];
     for (const [key, value] of Object.entries(parameters)) {
-        formatted[key] = {
+        formattedProperties[key] = {
             type: value.type || "string", // Default type to "string" if not provided
             description: value.description || "No description provided", // Default description
         };
+        if (value.required) {
+            requiredFields.push(key); // Add to required fields if marked as required
+        }
     }
-    return formatted;
+
+    return {
+        type: "object",
+        properties: formattedProperties,
+        required: requiredFields,
+    };
 }
 
 
@@ -660,8 +675,9 @@ async function getAnswer(userQuery) {
         // Step 1: Generate an embedding for the user query
         const inputTokens = encode(userQuery).length;
         const embeddingStartTime = Date.now(); // Timer for embedding generation
+        const embeddingResponse = "error";
         try {
-            const embeddingResponse = await client.embeddings.create({
+            embeddingResponse = await client.embeddings.create({
                 model: EMBED_MODEL,
                 inputs: [userQuery],
             });
