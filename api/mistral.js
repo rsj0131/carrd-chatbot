@@ -228,7 +228,7 @@ export default async function handler(req, res) {
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
-        const presetHistory = " "; /*await loadPresetHistory(process.env.PRESET_CHAT_ID);*/
+        const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
 
         const tools = await fetchFunctions();
@@ -280,7 +280,7 @@ export default async function handler(req, res) {
 
         const messages = [
             { role: "system", content: dynamicSystemMessage },
-            ...presetHistory,
+            /*...presetHistory,*/
             ...history.flatMap(entry => [
                 { role: "user", content: entry.userMessage },
                 { role: "assistant", content: entry.botReply },
