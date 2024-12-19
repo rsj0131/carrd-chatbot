@@ -429,8 +429,12 @@ async function executeFunction(name, args) {
             const userMessage = args.message || ""; // Ensure the message is passed as input
             return await sendImage(userMessage);
         case "generateEmbeddings":
-            const targetCollection = args.targetCollection || "knowledge_base"; // Default to 'knowledge_base' if not specified
-            return await generateEmbeddings({ targetCollection }); // Pass the targetCollection to generateEmbeddings
+            if (!args || !args.targetCollection) {
+                console.warn("Missing or invalid targetCollection in args; defaulting to 'knowledge_base'");
+            }
+            const targetCollection = args?.targetCollection || "knowledge_base"; // Ensure a fallback
+            console.log(`Target collection for embeddings: ${targetCollection}`);
+            return await generateEmbeddings({ targetCollection });
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
