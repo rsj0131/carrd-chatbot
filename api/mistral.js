@@ -231,7 +231,7 @@ export default async function handler(req, res) {
         const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
 
-        const functions = await fetchFunctions();
+        const tools = await fetchFunctions();
         
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
@@ -262,7 +262,7 @@ export default async function handler(req, res) {
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
             Current Time: ${currentTimeInArgentina}.
             You can use the available functions listed below when needed:
-            ${functions.map(func => `${func.name}: ${func.description}`).join("\n")}
+            ${tools.map(func => `${func.name}: ${func.description}`).join("\n")}
             When responding to the user, if a function can be used, always call the function instead of generating a textual response. 
             Provide only the required input for the function, and use the function call mechanism. 
             For example, if a user asks for the Twitter link, use the "shareTwitterLink" function.
@@ -288,12 +288,13 @@ export default async function handler(req, res) {
             { role: "user", content: message },
         ];
         
-        console.log("Available functions:", JSON.stringify(functions, null, 2));
+        console.log("Available functions:", JSON.stringify(tools, null, 2));
 
         const payload = {
             model: MODEL,
             messages,
-            functions,
+            tools,
+            tool_choice: "auto",
             temperature: 1.0,
             stream: false,
         };
@@ -363,24 +364,45 @@ export default async function handler(req, res) {
 
 //Functions
 
-// Fetch functions from the database
+// Fetch tools from the database and format them for Mistral
 async function fetchFunctions() {
     try {
         const db = await connectToDatabase();
-        const collection = db.collection("functions");
+        const collection = db.collection("functions"); // Assuming the collection is named "functions"
         const functions = await collection.find().toArray();
 
         console.log("Loaded functions from DB:", functions); // Debugging
 
-        return functions.map(func => ({
-            name: func.name,
-            description: func.description,
-            parameters: func.parameters || {}
+        // Transform the fetched functions into Mistral's tool format
+        const tools = functions.map(func => ({
+            name: func.name, // The tool's identifier
+            description: func.description, // A concise description of the tool
+            parameters: formatParameters(func.parameters), // Format the parameters as required by Mistral
         }));
+
+        console.log("Formatted tools for Mistral:", tools); // Debugging
+        return tools;
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
         return [];
     }
+}
+
+// Helper function to format parameters
+function formatParameters(parameters) {
+    if (!parameters || typeof parameters !== "object") {
+        return {}; // Return an empty object if parameters are undefined or invalid
+    }
+
+    // Transform each parameter to include type and description
+    const formatted = {};
+    for (const [key, value] of Object.entries(parameters)) {
+        formatted[key] = {
+            type: value.type || "string", // Default type to "string" if not provided
+            description: value.description || "No description provided", // Default description
+        };
+    }
+    return formatted;
 }
 
 
