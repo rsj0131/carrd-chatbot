@@ -430,7 +430,7 @@ async function executeFunction(name, args) {
             return await sendImage(userMessage);
         case "generateEmbeddings":
             if (!args || !args.targetCollection) {
-                console.warn("Missing or invalid targetCollection in args; defaulting to 'knowledge_base'");
+                console.warn(`Missing or invalid targetCollection in args ${args}; defaulting to "knowledge_base"`);
             }
             const targetCollection = args?.targetCollection || "knowledge_base"; // Ensure a fallback
             console.log(`Target collection for embeddings: ${targetCollection}`);
