@@ -419,8 +419,7 @@ async function executeFunction(name, args) {
     switch (name) {
         case "deleteAllChatHistory":
             return await deleteAllChatHistory();
-            };
-       case "sendImage":
+        case "sendImage":
             const userMessage = args.message || ""; // Ensure the message is passed as input
             return await sendImage(userMessage);
         case "generateEmbeddings":
