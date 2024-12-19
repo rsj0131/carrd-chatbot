@@ -17,7 +17,7 @@ async function connectToDatabase() {
 const client = new Mistral({apiKey: process.env.MODEL_API_KEY});
 
 // Pricing
-const MODEL = 'ministral-8b-latest'; // Specify the model
+const MODEL = 'mistral-large-latest'; // Specify the model
 const EMBED_MODEL = 'mistral-embed'; // Specify the embedding model
 const PRICING = {
         "gpt-4o-mini": { input: 0.150 / 1_000_000, output: 0.600 / 1_000_000 },
@@ -25,6 +25,7 @@ const PRICING = {
         "text-embedding-3-large": { input: 0.130 / 1_000_000, output: 0.065 / 1_000_000 },
         "text-embedding-ada-002": { input: 0.100 / 1_000_000, output: 0.050 / 1_000_000 },
         "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 },
+        "mistral-large-latest": { input: 2.000 / 1_000_000, output: 6.000 / 1_000_000 },
         "mistral-embed": { input: 0.100 / 1_000_000, output: 0.000 / 1_000_000 }
     };
 
