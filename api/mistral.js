@@ -432,6 +432,7 @@ async function executeFunction(name, args) {
                 hasMessage: false,
                 msgContent: null,
             };
+            
     }
 }
 
@@ -445,9 +446,8 @@ async function deleteAllChatHistory() {
         return {
             result: `All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`,
             hasMessage: true,
-            msgContent: `Console: All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`;
+            msgContent: `Console: All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`,
         };
-        return `All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`;
     } catch (error) {
         console.error("Error deleting chat history from MongoDB:", error);
         return {
