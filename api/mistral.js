@@ -149,7 +149,7 @@ async function checkAndSummarizeChatHistory() {
             stream: false,
         });
 
-        const result = response.data;
+        const result = response;
         const summary = result.choices?.[0]?.message?.content || "Summary could not be generated.";
 
         console.log("Generated summary:", summary);
@@ -304,9 +304,13 @@ export default async function handler(req, res) {
         console.log("Payload sent to Mistral:", JSON.stringify(payload, null, 2));
         
         const response = await client.chat.complete(payload);
-        console.log("API Response:", JSON.stringify(response.data, null, 2));
+        console.log("API Response:", JSON.stringify(response, null, 2));
 
-        const usage = response.data.usage || {};
+        if (!response?.usage) {
+            console.error("Usage data missing in API response.");
+            return; // Handle the error or return a default response
+        }
+        const usage = response.usage || { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
         const { prompt_tokens = 0, completion_tokens = 0, total_tokens = 0 } = usage;
         const { inputCost, outputCost, totalCost } = await computeCostAndLog(usage, MODEL);
         
@@ -315,9 +319,9 @@ export default async function handler(req, res) {
         let replies = []; // Store multiple replies
 
         // Check if the response requires a function call
-        const choice = response.data.choices?.[0]?.message;
+        const choice = response.choices?.[0]?.message;
         if (choice?.function_call) {
-            const { result, hasMessage, msgContent } = await processFunctionCall(response.data);
+            const { result, hasMessage, msgContent } = await processFunctionCall(response);
             // If the function generates a message, add it directly
             if (hasMessage && msgContent) {
                 replies.push(msgContent);
@@ -332,7 +336,7 @@ export default async function handler(req, res) {
                 max_tokens: 150,
             });
 
-            const followUpMessage = followUpResponse.data.choices?.[0]?.message?.content || "Follow-up not generated.";
+            const followUpMessage = followUpResponse.choices?.[0]?.message?.content || "Follow-up not generated.";
             replies.push(followUpMessage);
         } else {
             const botReply = choice?.content || "No response available.";
@@ -455,7 +459,7 @@ async function sendImage(userMessage) {
             model: EMBED_MODEL,
             inputs: [userMessage],
         });
-        const queryEmbedding = embeddingResponse.data.data[0].embedding;
+        const queryEmbedding = embeddingResponse.data[0].embedding;
         const embeddingDuration = Date.now() - embeddingStartTime;
 
         // Calculate cost dynamically
@@ -565,7 +569,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
                 inputs: [inputText],
             });
 
-            const embedding = response.data.data[0]?.embedding;
+            const embedding = response.data[0]?.embedding;
             if (!embedding) {
                 console.log("Failed to generate embedding for entry:", _id);
                 continue;
@@ -644,11 +648,11 @@ async function getAnswer(userQuery) {
             throw new Error("Failed to generate embedding.");
         }
         
-        if (!embeddingResponse?.data?.data || embeddingResponse.data.data.length === 0) {
+        if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
             console.error("Embedding response data is missing or invalid:", embeddingResponse);
             throw new Error("Failed to generate embedding.");
         }
-        const queryEmbedding = embeddingResponse.data.data[0].embedding;
+        const queryEmbedding = embeddingResponse.data[0].embedding;
         const embeddingDuration = Date.now() - embeddingStartTime;
 
         // Calculate cost for generating the query embedding
