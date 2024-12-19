@@ -141,7 +141,7 @@ async function checkAndSummarizeChatHistory() {
         ];
         
         // Call the API for summarization
-        const response = await ({
+        const response = await client.chat.complete({
             model: MODEL,
             messages: prompt,
             temperature: 0.5,
@@ -453,7 +453,7 @@ async function sendImage(userMessage) {
         const embeddingStartTime = Date.now(); // Timer for embedding generation
         const embeddingResponse = await client.embeddings.create({
             model: EMBED_MODEL,
-            inputs: userMessage,
+            inputs: [userMessage],
         });
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
         const embeddingDuration = Date.now() - embeddingStartTime;
@@ -562,7 +562,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
             // Generate embedding
             const response = await client.embeddings.create({
                 model: EMBED_MODEL,
-                inputs: inputText,
+                inputs: [inputText],
             });
 
             const embedding = response.data.data[0]?.embedding;
@@ -636,7 +636,12 @@ async function getAnswer(userQuery) {
         const embeddingStartTime = Date.now(); // Timer for embedding generation
         const embeddingResponse = await client.embeddings.create({
             model: EMBED_MODEL,
-            inputs: userQuery});
+            inputs: [userQuery]});
+        
+        if (!embeddingResponse?.data?.data || embeddingResponse.data.data.length === 0) {
+            console.error("Embedding response data is missing or invalid:", embeddingResponse);
+            throw new Error("Failed to generate embedding.");
+        }
         const queryEmbedding = embeddingResponse.data.data[0].embedding;
         const embeddingDuration = Date.now() - embeddingStartTime;
 
