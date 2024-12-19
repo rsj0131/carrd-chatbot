@@ -21,6 +21,7 @@ const MODEL = 'ministral-8b-latest'; // Specify the model
 const EMBED_MODEL = 'mistral-embed'; // Specify the embedding model
 const PRICING = {
         "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 },
+        "ministral-3b-latest": { input: 0.040 / 1_000_000, output: 0.040 / 1_000_000 },
         "mistral-large-latest": { input: 2.000 / 1_000_000, output: 6.000 / 1_000_000 },
         "mistral-small-latest": { input: 0.200 / 1_000_000, output: 0.600 / 1_000_000 }, // bad at calling functions
         "ft:mistral-small-latest:d017134b:20241219:cfc804be": { input: 0.200 / 1_000_000, output: 0.600 / 1_000_000 },
