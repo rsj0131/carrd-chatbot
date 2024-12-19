@@ -375,63 +375,33 @@ export default async function handler(req, res) {
 async function fetchFunctions() {
     try {
         const db = await connectToDatabase();
-        const collection = db.collection("functions"); // Assuming the collection is named "functions"
+        const collection = db.collection("functions");
         const functions = await collection.find().toArray();
 
-        console.log("Loaded functions from DB:", functions); // Debugging
-
-        // Transform the fetched functions into Mistral's tool format
-        const tools = functions.map(func => ({
-            type: "function", // Mistral's expected tool type
+        // Transform each function into the correct Mistral tool format
+        return functions.map(func => ({
+            type: "function",
             function: {
-                name: func.name, // The function's identifier
-                description: func.description, // A concise description of the function
-                parameters: formatParameters(func.parameters), // Format the parameters
+                name: func.name,
+                description: func.description,
+                parameters: {
+                    type: "object",
+                    properties: func.parameters?.properties || {}, // Ensure `properties` are valid
+                    required: func.parameters?.required || [], // Ensure `required` is a list
+                },
             },
         }));
-
-        console.log("Formatted tools for Mistral:", tools); // Debugging
-        return tools;
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
         return [];
     }
 }
 
-// Helper function to format parameters
-function formatParameters(parameters) {
-    if (!parameters || typeof parameters !== "object") {
-        return {
-            type: "object",
-            properties: {},
-            required: [],
-        }; // Return default structure if parameters are undefined or invalid
-    }
-
-    // Transform each parameter to include type and description
-    const formattedProperties = {};
-    const requiredFields = [];
-    for (const [key, value] of Object.entries(parameters)) {
-        formattedProperties[key] = {
-            type: value.type || "string", // Default type to "string" if not provided
-            description: value.description || "No description provided", // Default description
-        };
-        if (value.required) {
-            requiredFields.push(key); // Add to required fields if marked as required
-        }
-    }
-
-    return {
-        type: "object",
-        properties: formattedProperties,
-        required: requiredFields,
-    };
-}
-
 async function processToolCall(toolCall) {
     const { function: func, arguments: args } = toolCall;
     try {
-        const parsedArgs = JSON.parse(args);
+        // Parse arguments only if they are valid JSON
+        const parsedArgs = args ? JSON.parse(args) : {};
         console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
 
         // Dynamically execute the tool
@@ -440,7 +410,7 @@ async function processToolCall(toolCall) {
         return { result, hasMessage, msgContent };
     } catch (error) {
         console.error("Error processing tool call:", error);
-        return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: "null" };
+        return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: null };
     }
 }
 
