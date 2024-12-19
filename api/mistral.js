@@ -280,7 +280,7 @@ export default async function handler(req, res) {
 
         const messages = [
             { role: "system", content: dynamicSystemMessage },
-            /*...presetHistory,*/
+            ...presetHistory,
             ...history.flatMap(entry => [
                 { role: "user", content: entry.userMessage },
                 { role: "assistant", content: entry.botReply },
@@ -292,9 +292,9 @@ export default async function handler(req, res) {
 
         const payload = {
             model: MODEL,
-            messages,
             tools,
             tool_choice: "auto",
+            messages,
             temperature: 1.0,
             stream: false,
         };
