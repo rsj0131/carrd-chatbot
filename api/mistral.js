@@ -233,7 +233,7 @@ export default async function handler(req, res) {
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
-        const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
+        //const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
 
         const tools = await fetchFunctions();
@@ -285,7 +285,7 @@ export default async function handler(req, res) {
 
         const messages = [
             { role: "system", content: dynamicSystemMessage },
-            ...presetHistory,
+            /*...presetHistory,*/
             ...history.flatMap(entry => [
                 { role: "user", content: entry.userMessage },
                 { role: "assistant", content: entry.botReply },
@@ -418,10 +418,7 @@ async function processToolCall(toolCall) {
 async function executeFunction(name, args) {
     switch (name) {
         case "deleteAllChatHistory":
-            return {
-                result: await deleteAllChatHistory(),
-                hasMessage: false,
-                msgContent: null,
+            return await deleteAllChatHistory();
             };
        case "sendImage":
             const userMessage = args.message || ""; // Ensure the message is passed as input
@@ -446,10 +443,19 @@ async function deleteAllChatHistory() {
         const collection = db.collection("chatHistory");
         const deleteResult = await collection.deleteMany({});
         console.log(`Deleted ${deleteResult.deletedCount} records from chatHistory.`);
+        return {
+            result: `All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`,
+            hasMessage: true,
+            msgContent: `Console: All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`;
+        };
         return `All chat history deleted successfully. ${deleteResult.deletedCount} records were removed.`;
     } catch (error) {
         console.error("Error deleting chat history from MongoDB:", error);
-        return "An error occurred while deleting chat history.";
+        return {
+            result: "An error occurred while finding an image.",
+            hasMessage: true,
+            msgContent: "Console: An error occurred while deleting chat history.",
+        };
     }
 }
 
