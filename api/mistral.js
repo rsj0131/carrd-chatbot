@@ -17,7 +17,7 @@ async function connectToDatabase() {
 const client = new Mistral({apiKey: process.env.MODEL_API_KEY});
 
 // Pricing
-const MODEL = 'mistral-large-latest'; // Specify the model
+const MODEL = 'ministral-8b-latest'; // Specify the model
 const EMBED_MODEL = 'mistral-embed'; // Specify the embedding model
 const PRICING = {
         "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 },
