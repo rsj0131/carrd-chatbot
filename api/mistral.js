@@ -407,17 +407,19 @@ async function fetchFunctions() {
 
 async function processToolCall(toolCall) {
     try {
-        const { function: func, arguments: args } = toolCall;
+        // Correctly access arguments from the `function` object
+        const func = toolCall.function;
+        const args = func?.arguments;
 
         // Debugging logs
         console.log("Tool call received:", toolCall);
         console.log("Raw arguments from toolCall:", args);
 
         // Parse arguments safely
-        const parsedArgs = typeof args === "string" ? JSON.parse(args) : args || {};
+        const parsedArgs = args ? JSON.parse(args) : {}; // Ensure arguments are parsed if available
         console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
 
-        // Execute the tool
+        // Dynamically execute the tool
         const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs);
         console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
         return { result, hasMessage, msgContent };
@@ -426,6 +428,7 @@ async function processToolCall(toolCall) {
         return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: null };
     }
 }
+
 
 
 // Example function execution
