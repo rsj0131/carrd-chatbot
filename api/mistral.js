@@ -405,18 +405,19 @@ async function fetchFunctions() {
 
 async function processToolCall(toolCall) {
     const { function: func, arguments: args } = toolCall;
+
     try {
-        // Parse arguments only if they are valid JSON
-        const parsedArgs = args ? JSON.parse(args) : {};
-        console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
+        // Parse the arguments if they are a valid JSON string
+        const parsedArgs = args ? JSON.parse(args) : {}; // Fallback to empty object
+        console.log(`Processing tool call: ${func.name} with parsed arguments:`, parsedArgs);
 
         // Dynamically execute the tool
         const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs);
-        console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
+        console.log(`Tool ${func.name} executed. Result: ${result}`);
         return { result, hasMessage, msgContent };
     } catch (error) {
         console.error("Error processing tool call:", error);
-        return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: null };
+        return { result: "Error occurred while executing the tool.", hasMessage: false, msgContent: null };
     }
 }
 
@@ -425,9 +426,11 @@ async function executeFunction(name, args) {
     switch (name) {
         case "deleteAllChatHistory":
             return await deleteAllChatHistory();
+            
         case "sendImage":
             const userMessage = args.message || ""; // Ensure the message is passed as input
             return await sendImage(userMessage);
+            
         case "generateEmbeddings":
             if (!args || !args.targetCollection) {
                 console.warn(`Missing or invalid targetCollection in args ${args}; defaulting to "knowledge_base"`);
@@ -435,6 +438,7 @@ async function executeFunction(name, args) {
             const targetCollection = args?.targetCollection || "knowledge_base"; // Ensure a fallback
             console.log(`Target collection for embeddings: ${targetCollection}`);
             return await generateEmbeddings({ targetCollection });
+            
         default:
             console.warn(`No implementation found for function: ${name}`);
             return {
