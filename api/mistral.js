@@ -265,12 +265,25 @@ export default async function handler(req, res) {
             Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            Current Time: ${currentTimeInArgentina}.
-            You can use the available tools listed below when needed:
-            ${tools.map(func => `${func.name}: ${func.description}`).join("\n")}
-            When responding to the user, if a tool can be used, always call the tool instead of generating a textual response. 
-            Provide only the required input for the tool, and use the tool calling mechanism. 
-            For example, if a user asks you to delete all chat history, use the "deleteAllChatHistory" tool.
+            Current Time: ${currentTimeInArgentina}.\n
+            You have access to tools that allow you to perform specific actions.
+            Always prioritize using these tools when the user's request matches the tool's purpose. 
+            For example:
+            - If the user mentions deleting chat history, call the "deleteAllChatHistory" tool instead of generating a textual response.
+            - If the user requests an image or any other action that aligns with a tool, call the tool.
+            
+            Examples of how to respond:
+            - User: Can you delete the chat history?
+              Assistant: *invokes the deleteAllChatHistory tool*
+            
+            - User: Show me a picture related to cats.
+              Assistant: *invokes the sendImage tool*
+            
+            If a tool can fulfill the user's request, always invoke it.
+            Tools available:
+            ${tools.map(tool => `${tool.function.name}: ${tool.function.description}`).join("\n")}
+        
+            If you cannot fulfill the user's request with a tool, respond conversationally.
         `;
 
         // Step 4: Append knowledge base response if available
