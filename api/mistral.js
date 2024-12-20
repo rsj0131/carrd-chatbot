@@ -245,9 +245,7 @@ export default async function handler(req, res) {
         const characterDetails = await getCharacterDetails(characterId);
         //const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
-
         const tools = await fetchFunctions();
-        
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
             hour: '2-digit',
@@ -255,6 +253,7 @@ export default async function handler(req, res) {
             second: '2-digit',
             hour12: false,
         }).format(new Date());
+        const history = await fetchChatHistory();
         
         /*let dynamicSystemMessage = `
             \n${characterDetails.prompt || " "}.
@@ -330,7 +329,6 @@ export default async function handler(req, res) {
         } else {
             console.log("Knowledge response NOT loaded: ", knowledgeResponse);
         }
-        const history = await fetchChatHistory();
 
         const messages = [
             { role: "system", content: dynamicSystemMessage },
