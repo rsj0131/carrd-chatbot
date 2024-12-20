@@ -291,7 +291,7 @@ export default async function handler(req, res) {
         `;*/
 
         let dynamicSystemMessage = `
-            You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks.
+            You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
         
             ### Character Information
             - Name: ${characterName}.
@@ -312,6 +312,11 @@ export default async function handler(req, res) {
         
             ### History
             Contextualize your responses using the last ${history.length} messages from the conversation.
+
+            ### Tool Invocation Rules
+            1. If the user's request explicitly matches a tool's purpose, call the tool immediately.
+            2. If uncertain, prioritize tool invocation to handle any ambiguity.
+            3. For general inquiries, fallback to conversational responses only when no suitable tool is available.
         `;
 
 
