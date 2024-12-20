@@ -361,11 +361,11 @@ export default async function handler(req, res) {
                 max_tokens: 150,
             });
 
-            const followUpMessage = followUpResponse.choices?.[0]?.message?.content || "Follow-up not generated.";
+            let followUpMessage = followUpResponse.choices?.[0]?.message?.content || "Follow-up not generated.";
             followUpMessage = transformMarkdownLinksToHTML(followUpMessage);
             replies.push(followUpMessage);
         } else {
-            const botReply = choice?.content || "No response available.";
+            let botReply = choice?.content || "No response available.";
             botReply = transformMarkdownLinksToHTML(botReply); 
             replies.push(botReply);
         }
