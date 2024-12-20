@@ -256,8 +256,10 @@ export default async function handler(req, res) {
         const history = await fetchChatHistory();
 
         /*let dynamicSystemMessage = `
-            You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
-        
+            You are roleplaying as ${characterName}, here's things about you:
+            Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
+            ${characterDetails.prompt || " "}.
+            
             ### Character Information
             - Name: ${characterName}.
             - Age: ${characterDetails.age || "unknown"}.
