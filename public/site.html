@@ -479,7 +479,7 @@
             autoScroll();
         
             try {
-                const response = await fetch("process.env.BACKEND_URL", {
+                const response = await fetch("https://carrd-chatbot.vercel.app/api/openai", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message, characterId }),
