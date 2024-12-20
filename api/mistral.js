@@ -307,7 +307,7 @@ export default async function handler(req, res) {
         const payload = {
             model: MODEL,
             tools,
-            tool_choice: "any",
+            tool_choice: "auto",
             messages,
             temperature: 1.0,
             stream: false,
