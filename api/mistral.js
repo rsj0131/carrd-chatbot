@@ -396,7 +396,7 @@ export default async function handler(req, res) {
                 temperature: 1.0,
                 max_tokens: 150,
             });
-
+            console.log("Follow Up Messages Prompt sent to Mistral:", JSON.stringify(messages, null, 2));
             let followUpMessage = followUpResponse.choices?.[0]?.message?.content || "Follow-up not generated.";
             followUpMessage = transformMarkdownLinksToHTML(followUpMessage);
             replies.push(followUpMessage);
