@@ -336,12 +336,12 @@ export default async function handler(req, res) {
         }
 
         const messages = [
-            { role: "system", content: dynamicSystemMessage },
+            /*{ role: "system", content: dynamicSystemMessage },*/
             /*...presetHistory,*/
-            ...history.flatMap(entry => [
+            /*...history.flatMap(entry => [
                 { role: "user", content: entry.userMessage },
                 { role: "assistant", content: entry.botReply },
-            ]),
+            ]),*/
             { role: "user", content: message },
         ];
         
