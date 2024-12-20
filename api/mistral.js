@@ -527,18 +527,18 @@ async function sendImage(userMessage) {
 
             queryEmbedding = embeddingResponse.data[0].embedding;
             console.log("Generated new embedding:", queryEmbedding);
+            const embeddingDuration = Date.now() - embeddingStartTime;
+
+            // Calculate cost dynamically
+            const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
+            const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+            totalCost += inputCost;
+    
+            console.log(`Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}, Duration: ${embeddingDuration}ms`);
         } else {
             console.log("Using cached embedding:", queryEmbedding);
         }
-        const embeddingDuration = Date.now() - embeddingStartTime;
-
-        // Calculate cost dynamically
-        const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-        const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-        totalCost += inputCost;
-
-        console.log(`Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}, Duration: ${embeddingDuration}ms`);
-
+        
         // Step 2: Fetch all images with embeddings
         const fetchStartTime = Date.now();
         const images = await collection.find({ embedding: { $exists: true } }).toArray();
