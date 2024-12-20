@@ -4,6 +4,8 @@ import { Readable } from "stream";
 import { encode } from "gpt-3-encoder";
 import { Mistral } from '@mistralai/mistralai';
 
+let cachedEmbedding = null;
+
 // MongoDB Configuration
 const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
@@ -510,11 +512,24 @@ async function sendImage(userMessage) {
         // Step 1: Generate an embedding for the user message
         const inputTokens = encode(userMessage).length;
         const embeddingStartTime = Date.now(); // Timer for embedding generation
-        const embeddingResponse = await client.embeddings.create({
-            model: EMBED_MODEL,
-            inputs: [userMessage],
-        });
-        const queryEmbedding = embeddingResponse.data[0].embedding;
+        let queryEmbedding = cachedEmbedding;
+        if (!queryEmbedding) {
+            console.log("No cached embedding found, generating new one.");
+            const inputTokens = encode(userMessage).length;
+            const embeddingResponse = await client.embeddings.create({
+                model: EMBED_MODEL,
+                inputs: [userMessage],
+            });
+
+            if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
+                throw new Error("Failed to generate embedding.");
+            }
+
+            queryEmbedding = embeddingResponse.data[0].embedding;
+            console.log("Generated new embedding:", queryEmbedding);
+        } else {
+            console.log("Using cached embedding:", queryEmbedding);
+        }
         const embeddingDuration = Date.now() - embeddingStartTime;
 
         // Calculate cost dynamically
@@ -702,7 +717,8 @@ async function getAnswer(userQuery) {
             console.error("Embedding response data is missing or invalid:", embeddingResponse);
             throw new Error("Failed to generate embedding.");
         }
-        const queryEmbedding = embeddingResponse.data[0].embedding;
+        cachedEmbedding = embeddingResponse.data[0].embedding;
+        console.log("Cached embedding:", cachedEmbedding);
         const embeddingDuration = Date.now() - embeddingStartTime;
 
         // Calculate cost for generating the query embedding
@@ -724,7 +740,7 @@ async function getAnswer(userQuery) {
         // Step 3: Calculate similarity scores
         const similarityStartTime = Date.now(); // Timer for similarity calculation
         const similarities = entries.map(entry => {
-            const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
+            const similarity = cosineSimilarity(cachedEmbedding, entry.embedding);
             return { entry, similarity };
         });
         const similarityDuration = Date.now() - similarityStartTime;
@@ -764,6 +780,7 @@ async function getAnswer(userQuery) {
         return response;
     } catch (error) {
         console.error("Error in getAnswer:", error);
+        cachedEmbedding = null; // Clear the cache on error
         return "An error occurred while retrieving the information. Please try again later.";
     }
 }
