@@ -254,51 +254,27 @@ export default async function handler(req, res) {
             hour12: false,
         }).format(new Date());
         const history = await fetchChatHistory();
-        
-        /*let dynamicSystemMessage = `
-            \n${characterDetails.prompt || " "}.
-            You're not an AI model, you are ${characterName}.,
-            Please speak in the perspective of ${characterName}.
-            And here's the information about you:
-            Name: ${characterName}.
-            Age: ${characterDetails.age || "none"}.
-            Gender: ${characterDetails.gender || "none"}.
-            Birthday: ${characterDetails.birthday || "none"}.
-            Height: ${characterDetails.height || "none"}.
-            Weight: ${characterDetails.weight || "none"}.
-            Measurements: ${characterDetails.measurements || "none"}.
-            Appearance: ${characterDetails.appearance || "none"}.
-            Personality: ${characterDetails.personality || "Neutral"}.
-            Likes: ${characterDetails.likes || "none"}.
-            Disikes: ${characterDetails.dislikes || "none"}.
-            Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
-            Scenario: ${characterDetails.scenario || "A general chat session"}.
-            Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            Current Time: ${currentTimeInArgentina}.\n
-            ** You have access to tools that allow you to perform specific actions.
-            Always prioritize using these tools when the user's request matches the tool's purpose. 
-            For example:
-            - If the user mentions deleting chat history, call the "deleteAllChatHistory" tool instead of generating a textual response.
-            - If the user requests an image or any other action that aligns with a tool, call the tool.
-            
-            If a tool can fulfill the user's request, always invoke it.
-            Tools available:
-            ${tools.map(tool => `${tool.function.name}: ${tool.function.description}`).join("\n")}
-        
-            If you cannot fulfill the user's request with a tool, respond conversationally. **
-        `;*/
+
         let dynamicSystemMessage = `
-            You are a virtual assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
+            You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
         
             ### Character Information
             - Name: ${characterName}.
             - Age: ${characterDetails.age || "unknown"}.
             - Gender: ${characterDetails.gender || "unknown"}.
+            - Birthday: ${characterDetails.birthday || "none"}.
+            - Height: ${characterDetails.height || "none"}.
+            - Weight: ${characterDetails.weight || "none"}.
+            - Measurements: ${characterDetails.measurements || "none"}.
             - Appearance: ${characterDetails.appearance || "undefined"}.
             - Personality: ${characterDetails.personality || "Neutral"}.
             - Likes: ${characterDetails.likes || "none"}.
             - Dislikes: ${characterDetails.dislikes || "none"}.
-        
+            - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
+            - Scenario: ${characterDetails.scenario || "A general chat session"}.
+            - Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
+            - Current Time: ${currentTimeInArgentina}.\n
+            
             ### Tools Available
             You have access to the following tools. Use them when the user's query aligns with their purpose:
             ${tools.map(tool => `- ${tool.function.name}: ${tool.function.description}`).join("\n")}
