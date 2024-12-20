@@ -557,7 +557,7 @@ async function sendImage(userMessage) {
 
         // Step 5: Return the selected image
         return {
-            result: "You have successfully sent an image to the user",
+            result: `You have successfully sent an image to the user, the image description: ${randomImage.description}`,
             hasMessage: true,
             msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
         };
