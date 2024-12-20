@@ -17,14 +17,14 @@ async function connectToDatabase() {
 const client = new Mistral({apiKey: process.env.MODEL_API_KEY});
 
 // Pricing
-const MODEL = '	open-mistral-7b'; // Specify the model
+const MODEL = 'ministral-3b-latest'; // Specify the model
 const EMBED_MODEL = 'mistral-embed'; // Specify the embedding model
 const PRICING = {
         "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 }, //repetitive
         "ministral-3b-latest": { input: 0.040 / 1_000_000, output: 0.040 / 1_000_000 },
         "mistral-large-latest": { input: 2.000 / 1_000_000, output: 6.000 / 1_000_000 },
         "mistral-small-latest": { input: 0.200 / 1_000_000, output: 0.600 / 1_000_000 }, // bad at calling functions
-        "open-mistral-7b": { input: 0.250 / 1_000_000, output: 0.250 / 1_000_000 }, //repetitive
+        "codestral-latest": { input: 0.200 / 1_000_000, output: 0.600 / 1_000_000 },
         "ft:mistral-small-latest:d017134b:20241219:cfc804be": { input: 0.200 / 1_000_000, output: 0.600 / 1_000_000 },
         "mistral-embed": { input: 0.100 / 1_000_000, output: 0.000 / 1_000_000 }
     };
