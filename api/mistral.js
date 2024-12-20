@@ -309,7 +309,7 @@ export default async function handler(req, res) {
             tools,
             tool_choice: "any",
             messages,
-            temperature: 0.2,
+            temperature: 1.0,
             stream: false,
         };
         
