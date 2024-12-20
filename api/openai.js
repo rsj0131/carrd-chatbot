@@ -39,6 +39,13 @@ function getPricingForModel(model) {
     return pricing;
 }
 
+function transformMarkdownLinksToHTML(text) {
+    const markdownLinkRegex = /\[([^\]]+)]\((https?:\/\/[^\s)]+)\)/g;
+    return text.replace(markdownLinkRegex, (_, text, url) => {
+        return `<a href="${url}" target="_blank" rel="noopener noreferrer">${text}</a>`;
+    });
+}
+
 // Example Usage: Replace this logic in relevant sections
 async function computeCostAndLog(usage, model) {
     const { input, output } = getPricingForModel(model);
