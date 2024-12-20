@@ -269,7 +269,7 @@ export default async function handler(req, res) {
             Scenario: ${characterDetails.scenario || "A general chat session"}.
             Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
             Current Time: ${currentTimeInArgentina}.\n
-            You have access to tools that allow you to perform specific actions.
+            ** You have access to tools that allow you to perform specific actions.
             Always prioritize using these tools when the user's request matches the tool's purpose. 
             For example:
             - If the user mentions deleting chat history, call the "deleteAllChatHistory" tool instead of generating a textual response.
@@ -279,7 +279,7 @@ export default async function handler(req, res) {
             Tools available:
             ${tools.map(tool => `${tool.function.name}: ${tool.function.description}`).join("\n")}
         
-            If you cannot fulfill the user's request with a tool, respond conversationally.
+            If you cannot fulfill the user's request with a tool, respond conversationally. **
         `;
 
         // Step 4: Append knowledge base response if available
