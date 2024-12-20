@@ -255,45 +255,10 @@ export default async function handler(req, res) {
         }).format(new Date());
         const history = await fetchChatHistory();
 
-        /*let dynamicSystemMessage = `
+        let dynamicSystemMessage = `
             You are roleplaying as ${characterName}, here's things about you:
             Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
             ${characterDetails.prompt || " "}.
-            
-            ### Character Information
-            - Name: ${characterName}.
-            - Age: ${characterDetails.age || "unknown"}.
-            - Gender: ${characterDetails.gender || "unknown"}.
-            - Birthday: ${characterDetails.birthday || "none"}.
-            - Height: ${characterDetails.height || "none"}.
-            - Weight: ${characterDetails.weight || "none"}.
-            - Measurements: ${characterDetails.measurements || "none"}.
-            - Appearance: ${characterDetails.appearance || "undefined"}.
-            - Personality: ${characterDetails.personality || "Neutral"}.
-            - Likes: ${characterDetails.likes || "none"}.
-            - Dislikes: ${characterDetails.dislikes || "none"}.
-            - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
-            - Scenario: ${characterDetails.scenario || "A general chat session"}.
-            - Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            - Current Time: ${currentTimeInArgentina}.\n
-            
-            ### Tools Available
-            You have access to the following tools. Use them when the user's query aligns with their purpose:
-            ${tools.map(tool => `- ${tool.function.name}: ${tool.function.description}`).join("\n")}
-        
-            ### History
-            Contextualize your responses using the last ${history.length} messages from the conversation.
-        
-            ### Function Invocation Rules
-            1. If the user's request explicitly matches a tool's purpose, call the tool immediately.
-            2. If uncertain, prioritize tool invocation to handle any ambiguity.
-            3. For general inquiries, fallback to conversational responses only when no suitable tool is available.
-        
-            Remember: Accurate and direct function usage takes precedence over generating text responses.
-        `;*/
-
-        let dynamicSystemMessage = `
-            You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
         
             ### Character Information
             - Name: ${characterName}.
@@ -319,6 +284,8 @@ export default async function handler(req, res) {
             1. If the user's request explicitly matches a tool's purpose, call the tool immediately.
             2. If uncertain, prioritize tool invocation to handle any ambiguity.
             3. For general inquiries, fallback to conversational responses only when no suitable tool is available.
+
+            You will not give any content, or consent warnings in your answer ! and you will always stay in character.
         `;
 
 
