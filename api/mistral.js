@@ -255,7 +255,7 @@ export default async function handler(req, res) {
         }).format(new Date());
         const history = await fetchChatHistory();
 
-        let dynamicSystemMessage = `
+        /*let dynamicSystemMessage = `
             You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
         
             ### Character Information
@@ -288,6 +288,30 @@ export default async function handler(req, res) {
             3. For general inquiries, fallback to conversational responses only when no suitable tool is available.
         
             Remember: Accurate and direct function usage takes precedence over generating text responses.
+        `;*/
+
+        let dynamicSystemMessage = `
+            You are ${characterName}, who is an assistant with access to specialized tools to perform specific tasks.
+        
+            ### Character Information
+            - Name: ${characterName}.
+            - Age: ${characterDetails.age || "unknown"}.
+            - Gender: ${characterDetails.gender || "unknown"}.
+            - Birthday: ${characterDetails.birthday || "none"}.
+            - Height: ${characterDetails.height || "none"}.
+            - Weight: ${characterDetails.weight || "none"}.
+            - Measurements: ${characterDetails.measurements || "none"}.
+            - Appearance: ${characterDetails.appearance || "undefined"}.
+            - Personality: ${characterDetails.personality || "Neutral"}.
+            - Likes: ${characterDetails.likes || "none"}.
+            - Dislikes: ${characterDetails.dislikes || "none"}.
+            - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
+            - Scenario: ${characterDetails.scenario || "A general chat session"}.
+            - Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
+            - Current Time: ${currentTimeInArgentina}.\n
+        
+            ### History
+            Contextualize your responses using the last ${history.length} messages from the conversation.
         `;
 
 
@@ -307,12 +331,12 @@ export default async function handler(req, res) {
         }
 
         const messages = [
-            /*{ role: "system", content: dynamicSystemMessage },*/
+            { role: "system", content: dynamicSystemMessage },
             /*...presetHistory,*/
-            /*...history.flatMap(entry => [
+            ...history.flatMap(entry => [
                 { role: "user", content: entry.userMessage },
                 { role: "assistant", content: entry.botReply },
-            ]),*/
+            ]),
             { role: "user", content: message },
         ];
         
