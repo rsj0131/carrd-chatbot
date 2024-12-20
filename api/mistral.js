@@ -17,7 +17,7 @@ async function connectToDatabase() {
 const client = new Mistral({apiKey: process.env.MODEL_API_KEY});
 
 // Pricing
-const MODEL = 'mistral-large-latest'; // Specify the model
+const MODEL = 'mistral-small-latest'; // Specify the model
 const EMBED_MODEL = 'mistral-embed'; // Specify the embedding model
 const PRICING = {
         "ministral-8b-latest": { input: 0.100 / 1_000_000, output: 0.100 / 1_000_000 }, //repetitive
@@ -256,7 +256,7 @@ export default async function handler(req, res) {
             hour12: false,
         }).format(new Date());
         
-        let dynamicSystemMessage = `
+        /*let dynamicSystemMessage = `
             \n${characterDetails.prompt || " "}.
             You're not an AI model, you are ${characterName}.,
             Please speak in the perspective of ${characterName}.
@@ -287,12 +287,45 @@ export default async function handler(req, res) {
             ${tools.map(tool => `${tool.function.name}: ${tool.function.description}`).join("\n")}
         
             If you cannot fulfill the user's request with a tool, respond conversationally. **
+        `;*/
+        let dynamicSystemMessage = `
+            You are a virtual assistant with access to specialized tools to perform specific tasks. Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
+        
+            ### Character Information
+            - Name: ${characterName}.
+            - Age: ${characterDetails.age || "unknown"}.
+            - Gender: ${characterDetails.gender || "unknown"}.
+            - Appearance: ${characterDetails.appearance || "undefined"}.
+            - Personality: ${characterDetails.personality || "Neutral"}.
+            - Likes: ${characterDetails.likes || "none"}.
+            - Dislikes: ${characterDetails.dislikes || "none"}.
+        
+            ### Tools Available
+            You have access to the following tools. Use them when the user's query aligns with their purpose:
+            ${tools.map(tool => `- ${tool.function.name}: ${tool.function.description}`).join("\n")}
+        
+            ### History
+            Contextualize your responses using the last ${history.length} messages from the conversation.
+        
+            ### Function Invocation Rules
+            1. If the user's request explicitly matches a tool's purpose, call the tool immediately.
+            2. If uncertain, prioritize tool invocation to handle any ambiguity.
+            3. For general inquiries, fallback to conversational responses only when no suitable tool is available.
+        
+            Remember: Accurate and direct function usage takes precedence over generating text responses.
         `;
+
 
         // Step 4: Append knowledge base response if available
         if (knowledgeResponse && knowledgeResponse !== null) {
-            dynamicSystemMessage += `\n\nAdditionally, refer to the following knowledge base entry:\n${knowledgeResponse}\n
-            Provide a response that aligns with the user's perspective. If the user asks in the 3rd person (e.g. Who is ${characterName}), respond about ${characterName}'s information. If the user asks in the 2nd perso (e.g. Who are you), answer as if you are ${characterName}, referring to your information.`;
+            dynamicSystemMessage += `
+                ### Knowledge Base
+                If relevant, use knowledge entries to enhance your responses. Summarize and reference following knowledge base information:
+                ${knowledgeResponse}
+                Provide a response that aligns with the user's perspective. 
+                If the user asks in the 3rd person (e.g. Who is ${characterName}), respond about ${characterName}'s information. 
+                If the user asks in the 2nd perso (e.g. Who are you), answer as if you are ${characterName}, referring to your information.
+            `;
             console.log("Knowledge response loaded: ", knowledgeResponse);
         } else {
             console.log("Knowledge response NOT loaded: ", knowledgeResponse);
