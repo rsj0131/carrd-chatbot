@@ -349,7 +349,7 @@
         <img class="modal-content" id="modalImage">
     </div>
 
-    <button onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
+    <button class="reveal-nsfw" onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
         Reveal NSFW Content
     </button>
     <div class="hidden-image" style="display: none;">
@@ -518,10 +518,8 @@
                         botMessage.className = "bot-message";
         
                         if (isNSFW) {
-                            nsfwButtonCounter++;
-                            const nsfwButtonId = generateUniqueId();
                             botMessage.innerHTML = `
-                                <button data-nsfw-id="${nsfwButtonCounter}" onclick="revealNSFWContent(this)" style="...">
+                                <button id="${generateUniqueId()}" onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
                                     Reveal NSFW Content
                                 </button>
                                 <div class="hidden-image" style="display: none;">
