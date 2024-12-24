@@ -432,6 +432,14 @@
         function parseMessage(text) {
             return text.replace(/\n/g, '<br>');
         }
+
+        function revealNSFWImage(button) {
+            const hiddenImageContainer = button.nextElementSibling;
+            if (hiddenImageContainer) {
+                hiddenImageContainer.style.display = "block";
+                button.style.display = "none";
+            }
+        }
     
         async function sendMessage() {
             const inputElement = document.getElementById("message");
@@ -511,7 +519,20 @@
         
                     const botMessage = document.createElement("div");
                     botMessage.className = "bot-message";
-                    botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
+                    if (reply.msgContent?.isNSFW) {
+                        botMessage.innerHTML = `
+                            <p>${parseMessage(reply.msgContent.description)}</p>
+                            <button onclick="revealNSFWImage(this)" data-url="${reply.msgContent.url}" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">Reveal NSFW Image</button>
+                            <div class="hidden-image" style="display: none;">
+                                <img src="${reply.msgContent.url}" alt="${reply.msgContent.description}" style="max-width: 300px; max-height: 300px; border-radius: 10px; object-fit: contain;" />
+                            </div>
+                        `;
+                    } else {
+                        botMessage.innerHTML = `
+                            <p>${parseMessage(reply.msgContent.description)}</p>
+                            <img src="${reply.msgContent.url}" alt="${reply.msgContent.description}" style="max-width: 300px; max-height: 300px; border-radius: 10px; object-fit: contain;" />
+                        `;
+                    }
         
                     const botTimestamp = document.createElement("small");
                     botTimestamp.className = "timestamp";
