@@ -506,7 +506,7 @@
         
                         if (isNSFW) {
                             botMessage.innerHTML = `
-                                <button onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">Reveal NSFW Image</button>
+                                <button onclick="revealNSFWImage(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">Reveal NSFW Image</button>
                                 <div class="hidden-image" style="display: none;">
                                     ${content}
                                 </div>
@@ -527,6 +527,7 @@
                     console.error("Unexpected response structure:", data);
                 }
             } catch (error) {
+                console.error("Error during fetch:", error);
                 typingIndicator.remove();
         
                 const botMessageContainer = document.createElement("div");
