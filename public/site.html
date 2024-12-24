@@ -353,7 +353,7 @@
         Reveal NSFW Content
     </button>
     <div class="hidden-image" style="display: none;">
-        <img src="example-nsfw.jpg" alt="NSFW Content" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">
+        <img src="https://github.com/rsj0131/carrd-chatbot/blob/main/resources/image-placeholder.png" alt="NSFW Content" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">
     </div>
     
     <script>
@@ -442,6 +442,9 @@
         }
 
         let nsfwButtonCounter = 0;
+        function generateUniqueId() {
+            return `revealNSFWButton-${Date.now()}-${nsfwButtonCounter++}`;
+        }
         
         function revealNSFWContent(button) {
             const hiddenImageContainer = button.nextElementSibling;
@@ -516,9 +519,9 @@
         
                         if (isNSFW) {
                             nsfwButtonCounter++;
-                            const nsfwButtonId = `revealNSFWButton-${nsfwButtonCounter}`;
+                            const nsfwButtonId = generateUniqueId();
                             botMessage.innerHTML = `
-                                <button id="${nsfwButtonId}" onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
+                                <button data-nsfw-id="${nsfwButtonCounter}" onclick="revealNSFWContent(this)" style="...">
                                     Reveal NSFW Content
                                 </button>
                                 <div class="hidden-image" style="display: none;">
