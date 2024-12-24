@@ -348,14 +348,6 @@
         <span class="close">&times;</span>
         <img class="modal-content" id="modalImage">
     </div>
-
-    <button class="reveal-nsfw" onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
-        Reveal NSFW Content
-    </button>
-    <div class="hidden-image" style="display: none;">
-        <img src="https://github.com/rsj0131/carrd-chatbot/blob/main/resources/image-placeholder.png" alt="NSFW Content" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">
-    </div>
-    
     <script>
         // Get the modal
         const modal = document.getElementById("imageModal");
@@ -440,19 +432,6 @@
         function parseMessage(text) {
             return text.replace(/\n/g, '<br>');
         }
-
-        let nsfwButtonCounter = 0;
-        function generateUniqueId() {
-            return `revealNSFWButton-${Date.now()}-${nsfwButtonCounter++}`;
-        }
-        
-        function revealNSFWContent(button) {
-            const hiddenImageContainer = button.nextElementSibling;
-            if (hiddenImageContainer) {
-                hiddenImageContainer.style.display = "block";
-                button.style.display = "none";
-            }
-        }
     
         async function sendMessage() {
             const inputElement = document.getElementById("message");
@@ -510,25 +489,13 @@
                 typingIndicator.remove();
         
                 if (Array.isArray(data.replies)) {
-                    data.replies.forEach(({ content, isNSFW = false }) => {
+                    data.replies.forEach(reply => {
                         const botMessageContainer = document.createElement("div");
                         botMessageContainer.className = "message-container bot";
         
                         const botMessage = document.createElement("div");
                         botMessage.className = "bot-message";
-        
-                        if (isNSFW) {
-                            botMessage.innerHTML = `
-                                <button id="${generateUniqueId()}" onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
-                                    Reveal NSFW Content
-                                </button>
-                                <div class="hidden-image" style="display: none;">
-                                    ${content}
-                                </div>
-                            `;
-                        } else {
-                            botMessage.innerHTML = content;
-                        }
+                        botMessage.innerHTML = parseMessage(reply);
         
                         const botTimestamp = document.createElement("small");
                         botTimestamp.className = "timestamp";
@@ -539,10 +506,22 @@
                         messagesDiv.appendChild(botMessageContainer);
                     });
                 } else {
-                    console.error("Unexpected response structure:", data);
+                    const botMessageContainer = document.createElement("div");
+                    botMessageContainer.className = "message-container bot";
+        
+                    const botMessage = document.createElement("div");
+                    botMessage.className = "bot-message";
+                    botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
+        
+                    const botTimestamp = document.createElement("small");
+                    botTimestamp.className = "timestamp";
+                    botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+                    botMessageContainer.appendChild(botMessage);
+                    botMessageContainer.appendChild(botTimestamp);
+                    messagesDiv.appendChild(botMessageContainer);
                 }
             } catch (error) {
-                console.error("Error during fetch:", error);
                 typingIndicator.remove();
         
                 const botMessageContainer = document.createElement("div");
