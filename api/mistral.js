@@ -352,9 +352,9 @@ export default async function handler(req, res) {
         if (choice?.toolCalls?.length > 0) {
             for (const toolCall of choice.toolCalls) {
                 console.log("Tool call structure:", toolCall);
-                const { result, hasMessage, msgContent } = await processToolCall(toolCall, message);
+                const { result, hasMessage, msgContent, isNSFW = false } = await processToolCall(toolCall, message);
                 if (hasMessage && msgContent) {
-                    replies.push(msgContent);
+                    replies.push({ msgContent, isNSFW });
                 }
 
                 // Add tool result as a system message for follow-ups
@@ -588,11 +588,8 @@ async function sendImage(userMessage) {
         return {
             result: `You have successfully sent an image to the user, the image description: ${randomImage.description}`,
             hasMessage: true,
-            msgContent: {
-                description: randomImage.description,
-                url: randomImage.url,
-                isNSFW: randomImage.tags?.includes("nsfw") || false,
-            },
+            msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
+            isNSFW: randomImage.tags?.includes("nsfw") || false,
         };
     } catch (error) {
         console.error("Error in sendImage:", error);
