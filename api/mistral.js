@@ -588,7 +588,11 @@ async function sendImage(userMessage) {
         return {
             result: `You have successfully sent an image to the user, the image description: ${randomImage.description}`,
             hasMessage: true,
-            msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
+            msgContent: {
+                description: randomImage.description,
+                url: randomImage.url,
+                isNSFW: randomImage.tags?.includes("nsfw") || false,
+            },
         };
     } catch (error) {
         console.error("Error in sendImage:", error);
