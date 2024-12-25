@@ -430,8 +430,11 @@
         });
         
         function parseMessage(text) {
-            return text.replace(/\n/g, '<br>');
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Replace **bold text**
+                .replace(/\n/g, '<br>'); // Replace newlines
         }
+
     
         async function sendMessage() {
             const inputElement = document.getElementById("message");
