@@ -349,6 +349,25 @@
         <img class="modal-content" id="modalImage">
     </div>
     <script>
+       async function ensureAuth() {
+           try {
+               const response = await fetch("/api/auth/check");
+               const data = await response.json();
+    
+               if (!data.logged_in) {
+                   // Redirect to auth.html if not logged in
+                   window.location.href = "/auth.html";
+               }
+           } catch (error) {
+               console.error("Authentication check failed:", error);
+               window.location.href = "/auth.html";
+           }
+       }
+    
+       ensureAuth();
+    </script>
+    
+    <script>
         // Get the modal
         const modal = document.getElementById("imageModal");
         const modalImage = document.getElementById("modalImage");
