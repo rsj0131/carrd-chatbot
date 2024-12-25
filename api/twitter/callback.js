@@ -3,13 +3,14 @@ import cookie from "cookie";
 
 export default async function handler(req, res) {
     const { code } = req.query;
-
+    
     if (!code) {
         console.error("Missing code parameter");
         return res.status(400).json({ error: "Missing code parameter" });
     }
 
     const cookies = cookie.parse(req.headers.cookie || "");
+    console.log("Cookies in callback:", cookies);
     const codeVerifier = cookies.code_verifier;
 
     if (!codeVerifier) {
