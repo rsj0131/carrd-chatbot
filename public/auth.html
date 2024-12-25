@@ -12,6 +12,13 @@
     </div>
 
     <script>
+        window.addEventListener("message", async (event) => {
+            if (event.data && event.data.logged_in) {
+                console.log("Authentication successful, updating state:", event.data);
+                await checkAuth(); // Ensure the authentication state is re-checked
+            }
+        });
+
         async function checkAuth() {
             try {
                 const response = await fetch("/api/auth/check", { credentials: "include" });
