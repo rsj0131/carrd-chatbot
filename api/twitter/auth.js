@@ -1,11 +1,13 @@
 import { randomBytes } from "crypto";
 import cookie from "cookie";
+import crypto from "crypto"; // Ensure crypto is imported
 
 export default async function handler(req, res) {
     try {
         const state = randomBytes(16).toString("hex");
         const codeVerifier = randomBytes(32).toString("hex");
 
+        // Correctly calculate the code_challenge
         const codeChallenge = crypto
             .createHash("sha256")
             .update(codeVerifier)
@@ -13,6 +15,7 @@ export default async function handler(req, res) {
         console.log("Generated code_verifier:", codeVerifier);
         console.log("Generated code_challenge:", codeChallenge);
 
+        // Set the code_verifier as a secure cookie
         res.setHeader(
             "Set-Cookie",
             cookie.serialize("code_verifier", codeVerifier, {
@@ -22,7 +25,7 @@ export default async function handler(req, res) {
                 maxAge: 300, // 5 minutes
                 sameSite: "Lax", // Change to "Lax" to allow the redirect flow
             })
-        );    
+        );
 
         console.log("Set-Cookie header sent with code_verifier:", codeVerifier); // Debug log
 
@@ -36,4 +39,3 @@ export default async function handler(req, res) {
         res.status(500).json({ error: "Failed to initiate Twitter authentication" });
     }
 }
-
