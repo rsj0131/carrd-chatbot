@@ -3,17 +3,14 @@ import cookie from "cookie";
 
 export default async function handler(req, res) {
     const { code } = req.query;
-    
+
     if (!code) {
         console.error("Missing code parameter");
         return res.status(400).json({ error: "Missing code parameter" });
     }
 
     const cookies = cookie.parse(req.headers.cookie || "");
-    console.log("Cookies in callback:", cookies);
     const codeVerifier = cookies.code_verifier;
-    console.log("All cookies in callback:", req.headers.cookie);
-    console.log("Received code_verifier from cookie:", codeVerifier);
 
     if (!codeVerifier) {
         console.error("Missing code_verifier");
@@ -34,10 +31,10 @@ export default async function handler(req, res) {
                 code: code,
                 redirect_uri: process.env.TWITTER_CALLBACK_URL,
                 client_id: process.env.TWITTER_API_KEY,
-                code_verifier: codeVerifier, // Ensure this matches exactly
+                code_verifier: codeVerifier,
             }),
         });
-        
+
         const tokenData = await tokenResponse.json();
 
         if (!tokenResponse.ok) {
@@ -67,11 +64,6 @@ export default async function handler(req, res) {
 
         const { id, username, name } = userData.data;
 
-        if (!username || !id || !name) {
-            console.error("Incomplete user data:", userData.data);
-            return res.status(500).json({ error: "User data is incomplete" });
-        }
-
         const token = jwt.sign(
             { id, username, name },
             process.env.JWT_SECRET,
@@ -83,9 +75,13 @@ export default async function handler(req, res) {
             `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Lax`
         );
 
-        // Use the REDIRECT_URL environment variable
-        const redirectUrl = process.env.REDIRECT_URL || "https://doublevchan.carrd.co";
-        res.redirect(`${redirectUrl}?logged_in=true&username=${encodeURIComponent(username)}`);
+        // Send a script to post a message to the parent window
+        res.send(`
+            <script>
+                window.opener.postMessage({ logged_in: true, username: "${username}" }, "*");
+                window.close();
+            </script>
+        `);
     } catch (error) {
         console.error("OAuth Callback Error:", error);
         res.status(500).json({ error: "Authentication failed" });
