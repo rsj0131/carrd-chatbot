@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication</title>
+</head>
+<body>
+    <div id="loading">Checking authentication...</div>
+    <div id="login-container" style="display: none;">
+        <button id="login-button">Login with Twitter</button>
+    </div>
+
+    <script>
+        async function checkAuth() {
+            try {
+                const response = await fetch("/api/auth/check");
+                const data = await response.json();
+
+                if (data && data.logged_in) {
+                    // Redirect to the main content
+                    window.location.href = "/site.html";
+                } else {
+                    // Show login button
+                    document.getElementById("loading").style.display = "none";
+                    document.getElementById("login-container").style.display = "block";
+                }
+            } catch (error) {
+                console.error("Error checking auth:", error);
+                document.getElementById("loading").innerText = "Error checking authentication.";
+            }
+        }
+
+        document.getElementById("login-button").addEventListener("click", () => {
+            const redirectUrl = encodeURIComponent(window.location.href);
+            window.location.href = `/api/twitter/auth?redirect=${redirectUrl}`;
+        });
+
+        checkAuth();
+    </script>
+</body>
+</html>
