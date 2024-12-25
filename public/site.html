@@ -313,6 +313,42 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        /* Styles for the revealNSFWContent button */
+        .reveal-nsfw-button {
+            color: white;
+            background: rgba(255, 0, 0, 0.7);
+            border: none;
+            border-radius: 5px;
+            padding: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+        
+        .reveal-nsfw-button:hover {
+            background: rgba(255, 0, 0, 0.9);
+            transform: scale(1.05); /* Slight zoom effect */
+        }
+        
+        /* Styles for the hidden NSFW image container */
+        .hidden-image {
+            display: none; /* Hidden by default */
+            margin-top: 10px;
+            text-align: center;
+        }
+        
+        .hidden-image img {
+            max-width: 400px;
+            max-height: 400px;
+            border-radius: 10px;
+            object-fit: contain; /* Ensures the image maintains its aspect ratio */
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2); /* Optional: Add shadow to the image */
+            transition: transform 0.3s ease;
+        }
+        
+        .hidden-image img:hover {
+            transform: scale(1.02); /* Slight zoom on hover */
+        }
     </style>
 </head>
 <body>
@@ -348,7 +384,31 @@
         <span class="close">&times;</span>
         <img class="modal-content" id="modalImage">
     </div>
+
+    <div class="bot-message">
+        <button class="reveal-nsfw-button" onclick="revealNSFWContent(this)">
+            Reveal NSFW Content
+        </button>
+        <div class="hidden-image">
+            <img src="https://raw.githubusercontent.com/rsj0131/carrd-chatbot/refs/heads/main/resources/image-placeholder.png" alt="NSFW Content">
+        </div>
+    </div>
     <script>
+        // Unique ID generation for NSFW buttons
+        let nsfwButtonCounter = 0;
+        function generateUniqueId() {
+            return `revealNSFWButton-${Date.now()}-${nsfwButtonCounter++}`;
+        }
+
+        // Reveal NSFW Content Function
+        function revealNSFWContent(button) {
+            const hiddenImageContainer = button.nextElementSibling;
+            if (hiddenImageContainer) {
+                hiddenImageContainer.style.display = "block";
+                button.style.display = "none";
+            }
+        }
+        
         // Get the modal
         const modal = document.getElementById("imageModal");
         const modalImage = document.getElementById("modalImage");
@@ -489,13 +549,25 @@
                 typingIndicator.remove();
         
                 if (Array.isArray(data.replies)) {
-                    data.replies.forEach(reply => {
+                    data.replies.forEach(({ content, isNSFW = false }) => {
                         const botMessageContainer = document.createElement("div");
                         botMessageContainer.className = "message-container bot";
         
                         const botMessage = document.createElement("div");
                         botMessage.className = "bot-message";
-                        botMessage.innerHTML = parseMessage(reply);
+                        if (isNSFW) {
+                            const nsfwButtonId = generateUniqueId();
+                            botMessage.innerHTML = `
+                                <button id="${nsfwButtonId}" onclick="revealNSFWContent(this)" style="color: white; background: rgba(255, 0, 0, 0.7); border: none; border-radius: 5px; padding: 5px;">
+                                    Reveal NSFW Content
+                                </button>
+                                <div class="hidden-image" style="display: none;">
+                                    <img src="${content}" alt="NSFW Content" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">
+                                </div>
+                            `;
+                        } else {
+                            botMessage.innerHTML = content;
+                        }
         
                         const botTimestamp = document.createElement("small");
                         botTimestamp.className = "timestamp";
@@ -505,21 +577,6 @@
                         botMessageContainer.appendChild(botTimestamp);
                         messagesDiv.appendChild(botMessageContainer);
                     });
-                } else {
-                    const botMessageContainer = document.createElement("div");
-                    botMessageContainer.className = "message-container bot";
-        
-                    const botMessage = document.createElement("div");
-                    botMessage.className = "bot-message";
-                    botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
-        
-                    const botTimestamp = document.createElement("small");
-                    botTimestamp.className = "timestamp";
-                    botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-                    botMessageContainer.appendChild(botMessage);
-                    botMessageContainer.appendChild(botTimestamp);
-                    messagesDiv.appendChild(botMessageContainer);
                 }
             } catch (error) {
                 typingIndicator.remove();
