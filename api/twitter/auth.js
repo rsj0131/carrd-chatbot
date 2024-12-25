@@ -6,9 +6,7 @@ export default async function handler(req, res) {
         const state = randomBytes(16).toString("hex");
         const codeVerifier = randomBytes(32).toString("hex");
 
-        const codeChallenge = Buffer.from(
-            codeVerifier
-        ).toString("base64url");
+        const codeChallenge = Buffer.from(codeVerifier).toString("base64url");
 
         res.setHeader(
             "Set-Cookie",
@@ -17,15 +15,20 @@ export default async function handler(req, res) {
                 secure: process.env.NODE_ENV === "production",
                 path: "/",
                 maxAge: 300, // 5 minutes
-                sameSite: "Strict", // Adjust if cross-origin issues persist
+                sameSite: "Strict",
             })
         );
 
-        const redirectUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${process.env.TWITTER_API_KEY}&redirect_uri=${process.env.TWITTER_CALLBACK_URL}&scope=tweet.read%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+        console.log("Set-Cookie header sent with code_verifier:", codeVerifier); // Debug log
 
-        res.redirect(redirectUrl);
+        // Delay the redirect for 5 seconds to inspect logs
+        setTimeout(() => {
+            const redirectUrl = `https://twitter.com/i/oauth2/authorize?response_type=code&client_id=${process.env.TWITTER_API_KEY}&redirect_uri=${process.env.TWITTER_CALLBACK_URL}&scope=tweet.read%20users.read&state=${state}&code_challenge=${codeChallenge}&code_challenge_method=S256`;
+            res.redirect(redirectUrl);
+        }, 5000);
     } catch (error) {
         console.error("Twitter Auth Initiation Error:", error);
         res.status(500).json({ error: "Failed to initiate Twitter authentication" });
     }
 }
+
