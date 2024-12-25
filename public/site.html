@@ -371,7 +371,7 @@
         </button>
     
         <form id="chatForm">
-            <textarea id="message" placeholder="Type your message..." required></textarea>
+            <textarea id="message-${Date.now()}" placeholder="Type your message..." required></textarea>
             <button type="submit" id="sendButton" aria-label="Send">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M1.5 8a.5.5 0 0 1 .5-.5h9.793L7.146 4.354a.5.5 0 1 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L11.793 8.5H2a.5.5 0 0 1-.5-.5z"/>
@@ -395,9 +395,9 @@
     </div>
     <script>
         // Unique ID generation for NSFW buttons
-        let nsfwButtonCounter = 0;
-        function generateUniqueId() {
-            return `revealNSFWButton-${Date.now()}-${nsfwButtonCounter++}`;
+        let counter = 0;
+        function generateDynamicId(prefix) {
+            return `${prefix}-${counter++}`;
         }
 
         // Reveal NSFW Content Function
