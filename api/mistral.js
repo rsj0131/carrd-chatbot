@@ -203,7 +203,7 @@ async function checkAndSummarizeChatHistory() {
 }
 
 
-async function saveChatHistory(userMessage, botReply) {
+async function saveChatHistory(userMessage, botReplies) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
