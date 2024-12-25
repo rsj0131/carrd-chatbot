@@ -14,10 +14,10 @@ export default async function handler(req, res) {
             "Set-Cookie",
             cookie.serialize("code_verifier", codeVerifier, {
                 httpOnly: true,
-                secure: true,
+                secure: process.env.NODE_ENV === "production", // Use secure cookies only in production
                 path: "/",
                 maxAge: 300, // 5 minutes
-                sameSite: "Strict",
+                sameSite: "Strict", // Prevent CSRF
             })
         );
 
