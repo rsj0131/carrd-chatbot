@@ -31,14 +31,39 @@
             }
         }
     
-        document.getElementById("login-button").addEventListener("click", () => {
+        function loginWithTwitter() {
             const redirectUrl = encodeURIComponent(window.location.href);
-            window.location.href = `/api/twitter/auth?redirect=${redirectUrl}`;
-        });
+    
+            // Open Twitter login in a new window
+            const twitterLoginWindow = window.open(
+                `/api/twitter/auth?redirect=${redirectUrl}`,
+                "TwitterLogin",
+                "width=600,height=600"
+            );
+    
+            // Poll for successful login
+            const checkLoginInterval = setInterval(async () => {
+                try {
+                    const response = await fetch("/api/auth/check");
+                    const data = await response.json();
+    
+                    if (data && data.logged_in) {
+                        clearInterval(checkLoginInterval);
+                        twitterLoginWindow.close(); // Close the login window
+                        window.location.href = "/site.html"; // Redirect to the main content
+                    }
+                } catch (error) {
+                    console.error("Error checking auth during polling:", error);
+                }
+            }, 1000);
+        }
+    
+        document.getElementById("login-button").addEventListener("click", loginWithTwitter);
     
         // Automatically check authentication on page load
         checkAuth();
     </script>
+
 
 </body>
 </html>
