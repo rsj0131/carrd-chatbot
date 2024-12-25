@@ -78,7 +78,10 @@ export default async function handler(req, res) {
             { expiresIn: "1h" }
         );
 
-        res.setHeader("Set-Cookie", `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Strict`);
+        res.setHeader(
+            "Set-Cookie",
+            `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Lax`
+        );
 
         // Use the REDIRECT_URL environment variable
         const redirectUrl = process.env.REDIRECT_URL || "https://doublevchan.carrd.co";
