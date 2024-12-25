@@ -13,6 +13,7 @@ export default async function handler(req, res) {
     console.log("Cookies in callback:", cookies);
     const codeVerifier = cookies.code_verifier;
     console.log("All cookies in callback:", req.headers.cookie);
+    console.log("Received code_verifier from cookie:", codeVerifier);
 
     if (!codeVerifier) {
         console.error("Missing code_verifier");
@@ -33,10 +34,10 @@ export default async function handler(req, res) {
                 code: code,
                 redirect_uri: process.env.TWITTER_CALLBACK_URL,
                 client_id: process.env.TWITTER_API_KEY,
-                code_verifier: codeVerifier,
+                code_verifier: codeVerifier, // Ensure this matches exactly
             }),
         });
-
+        
         const tokenData = await tokenResponse.json();
 
         if (!tokenResponse.ok) {
