@@ -1,19 +1,17 @@
 import jwt from "jsonwebtoken";
-import cookie from "cookie";
 
-export default async function handler(req, res) {
+export default function handler(req, res) {
+    const { session } = req.cookies || {};
+
+    if (!session) {
+        return res.status(200).json({ logged_in: false });
+    }
+
     try {
-        const cookies = cookie.parse(req.headers.cookie || "");
-        const session = cookies.session;
-
-        if (!session) {
-            return res.status(200).json({ logged_in: false });
-        }
-
-        const user = jwt.verify(session, process.env.JWT_SECRET);
-        return res.status(200).json({ logged_in: true, user });
+        const decoded = jwt.verify(session, process.env.JWT_SECRET);
+        return res.status(200).json({ logged_in: true, username: decoded.username });
     } catch (error) {
-        console.error("Auth Check Error:", error);
-        res.status(200).json({ logged_in: false });
+        console.error("Invalid session:", error);
+        return res.status(200).json({ logged_in: false });
     }
 }
