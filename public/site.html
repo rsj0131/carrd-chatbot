@@ -4,83 +4,108 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Chat with Vivian</title>
+    <!-- Link to Google Fonts for Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* General Styles */
+        :root {
+            /* You can keep color variables here if you want to reuse them in the future. */
+            /* For now, this is just an example if you'd like to centralize colors. */
+            /* --skyblue-08: rgba(135, 206, 235, 0.8); */
+            /* --skyblue-05: rgba(135, 206, 235, 0.5); */
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', sans-serif; /* Set Inter as the default font */
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            height: 100vh;
+            overflow: hidden; /* Prevent body scroll */
+            height: 100vh; /* Ensure the body fills the viewport */
         }
 
         #chat-container {
             display: flex;
             flex-direction: column;
-            height: 100%;
+            height: 100%; /* Full height for the chat container */
+            max-height: 100%; /* Prevent overflow */
+            overflow: hidden; /* Prevent content overflow */
         }
-
+        
         header {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.5rem; /* Space between avatar and title */
         }
 
         header h1 {
-            font-weight: 600;
-            font-size: 2rem;
+            font-family: 'Inter', sans-serif; /* Apply Inter specifically to the header */
+            font-weight: 600; /* Choose a bold weight for emphasis */
+            font-size: 2rem; /* Adjust the font size */
             color: white;
-            margin: 0;
+            margin: 0; /* Remove default margin */
         }
 
         .avatar {
             width: 50px;
             height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid white;
+            border-radius: 50%; /* Makes the image circular */
+            object-fit: cover; /* Ensures the image fits inside the circle */
+            border: 2px solid white; /* Optional: Add a white border for styling */
         }
 
-        /* Chat Window */
         #chat-window {
-            flex: 1;
-            padding: 1rem;
             background-color: transparent;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            flex: 1; /* Allow chat window to grow and fill available space */
+            max-height: calc(100vh - 200px); /* Constrain to viewport height minus margins */
+            overflow-y: auto; /* Enable internal scrolling */
+            padding: 1rem;
             border-radius: 0.5rem;
-            margin: 10px 0 1rem;
-            overflow-y: auto;
+            margin-top: 10px; /* Add margin to move the chat window down */
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            scrollbar-width: thin; /* For Firefox */
+            scrollbar-color: rgba(235, 235, 235, 0.8) transparent; /* Thumb and track colors */
+            position: relative;
         }
 
+        /* Scrollbar styling */
         #chat-window::-webkit-scrollbar {
-            width: 8px;
+            width: 8px; /* Scroll bar width */
         }
 
+        #chat-window::-webkit-scrollbar-track {
+            background: transparent; /* Scrollbar track background */
+        }
+    
         #chat-window::-webkit-scrollbar-thumb {
-            background-color: rgba(200, 200, 200, 0.8);
-            border-radius: 4px;
+            background-color: rgba(200, 200, 200, 0.8); /* Scrollbar thumb color */
+            border-radius: 4px; /* Round edges */
         }
-
+    
+        #chat-window::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(245, 245, 245, 1); /* Change thumb color on hover */
+        }
+        
         .message-container {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
+            justify-content: flex-start;
         }
 
         .message-container.user {
-            align-items: flex-end;
+            justify-content: flex-end;
         }
 
-        .user-message, .bot-message {
-            max-width: 80%;
+        .user-message,
+        .bot-message {
+            display: inline-block;
             padding: 0.5rem;
             border-radius: 0.5rem;
             word-wrap: break-word;
             word-break: break-word;
+            max-width: 80%;
+            width: fit-content;
         }
 
         .user-message {
@@ -93,16 +118,73 @@
             color: white;
         }
 
-        .timestamp {
-            font-size: 0.8rem;
+        .bot-message a {
+            color: #def6ff; /* Set your desired color for the link */
+            text-decoration: none; /* Removes underline */
+        }
+        
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            background-color: rgba(135, 206, 235, 0.5);
             color: white;
-            margin-top: 0.2rem;
+            font-size: 1rem;
+            width: fit-content;
+        }
+    
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: white;
+            animation: blink 1.2s infinite;
+        }
+    
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+    
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+    
+        @keyframes blink {
+            0%, 20% {
+                opacity: 0.2;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.2;
+            }
         }
 
-        /* Form */
+        .timestamp {
+            font-size: 0.8rem; /* Smaller font size */
+            color: white; /* White text color */
+            margin-top: 0.2rem; /* Small margin to separate from the message */
+            display: block; /* Ensure it's on its own line */
+        }
+        
+        .message-container.user {
+            flex-direction: column; /* Stack user message and timestamp vertically */
+            align-items: flex-end; /* Align content to the right */
+        }
+        
+        .message-container.bot {
+            flex-direction: column; /* Stack bot message and timestamp vertically */
+            align-items: flex-start; /* Align content to the left */
+        }
+
         form {
+            flex-shrink: 0; /* Prevent form from shrinking */
             display: flex;
             gap: 0.5rem;
+            width: 100%;
             margin: 0;
         }
 
@@ -110,97 +192,364 @@
             flex: 1;
             padding: 0.75rem;
             border-radius: 0.5rem;
+            border: none;
             background-color: transparent;
             color: white;
+            font-family: 'Inter', sans-serif;
             resize: none;
-            border: none;
-            outline: none;
+            margin: 0;
+            box-sizing: border-box;
+            outline: none; /* Hide the outline when focused */
         }
 
         textarea::placeholder {
             color: white;
         }
 
+        textarea:focus {
+            outline: none; /* Ensure no border or outline appears when focused */
+            box-shadow: none; /* Prevent any shadow effects from appearing */
+        }
+
         #sendButton {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
             background-color: rgba(255, 255, 255, 0.8);
+            border: none; /* Remove default button border */
+            border-radius: 50%; /* Make it circular */
+            width: 50px; /* Set width to make it circular */
+            height: 50px; /* Set height to make it circular */
+            display: flex; /* Use flexbox for centering */
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            cursor: pointer; /* Show pointer cursor */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Add a slight shadow */
+            transition: background-color 0.3s ease; /* Add smooth hover effect */
+        }
+        
+        #sendButton:hover {
+            background-color: rgba(235, 235, 235, 1);
+        }
+        
+        #sendButton svg {
+            fill: black; /* Set the arrow icon color */
+            transition: transform 0.3s ease; /* Smooth transition for icon animation */
+        }
+        
+        #sendButton:hover svg {
+            transform: scale(1.1); /* Slightly enlarge the arrow icon on hover */
+        }
+
+        #scrollToBottom {
+            display: none; /* Moved inline style to CSS */
+            position: absolute; /* Absolute positioning relative to #chat-window */
+            bottom: 15%; /* Adjust the distance from the bottom of the #chat-window */
+            left: 50%; /* Center the button horizontally */
+            transform: translateX(-50%); /* Center alignment correction */
+            width: 40px; /* Set width for a circle */
+            height: 40px; /* Set height for a circle */
+            background-color: rgba(135, 206, 235, 0.8); /* Background color */
+            color: white; /* Arrow color */
+            border: none;
+            border-radius: 50%; /* Make it circular */
             cursor: pointer;
+            z-index: 10; /* Ensure it stays above other elements */
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center; /* Center the arrow inside the circle */
+            font-size: 18px; /* Arrow size */
+        }
+        
+        #scrollToBottom:hover {
+            background-color: rgba(135, 206, 235, 1); /* Darker on hover */
+        }
+
+        /* Media query for mobile devices */
+        @media (max-width: 300px) {
+            header h1 {
+                font-size: 1.2rem; /* Adjust title font size */
+            }
+    
+            .user-message,
+            .bot-message {
+                max-width: 100%; /* Allow messages to use the full width */
+            }
+    
+            #chat-window {
+                padding: 0.5rem 0; /* Adjust padding for mobile */
+            }
+    
+            textarea {
+                padding: 0.5rem; /* Reduce padding for smaller screens */
+            }
+    
+            button {
+                padding: 0.5rem; /* Reduce padding for smaller screens */
+            }
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+    
+        .modal-content {
+            display: block;
+            margin: auto;
+            max-width: 90%;
+            max-height: 90%;
+        }
+    
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    
+        .close:hover,
+        .close:focus {
+            color: #bbb;
+            text-decoration: none;
+            cursor: pointer;
         }
     </style>
 </head>
 <body>
     <div id="chat-container">
         <header>
-            <img src="https://github.com/rsj0131/carrd-chatbot/raw/9125199bd4f0817fa49bea8cfdb1dcc3379a62a3/resources/avatar.jpg" 
+            <img src="https://github.com/rsj0131/carrd-chatbot/blob/9125199bd4f0817fa49bea8cfdb1dcc3379a62a3/resources/avatar.jpg?raw=true" 
                  alt="Vivian Avatar" 
                  class="avatar">
             <h1>Vivian</h1>
         </header>
     
-        <div id="chat-window"></div>
+        <div id="chat-window">
+            <div id="messages"></div>
+        </div>
+    
+        <button id="scrollToBottom">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M8 12a.5.5 0 0 1-.374-.155l-4-4a.5.5 0 1 1 .748-.66L8 10.793l3.626-3.626a.5.5 0 0 1 .748.66l-4 4A.5.5 0 0 1 8 12Z"/>
+            </svg>
+        </button>
     
         <form id="chatForm">
             <textarea id="message" placeholder="Type your message..." required></textarea>
             <button type="submit" id="sendButton" aria-label="Send">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="black" viewBox="0 0 16 16">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="white" viewBox="0 0 16 16">
                     <path fill-rule="evenodd" d="M1.5 8a.5.5 0 0 1 .5-.5h9.793L7.146 4.354a.5.5 0 1 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L11.793 8.5H2a.5.5 0 0 1-.5-.5z"/>
                 </svg>
             </button>
         </form>
     </div>
 
+    <div id="imageModal" class="modal">
+        <span class="close">&times;</span>
+        <img class="modal-content" id="modalImage">
+    </div>
     <script>
-        const chatWindow = document.getElementById("chat-window");
-        const chatForm = document.getElementById("chatForm");
-        const messageInput = document.getElementById("message");
+        // Get the modal
+        const modal = document.getElementById("imageModal");
+        const modalImage = document.getElementById("modalImage");
+        const closeBtn = document.querySelector(".close");
 
-        function createMessageElement(message, type = "bot") {
-            const container = document.createElement("div");
-            container.className = `message-container ${type}`;
-            const messageDiv = document.createElement("div");
-            messageDiv.className = `${type}-message`;
-            messageDiv.textContent = message;
-            const timestamp = document.createElement("small");
-            timestamp.className = "timestamp";
-            timestamp.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            container.appendChild(messageDiv);
-            container.appendChild(timestamp);
-            return container;
-        }
-
-        function appendMessage(message, type = "bot") {
-            const messageElement = createMessageElement(message, type);
-            chatWindow.appendChild(messageElement);
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-
-        chatForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const message = messageInput.value.trim();
-            if (!message) return;
-
-            appendMessage(message, "user");
-            messageInput.value = "";
-
-            try {
-                const response = await fetch("/api/mistral", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message }),
-                });
-
-                const data = await response.json();
-                if (data.reply) appendMessage(data.reply);
-            } catch (error) {
-                console.error("Error:", error);
-                appendMessage("Unable to connect to the server.", "bot");
+        // Open modal when an image is clicked
+        document.addEventListener("click", (event) => {
+            if (event.target.tagName === "IMG" && event.target.classList.contains("clickable-image")) {
+                modal.style.display = "block";
+                modalImage.src = event.target.src;
             }
         });
+        
+        // Close modal when the close button is clicked
+        closeBtn.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+        
+        // Close modal when clicking outside the image
+        modal.addEventListener("click", (event) => {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        });
+
+        // Scroll to Bottom Function
+        function scrollToBottom() {
+            const chatWindow = document.getElementById("chat-window");
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+    
+        // Chat Window Scroll Logic
+        const chatWindow = document.getElementById("chat-window");
+        const scrollToBottomButton = document.getElementById("scrollToBottom");
+    
+        function checkScrollPosition() {
+            const isAtBottom =
+                chatWindow.scrollTop >= chatWindow.scrollHeight - chatWindow.clientHeight - 50;
+            
+            if (!isAtBottom) {
+                scrollToBottomButton.style.display = "block";
+            } else {
+                scrollToBottomButton.style.display = "none";
+            }
+        }
+    
+        chatWindow.addEventListener("scroll", checkScrollPosition);
+    
+        // Attach the click event to the button
+        scrollToBottomButton.addEventListener("click", () => {
+            scrollToBottom();
+            checkScrollPosition(); // Ensure button updates after scrolling
+        });
+    
+        // Ensure the chat auto-scrolls and button visibility updates when a new message is added
+        function autoScroll() {
+            scrollToBottom();
+            checkScrollPosition();
+        }
+    
+        document.getElementById("chatForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            sendMessage();
+            autoScroll(); // Scroll to bottom after sending a message
+        });
+    
+        document.getElementById("message").addEventListener("keydown", (e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+                autoScroll();
+            }
+        });
+        
+        function parseMessage(text) {
+            return text.replace(/\n/g, '<br>');
+        }
+    
+        async function sendMessage() {
+            const inputElement = document.getElementById("message");
+            const sendButton = document.getElementById("sendButton");
+            const messagesDiv = document.getElementById("messages");
+        
+            const message = inputElement.value;
+            const characterId = "1";
+        
+            if (!message.trim()) return;
+        
+            // Disable input and send button
+            inputElement.disabled = true;
+            sendButton.disabled = true;
+        
+            const userTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+            // Add user message
+            const userMessageContainer = document.createElement("div");
+            userMessageContainer.className = "message-container user";
+        
+            const userMessage = document.createElement("div");
+            userMessage.className = "user-message";
+            userMessage.innerText = message;
+        
+            const userTimestamp = document.createElement("small");
+            userTimestamp.className = "timestamp";
+            userTimestamp.innerText = userTime;
+        
+            userMessageContainer.appendChild(userMessage);
+            userMessageContainer.appendChild(userTimestamp);
+            messagesDiv.appendChild(userMessageContainer);
+        
+            inputElement.value = ""; // Clear input
+            autoScroll();
+        
+            const typingIndicator = document.createElement("div");
+            typingIndicator.className = "typing-indicator";
+            typingIndicator.innerHTML = `
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            `;
+            messagesDiv.appendChild(typingIndicator);
+            autoScroll();
+        
+            try {
+                const response = await fetch("https://carrd-chatbot.vercel.app/api/mistral", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message, characterId }),
+                });
+        
+                const data = await response.json();
+                typingIndicator.remove();
+        
+                if (Array.isArray(data.replies)) {
+                    data.replies.forEach(reply => {
+                        const botMessageContainer = document.createElement("div");
+                        botMessageContainer.className = "message-container bot";
+        
+                        const botMessage = document.createElement("div");
+                        botMessage.className = "bot-message";
+                        botMessage.innerHTML = parseMessage(reply);
+        
+                        const botTimestamp = document.createElement("small");
+                        botTimestamp.className = "timestamp";
+                        botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+                        botMessageContainer.appendChild(botMessage);
+                        botMessageContainer.appendChild(botTimestamp);
+                        messagesDiv.appendChild(botMessageContainer);
+                    });
+                } else {
+                    const botMessageContainer = document.createElement("div");
+                    botMessageContainer.className = "message-container bot";
+        
+                    const botMessage = document.createElement("div");
+                    botMessage.className = "bot-message";
+                    botMessage.innerHTML = parseMessage(data.reply || "Error: " + data.error);
+        
+                    const botTimestamp = document.createElement("small");
+                    botTimestamp.className = "timestamp";
+                    botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+                    botMessageContainer.appendChild(botMessage);
+                    botMessageContainer.appendChild(botTimestamp);
+                    messagesDiv.appendChild(botMessageContainer);
+                }
+            } catch (error) {
+                typingIndicator.remove();
+        
+                const botMessageContainer = document.createElement("div");
+                botMessageContainer.className = "message-container bot";
+        
+                const botMessage = document.createElement("div");
+                botMessage.className = "bot-message";
+                botMessage.innerText = "Error: Unable to connect to the server.";
+        
+                const botTimestamp = document.createElement("small");
+                botTimestamp.className = "timestamp";
+                botTimestamp.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+                botMessageContainer.appendChild(botMessage);
+                botMessageContainer.appendChild(botTimestamp);
+                messagesDiv.appendChild(botMessageContainer);
+            } finally {
+                // Re-enable input and send button
+                inputElement.disabled = false;
+                sendButton.disabled = false;
+                inputElement.focus(); // Focus back to input
+                autoScroll();
+            }
+        }
     </script>
+
 </body>
 </html>
