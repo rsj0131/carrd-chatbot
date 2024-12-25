@@ -261,7 +261,9 @@ export default async function handler(req, res) {
             You are roleplaying as ${characterName}, here's things about you:
             Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
             ${characterDetails.prompt || " "}.
-        
+
+            - Current Date and Time: ${currentTimeInArgentina}.
+            
             ### Character Information
             - Name: ${characterName}.
             - Age: ${characterDetails.age || "unknown"}.
@@ -277,7 +279,7 @@ export default async function handler(req, res) {
             - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
             - Scenario: ${characterDetails.scenario || "A general chat session"}.
             - Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            - Current Time: ${currentTimeInArgentina}.\n
+            
         
             ### History
             Contextualize your responses using the last ${history.length} messages from the conversation.
