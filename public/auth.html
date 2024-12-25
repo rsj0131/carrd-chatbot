@@ -14,12 +14,16 @@
     <script>
         async function checkAuth() {
             try {
-                const response = await fetch("/api/auth/check");
+                const response = await fetch("/api/auth/check", { credentials: "include" });
                 const data = await response.json();
     
                 if (data && data.logged_in) {
                     // Redirect to the main content
-                    window.location.href = "/site.html";
+                    document.getElementById("login-container").style.display = "none";
+                    document.getElementById("loading").innerText = `Welcome, ${data.username}! Redirecting...`;
+                    setTimeout(() => {
+                        window.location.href = "/site.html";
+                    }, 1000);
                 } else {
                     // Show login button
                     document.getElementById("loading").style.display = "none";
@@ -42,11 +46,11 @@
             );
     
             // Listen for messages from the child window
-            window.addEventListener("message", (event) => {
+            window.addEventListener("message", async (event) => {
                 if (event.data && event.data.logged_in) {
                     console.log("Authentication successful:", event.data);
                     twitterLoginWindow.close();
-                    window.location.href = "/site.html"; // Redirect to the main content
+                    await checkAuth(); // Check auth state and update UI
                 }
             });
         }
@@ -56,7 +60,6 @@
         // Automatically check authentication on page load
         checkAuth();
     </script>
-
 
 </body>
 </html>
