@@ -23,9 +23,10 @@ export default async function handler(req, res) {
                 secure: process.env.NODE_ENV === "production", // Use HTTPS in production
                 path: "/",
                 maxAge: 300, // 5 minutes
-                sameSite: "Lax", // Change to "Lax" to allow the redirect flow
+                sameSite: "None", // Allow cross-origin cookies
             })
         );
+
 
         console.log("Set-Cookie header sent with code_verifier:", codeVerifier); // Debug log
 
