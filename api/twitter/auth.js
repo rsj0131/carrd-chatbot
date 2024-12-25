@@ -12,12 +12,12 @@ export default async function handler(req, res) {
             "Set-Cookie",
             cookie.serialize("code_verifier", codeVerifier, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+                secure: process.env.NODE_ENV === "production", // Use HTTPS in production
                 path: "/",
                 maxAge: 300, // 5 minutes
-                sameSite: "Strict",
+                sameSite: "Lax", // Change to "Lax" to allow the redirect flow
             })
-        );
+        );    
 
         console.log("Set-Cookie header sent with code_verifier:", codeVerifier); // Debug log
 
