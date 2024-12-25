@@ -494,8 +494,8 @@
         }
     
         async function sendMessage() {
-            const inputElement = document.getElementById("message");
-            const sendButton = document.getElementById("sendButton");
+            const inputElement = document.querySelector('textarea[placeholder="Type your message..."]');
+            const sendButton = document.querySelector('button[type="submit"]');
             const messagesDiv = document.getElementById("messages");
         
             const message = inputElement.value;
