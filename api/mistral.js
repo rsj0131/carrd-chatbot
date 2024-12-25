@@ -203,16 +203,20 @@ async function checkAndSummarizeChatHistory() {
 }
 
 
-async function saveToMongoDB(userMessage, botReply) {
+async function saveChatHistory(userMessage, botReply) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
-        await collection.insertOne({
+        
+        // Save each reply as a separate entry
+        const chatEntries = botReplies.map(reply => ({
             timestamp: new Date(),
             userMessage,
-            botReply,
-        });
-        console.log("Saved conversation to MongoDB.");
+            botReply: reply,
+        }));
+
+        await collection.insertMany(chatEntries);
+        console.log(`Saved ${chatEntries.length} conversation entries to MongoDB.`);
     } catch (error) {
         console.error("Error saving conversation to MongoDB:", error);
     }
@@ -379,9 +383,7 @@ export default async function handler(req, res) {
             replies.push(botReply);
         }
 
-        // Save the last bot reply for chat history purposes
-        const lastReply = replies[replies.length - 1] || "No response available.";
-        await saveToMongoDB(message, lastReply);
+        await saveChatHistory(message, replies);
 
         // Summarize and clean up chat history
         await checkAndSummarizeChatHistory();
