@@ -16,7 +16,7 @@
             try {
                 const response = await fetch("/api/auth/check");
                 const data = await response.json();
-
+    
                 if (data && data.logged_in) {
                     // Redirect to the main content
                     window.location.href = "/site.html";
@@ -30,13 +30,15 @@
                 document.getElementById("loading").innerText = "Error checking authentication.";
             }
         }
-
+    
         document.getElementById("login-button").addEventListener("click", () => {
             const redirectUrl = encodeURIComponent(window.location.href);
             window.location.href = `/api/twitter/auth?redirect=${redirectUrl}`;
         });
-
+    
+        // Automatically check authentication on page load
         checkAuth();
     </script>
+
 </body>
 </html>
