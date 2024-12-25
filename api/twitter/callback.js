@@ -72,7 +72,7 @@ export default async function handler(req, res) {
 
         res.setHeader(
             "Set-Cookie",
-            `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=Lax`
+            `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=None`
         );
 
         // Send a script to post a message to the parent window
