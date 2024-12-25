@@ -10,6 +10,8 @@ export default async function handler(req, res) {
             .createHash("sha256")
             .update(codeVerifier)
             .digest("base64url");
+        console.log("Generated code_verifier:", codeVerifier);
+        console.log("Generated code_challenge:", codeChallenge);
 
         res.setHeader(
             "Set-Cookie",
