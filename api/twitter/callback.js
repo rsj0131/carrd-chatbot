@@ -12,6 +12,7 @@ export default async function handler(req, res) {
     const cookies = cookie.parse(req.headers.cookie || "");
     console.log("Cookies in callback:", cookies);
     const codeVerifier = cookies.code_verifier;
+    console.log("All cookies in callback:", req.headers.cookie);
 
     if (!codeVerifier) {
         console.error("Missing code_verifier");
