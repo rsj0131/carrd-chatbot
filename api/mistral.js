@@ -356,7 +356,7 @@ export default async function handler(req, res) {
                 console.log("Tool call structure:", toolCall);
                 const { result, hasMessage, msgContent, isNSFW = false } = await processToolCall(toolCall, message);
                 if (hasMessage && msgContent) {
-                    replies.push({ msgContent, isNSFW });
+                    replies.push(msgContent);
                 }
 
                 // Add tool result as a system message for follow-ups
