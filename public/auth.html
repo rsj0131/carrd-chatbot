@@ -41,21 +41,14 @@
                 "width=600,height=600"
             );
     
-            // Poll for successful login
-            const checkLoginInterval = setInterval(async () => {
-                try {
-                    const response = await fetch("/api/auth/check");
-                    const data = await response.json();
-    
-                    if (data && data.logged_in) {
-                        clearInterval(checkLoginInterval);
-                        twitterLoginWindow.close(); // Close the login window
-                        window.location.href = "/site.html"; // Redirect to the main content
-                    }
-                } catch (error) {
-                    console.error("Error checking auth during polling:", error);
+            // Listen for messages from the child window
+            window.addEventListener("message", (event) => {
+                if (event.data && event.data.logged_in) {
+                    console.log("Authentication successful:", event.data);
+                    twitterLoginWindow.close();
+                    window.location.href = "/site.html"; // Redirect to the main content
                 }
-            }, 1000);
+            });
         }
     
         document.getElementById("login-button").addEventListener("click", loginWithTwitter);
