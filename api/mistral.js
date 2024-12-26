@@ -143,13 +143,19 @@ async function checkAndSummarizeChatHistory(userid) {
     const startSummaryTime = Date.now(); // Start timer for summarization
 
     try {
+        if (!userid) {
+            console.error("User ID is required to summarize chat history.");
+            return;
+        }
+
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
 
-        // Fetch all chat history
-        const allHistory = await collection.find().sort({ timestamp: 1 }).toArray();
+        // Fetch chat history for the specific user, sorted by timestamp
+        const allHistory = await collection.find({ userID: userid }).sort({ timestamp: 1 }).toArray();
+
         if (allHistory.length < 10) {
-            console.log("Not enough messages for summarization.");
+            console.log(`Not enough messages for summarization for user ${userid}.`);
             return; // Skip summarization if history count < 10
         }
 
@@ -197,7 +203,7 @@ async function checkAndSummarizeChatHistory(userid) {
         const result = response;
         const summary = result.choices?.[0]?.message?.content || "Summary could not be generated.";
 
-        console.log("Generated summary:", summary);
+        console.log(`Generated summary for user ${userid}:`, summary);
 
         // Token Usage and Pricing
         const usage = result.usage || {};
@@ -215,20 +221,21 @@ async function checkAndSummarizeChatHistory(userid) {
             userID: userid,
         });
 
-        console.log("Summary saved to chat history.");
+        console.log(`Summary saved to chat history for user ${userid}.`);
 
         // Delete older messages that were summarized
         const olderIds = olderMessages.map(msg => msg._id);
         await collection.deleteMany({ _id: { $in: olderIds } });
 
-        console.log("Older messages summarized and deleted.");
+        console.log(`Older messages summarized and deleted for user ${userid}.`);
     } catch (error) {
-        console.error("Error checking and summarizing chat history:", error);
+        console.error(`Error checking and summarizing chat history for user ${userid}:`, error);
     } finally {
         const summaryElapsedTime = Date.now() - startSummaryTime; // End timer for summarization
-        console.log(`Time taken for summarization: ${summaryElapsedTime} ms`);
+        console.log(`Time taken for summarization for user ${userid}: ${summaryElapsedTime} ms`);
     }
 }
+
 
 
 async function saveChatHistory(userMessage, botReplies, userid) {
