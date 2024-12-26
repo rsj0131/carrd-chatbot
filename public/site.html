@@ -349,25 +349,29 @@
         <img class="modal-content" id="modalImage">
     </div>
     <script>
-       async function ensureAuth() {
-           try {
-               const response = await fetch("/api/auth/check");
-               const data = await response.json();
-    
-               if (!data.logged_in) {
-                   // Redirect to auth.html if not logged in
-                   window.location.href = "/auth.html";
-               }
-           } catch (error) {
-               console.error("Authentication check failed:", error);
-               window.location.href = "/auth.html";
-           }
-       }
-    
-       ensureAuth();
-    </script>
-    
-    <script>
+        async function checkSession() {
+            try {
+                const response = await fetch("/api/auth/check", { credentials: "include" });
+                const data = await response.json();
+        
+                if (!data.logged_in) {
+                    // If session expired, redirect to auth.html
+                    alert("Session expired. Please log in again.");
+                    window.location.href = "/auth.html";
+                }
+            } catch (error) {
+                console.error("Error checking session:", error);
+                alert("An error occurred. Please log in again.");
+                window.location.href = "/auth.html";
+            }
+        }
+        
+        // Check session every 5 minutes
+        setInterval(checkSession, 5 * 60 * 1000);
+        
+        // Initial check when the page loads
+        checkSession();
+        
         // Get the modal
         const modal = document.getElementById("imageModal");
         const modalImage = document.getElementById("modalImage");
