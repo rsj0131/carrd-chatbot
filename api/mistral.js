@@ -438,9 +438,11 @@ async function fetchFunctions(isAdminUser = false) {
         const db = await connectToDatabase();
         const collection = db.collection("functions");
         const functions = await collection.find().toArray();
+        
+        // Filter the functions based on admin privileges
         const filteredFunctions = functions.filter(func => {
-            // Include the function if it is not admin-only or the user is an admin
-            return func.forAdmin !== 1 || isAdminUser;
+            const forAdmin = func.forAdmin === 1; // Ensure `forAdmin` is treated as a number
+            return !forAdmin || isAdminUser; // Include non-admin functions or admin-only for admins
         });
 
         // Transform each function into the correct Mistral tool format
