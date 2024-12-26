@@ -43,14 +43,12 @@
                 try {
                     const authResponse = await fetch("/api/twitter/auth");
                     const { redirectUrl, codeVerifier } = await authResponse.json();
-
-                    localStorage.setItem("code_verifier", codeVerifier); // Store the codeVerifier temporarily
-
-                    const twitterLoginWindow = window.open(
-                        redirectUrl,
-                        "TwitterLogin",
-                        "width=600,height=600"
-                    );
+            
+                    // Store `codeVerifier` securely
+                    localStorage.setItem("code_verifier", codeVerifier);
+            
+                    // Open Twitter login in a new window
+                    window.open(redirectUrl, "TwitterLogin", "width=600,height=600");
                 } catch (error) {
                     console.error("Twitter Authentication Error:", error);
                 }
