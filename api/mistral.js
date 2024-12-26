@@ -64,8 +64,8 @@ async function isAdmin(userid) {
         const db = await connectToDatabase();
         const adminsCollection = db.collection("admins");
 
-        // Check if the user's ID exists in the admins collection
-        const adminRecord = await adminsCollection.findOne({ userid });
+        // Convert userid to a string to ensure type consistency
+        const adminRecord = await adminsCollection.findOne({ userid: String(userid) });
         console.log(`Admin check for user ${userid}:`, adminRecord);
 
         return !!adminRecord; // Return true if the record exists, otherwise false
