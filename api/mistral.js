@@ -307,11 +307,11 @@ export default async function handler(req, res) {
             ${characterDetails.prompt || " "}.`
             
         if(user_name !== null) {
-            if(isAdminUser == true) dynamicSystemMessage += `You are talking to ${adminName} himself, please be extra intimate.`
-            else dynamicSystemMessage += `You are talking to ${user_name}, who's the user of this site`
+            if(isAdminUser == true) dynamicSystemMessage += `You are talking to ${adminName} himself, please be extra intimate.`;
+            else dynamicSystemMessage += `You are talking to ${user_name}, who's the user of this site`;
         }
+        
         dynamicSystemMessage += `
-
             - Current Date and Time: ${currentTimeInArgentina}.
             
             ### Character Information
