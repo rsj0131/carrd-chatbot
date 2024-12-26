@@ -63,10 +63,9 @@ async function isAdmin(userid) {
     try {
         const db = await connectToDatabase();
         const adminsCollection = db.collection("admins");
-        const adminRecord = await adminsCollection.findOne({ userid: String(userid) });
+        const adminRecord = await adminsCollection.findOne({ userID: String(userid) });
         console.log(`Admin check for user ${userid}:`, !!adminRecord);
 
-        return {isAdminUser == !!adminRecord; // Return true if the record exists, otherwise false
         return {
             isAdminUser: !!adminRecord,
             adminName: adminsCollection.name,
@@ -126,7 +125,7 @@ async function fetchChatHistory(userid) {
 
         // Fetch chat history for the specific user, sorted by timestamp in descending order
         const history = await collection
-            .find({ userid }) // Filter by user ID
+            .find({ userID }) // Filter by user ID
             .sort({ timestamp: -1 }) // Sort by timestamp (newest first)
             //.limit(30) // Limit to the last 30 entries
             .toArray();
@@ -136,6 +135,7 @@ async function fetchChatHistory(userid) {
         return history.map(entry => ({
             userMessage: entry.userMessage,
             botReply: entry.botReply,
+            timestamp: entry.timestamp, // Add timestamp for ordering in the UI
         }));
     } catch (error) {
         console.error("Error fetching chat history from MongoDB:", error);
@@ -306,9 +306,12 @@ export default async function handler(req, res) {
             Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
             ${characterDetails.prompt || " "}.`;
             
-        if(user_name !== null) {
-            if(isAdminUser == true) dynamicSystemMessage += `You are talking to ${adminName} himself, please be extra intimate.`;
-            else dynamicSystemMessage += `You are talking to ${user_name}, who's the user of this site`;
+        if (user_name) {
+            if (isAdminUser) {
+                dynamicSystemMessage += `You are talking to ${adminName}, please be extra intimate.`;
+            } else {
+                dynamicSystemMessage += `You are talking to ${user_name}, who's a user of this site.`;
+            }
         }
         
         dynamicSystemMessage += `
@@ -467,8 +470,6 @@ async function fetchFunctions(isAdminUser = false) {
                 },
             },
         }));
-        // Log the formatted tools for debugging
-        console.log(`Formatted tools for Mistral for: ${userid}`, JSON.stringify(tools, null, 2));
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
         return [];
@@ -803,7 +804,7 @@ async function getAnswer(userQuery) {
         const threshold = 0.7; // Adjust this threshold based on desired precision
         if (bestMatch.similarity < threshold) {
             console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
-            return null;
+            return " ";
         }
 
         // Step 5: Build and return the response
