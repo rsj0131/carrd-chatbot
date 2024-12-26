@@ -20,10 +20,10 @@ export default async function handler(req, res) {
             "Set-Cookie",
             cookie.serialize("code_verifier", codeVerifier, {
                 httpOnly: true,
-                secure: process.env.NODE_ENV === "production", // Use HTTPS in production
+                secure: true,
                 path: "/",
                 maxAge: 300, // 5 minutes
-                sameSite: "None", // Allow cross-origin cookies
+                sameSite: "None",
             })
         );
 
