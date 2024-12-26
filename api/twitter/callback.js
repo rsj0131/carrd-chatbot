@@ -28,7 +28,7 @@ export default async function handler(req, res) {
             },
             body: new URLSearchParams({
                 grant_type: "authorization_code",
-                code: code,
+                code,
                 redirect_uri: process.env.TWITTER_CALLBACK_URL,
                 client_id: process.env.TWITTER_API_KEY,
                 code_verifier: codeVerifier,
@@ -64,32 +64,39 @@ export default async function handler(req, res) {
 
         const { id, username, name } = userData.data;
 
-        const token = jwt.sign(
+        const sessionToken = jwt.sign(
             { id, username, name },
             process.env.JWT_SECRET,
             { expiresIn: "2h" }
         );
 
-        res.setHeader(
-            "Set-Cookie",
-            `session=${token}; HttpOnly; Path=/; Max-Age=7200; Secure; SameSite=None`
-        );
-
         const refreshToken = jwt.sign(
             { id, username },
             process.env.JWT_REFRESH_SECRET,
-            { expiresIn: "7d" } // Valid for 7 days
+            { expiresIn: "7d" }
         );
-        
-        res.setHeader(
-            "Set-Cookie",
-            `refresh_token=${refreshToken}; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=None`
-        );
-        
+
+        res.setHeader("Set-Cookie", [
+            cookie.serialize("session", sessionToken, {
+                httpOnly: true,
+                secure: true,
+                path: "/",
+                maxAge: 7200, // 2 hours
+                sameSite: "None",
+            }),
+            cookie.serialize("refresh_token", refreshToken, {
+                httpOnly: true,
+                secure: true,
+                path: "/",
+                maxAge: 604800, // 7 days
+                sameSite: "None",
+            }),
+        ]);
+
         // Send a script to post a message to the parent window
         res.send(`
             <script>
-                window.opener.postMessage({ logged_in: true, username: "${username}" }, "*");
+                window.opener.postMessage({ logged_in: true, username: "${username}", name: "${name}" }, "*");
                 window.close();
             </script>
         `);
