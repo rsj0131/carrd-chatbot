@@ -391,7 +391,7 @@
                     document.getElementById("twitter-username").textContent = `@${data.username}` || "";
         
                     // Send user info to backend for storage and integration
-                    await sendUserInfoToBackend(data.username, data.name);
+                    //await sendUserInfoToBackend(data.username, data.name);
                 } else {
                     // Redirect to login if not authenticated
                     window.location.href = "/auth.html";
