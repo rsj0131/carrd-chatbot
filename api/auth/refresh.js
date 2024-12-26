@@ -12,19 +12,25 @@ export default async function handler(req, res) {
 
         const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
-        // Issue a new JWT
-        const newToken = jwt.sign(
+        // Issue a new session token
+        const newSessionToken = jwt.sign(
             { id: decoded.id, username: decoded.username },
             process.env.JWT_SECRET,
-            { expiresIn: "2h" } // New JWT valid for 2 hours
+            { expiresIn: "2h" }
         );
 
         res.setHeader(
             "Set-Cookie",
-            `session=${newToken}; HttpOnly; Path=/; Max-Age=7200; Secure; SameSite=None`
+            cookie.serialize("session", newSessionToken, {
+                httpOnly: true,
+                secure: true,
+                path: "/",
+                maxAge: 7200, // 2 hours
+                sameSite: "None",
+            })
         );
 
-        return res.status(200).json({ success: true });
+        return res.status(200).json({ success: true, username: decoded.username });
     } catch (error) {
         console.error("Refresh Token Error:", error);
         return res.status(401).json({ error: "Unauthorized" });
