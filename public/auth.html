@@ -1,85 +1,29 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Authentication</title>
-</head>
-<body>
-    <div id="loading">Checking authentication...</div>
-    <div id="login-container" style="display: none;">
-        <button id="login-button">Login with Twitter</button>
-    </div>
+<script>
+    async function loginWithTwitter() {
+        try {
+            const authResponse = await fetch("/api/twitter/auth");
+            const { redirectUrl, codeVerifier } = await authResponse.json();
 
-    <script>
-        // Listen for messages from the child window
-        window.addEventListener("message", async (event) => {
-            if (event.data && event.data.logged_in) {
-                console.log("User authenticated:", event.data);
+            localStorage.setItem("code_verifier", codeVerifier); // Store the codeVerifier temporarily
 
-                // Store Twitter username and name in local storage
-                localStorage.setItem("username", event.data.username);
-                localStorage.setItem("name", event.data.name);
-
-                // Close Twitter login window (if open)
-                if (event.source) {
-                    event.source.close();
-                }
-
-                // Update the UI to reflect authenticated state
-                await checkAuth();
-            }
-        });
-
-        async function checkAuth() {
-            try {
-                const response = await fetch("/api/auth/check", { credentials: "include" });
-                const data = await response.json();
-    
-                if (data && data.logged_in) {
-                    // Redirect to the main content
-                    document.getElementById("login-container").style.display = "none";
-                    document.getElementById("loading").innerText = `Welcome, ${data.username}! Redirecting...`;
-                    
-                    /*// Update local storage in case it's not already set
-                    if (!localStorage.getItem("username")) {
-                        localStorage.setItem("username", data.username);
-                    }
-                    if (!localStorage.getItem("name")) {
-                        localStorage.setItem("name", data.name);
-                    }*/
-
-                    // Redirect to the chat page
-                    setTimeout(() => {
-                        window.location.href = "/site.html";
-                    }, 1000);
-                } else {
-                    // Show login button if not logged in
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("login-container").style.display = "block";
-                }
-            } catch (error) {
-                console.error("Error checking auth:", error);
-                document.getElementById("loading").innerText = "Error checking authentication.";
-            }
-        }
-    
-        function loginWithTwitter() {
-            const redirectUrl = encodeURIComponent(window.location.href);
-    
-            // Open Twitter login in a new window
             const twitterLoginWindow = window.open(
-                `/api/twitter/auth?redirect=${redirectUrl}`,
+                redirectUrl,
                 "TwitterLogin",
                 "width=600,height=600"
             );
+        } catch (error) {
+            console.error("Twitter Authentication Error:", error);
         }
-    
-        document.getElementById("login-button").addEventListener("click", loginWithTwitter);
-    
-        // Automatically check authentication on page load
-        checkAuth();
-    </script>
+    }
 
-</body>
-</html>
+    // Listen for messages from child windows
+    window.addEventListener("message", (event) => {
+        if (event.data.logged_in) {
+            localStorage.setItem("username", event.data.username);
+            localStorage.setItem("name", event.data.name);
+            window.location.href = "/site.html"; // Redirect after successful login
+        }
+    });
+
+    document.getElementById("login-button").addEventListener("click", loginWithTwitter);
+</script>
