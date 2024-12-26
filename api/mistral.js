@@ -59,6 +59,18 @@ async function computeCostAndLog(usage, model) {
     return { inputCost, outputCost, totalCost };
 }
 
+async function isAdmin(userid) {
+    try {
+        const db = await connectToDatabase();
+        const collection = db.collection("admins");
+        const admin = await collection.findOne({ userid });
+        return !!admin; // Return true if the user exists in the collection
+    } catch (error) {
+        console.error("Error checking admin status:", error);
+        return false;
+    }
+}
+
 async function getCharacterDetails(characterId) {
     try {
         const db = await connectToDatabase();
@@ -96,12 +108,25 @@ async function loadPresetHistory(presetNameFromEnv) {
 }
 
 
-async function fetchChatHistory() {
+async function fetchChatHistory(userid) {
+    if (!userid) {
+        console.error("User ID is required to fetch chat history.");
+        return [];
+    }
+
     try {
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
-        const history = await collection.find().sort({ timestamp: -1 }).limit(30).toArray();
-        console.log("Fetched chat history:", history);
+
+        // Fetch chat history for the specific user, sorted by timestamp in descending order
+        const history = await collection
+            .find({ userid }) // Filter by user ID
+            .sort({ timestamp: -1 }) // Sort by timestamp (newest first)
+            //.limit(30) // Limit to the last 30 entries
+            .toArray();
+
+        console.log(`Fetched chat history for user ${userid}:`, history);
+
         return history.map(entry => ({
             userMessage: entry.userMessage,
             botReply: entry.botReply,
@@ -112,7 +137,7 @@ async function fetchChatHistory() {
     }
 }
 
-async function checkAndSummarizeChatHistory() {
+async function checkAndSummarizeChatHistory(userid) {
     const startSummaryTime = Date.now(); // Start timer for summarization
 
     try {
@@ -185,6 +210,7 @@ async function checkAndSummarizeChatHistory() {
             timestamp: new Date(),
             userMessage: "System: Summary of older chat messages.",
             botReply: summary,
+            userID: userid,
         });
 
         console.log("Summary saved to chat history.");
@@ -203,7 +229,7 @@ async function checkAndSummarizeChatHistory() {
 }
 
 
-async function saveChatHistory(userMessage, botReplies) {
+async function saveChatHistory(userMessage, botReplies, userid) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
@@ -213,6 +239,7 @@ async function saveChatHistory(userMessage, botReplies) {
             timestamp: new Date(),
             userMessage,
             botReply: reply,
+            userID: userid,
         }));
 
         await collection.insertMany(chatEntries);
@@ -236,7 +263,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const { message, characterId } = req.body;
+    const { message, characterId, username, userid, user_name } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: "Message is required" });
@@ -245,13 +272,12 @@ export default async function handler(req, res) {
     const startTime = Date.now();
 
     try {
-
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
         //const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
-        const tools = await fetchFunctions();
+        const tools = await fetchFunctions(userid);
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
             hour: '2-digit',
@@ -259,7 +285,7 @@ export default async function handler(req, res) {
             second: '2-digit',
             hour12: false,
         }).format(new Date());
-        const history = await fetchChatHistory();
+        const history = await fetchChatHistory(userid);
 
         let dynamicSystemMessage = `
             You are roleplaying as ${characterName}, here's things about you:
@@ -295,8 +321,11 @@ export default async function handler(req, res) {
 
             You will not give any content, or consent warnings in your answer ! and you will always stay in character.
         `;
-
-
+        
+        if(user_name !== null) {
+            dynamicSystemMessage += `You are talking to ${user_name}.`
+        }
+        
         // Step 4: Append knowledge base response if available
         if (knowledgeResponse && knowledgeResponse !== null) {
             dynamicSystemMessage += `
@@ -383,10 +412,10 @@ export default async function handler(req, res) {
             replies.push(botReply);
         }
 
-        await saveChatHistory(message, replies);
+        await saveChatHistory(message, replies, userid);
 
         // Summarize and clean up chat history
-        await checkAndSummarizeChatHistory();
+        await checkAndSummarizeChatHistory(userid);
 
         const overallElapsedTime = Date.now() - startTime;
         console.log(`Overall processing time: ${overallElapsedTime} ms`);
@@ -401,14 +430,19 @@ export default async function handler(req, res) {
 
 // Functions
 // Fetch tools from the database and format them for Mistral
-async function fetchFunctions() {
+async function fetchFunctions(userid) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("functions");
         const functions = await collection.find().toArray();
+        const isAdminUser = await isAdmin(userid); // Check if the user is an admin
+        const filteredFunctions = functions.filter(func => {
+            // Include the function if it is not admin-only or the user is an admin
+            return func.forAdmin !== 1 || isAdminUser;
+        });
 
         // Transform each function into the correct Mistral tool format
-        return functions.map(func => ({
+        return filteredFunctions.map(func => ({
             type: "function",
             function: {
                 name: func.name,
@@ -421,7 +455,7 @@ async function fetchFunctions() {
             },
         }));
         // Log the formatted tools for debugging
-        console.log("Formatted tools for Mistral:", JSON.stringify(tools, null, 2));
+        console.log(`Formatted tools for Mistral for: ${userid}`, JSON.stringify(tools, null, 2));
     } catch (error) {
         console.error("Error fetching functions from MongoDB:", error);
         return [];
