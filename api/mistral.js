@@ -62,9 +62,13 @@ async function computeCostAndLog(usage, model) {
 async function isAdmin(userid) {
     try {
         const db = await connectToDatabase();
-        const collection = db.collection("admins");
-        const admin = await collection.findOne({ userid });
-        return !!admin; // Return true if the user exists in the collection
+        const adminsCollection = db.collection("admins");
+
+        // Check if the user's ID exists in the admins collection
+        const adminRecord = await adminsCollection.findOne({ userid });
+        console.log(`Admin check for user ${userid}:`, adminRecord);
+
+        return !!adminRecord; // Return true if the record exists, otherwise false
     } catch (error) {
         console.error("Error checking admin status:", error);
         return false;
@@ -272,12 +276,13 @@ export default async function handler(req, res) {
     const startTime = Date.now();
 
     try {
+        const isAdminUser = await isAdmin(userid); // Check if the user is an admin
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
         //const presetHistory = await loadPresetHistory(process.env.PRESET_CHAT_ID);
         const characterName = characterDetails.name || "assistant";
-        const tools = await fetchFunctions(userid);
+        const tools = await fetchFunctions(isAdminUser);
         const currentTimeInArgentina = new Intl.DateTimeFormat('en-US', {
             timeZone: 'America/Argentina/Buenos_Aires',
             hour: '2-digit',
@@ -430,12 +435,11 @@ export default async function handler(req, res) {
 
 // Functions
 // Fetch tools from the database and format them for Mistral
-async function fetchFunctions(userid) {
+async function fetchFunctions(isAdminUser = false) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("functions");
         const functions = await collection.find().toArray();
-        const isAdminUser = await isAdmin(userid); // Check if the user is an admin
         const filteredFunctions = functions.filter(func => {
             // Include the function if it is not admin-only or the user is an admin
             return func.forAdmin !== 1 || isAdminUser;
