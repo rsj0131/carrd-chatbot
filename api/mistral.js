@@ -63,18 +63,26 @@ async function isAdmin(userid) {
     try {
         const db = await connectToDatabase();
         const adminsCollection = db.collection("admins");
-        const adminRecord = await adminsCollection.findOne({ userID: String(userid) });
-        console.log(`Admin check for user ${userid}:`, !!adminRecord);
+
+        // Ensure the `userid` is treated as a string
+        const adminRecord = await adminsCollection.findOne({ userid: String(userid) });
+
+        // Log the result for debugging
+        console.log(`Admin check for user ${userid}:`, adminRecord);
 
         return {
-            isAdminUser: !!adminRecord,
-            adminName: adminsCollection.name,
+            isAdminUser: !!adminRecord, // Return true if the record exists
+            adminName: adminRecord?.name || null, // Extract `name` or return null if not found
         };
     } catch (error) {
         console.error("Error checking admin status:", error);
-        return false;
+        return {
+            isAdminUser: false, // Default to false if there's an error
+            adminName: null,    // Default to null for admin name
+        };
     }
 }
+
 
 async function getCharacterDetails(characterId) {
     try {
@@ -125,7 +133,7 @@ async function fetchChatHistory(userid) {
 
         // Fetch chat history for the specific user, sorted by timestamp in descending order
         const history = await collection
-            .find({ userID }) // Filter by user ID
+            .find({ userid }) // Filter by user ID
             .sort({ timestamp: -1 }) // Sort by timestamp (newest first)
             //.limit(30) // Limit to the last 30 entries
             .toArray();
