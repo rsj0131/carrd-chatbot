@@ -349,15 +349,19 @@
         <img class="modal-content" id="modalImage">
     </div>
     <script>
-        async function checkSession() {
+        async function checkSession(initial = false) {
             try {
                 const response = await fetch("/api/auth/check", { credentials: "include" });
                 const data = await response.json();
         
                 if (!data.logged_in) {
-                    // If session expired, redirect to auth.html
-                    alert("Session expired. Please log in again.");
-                    window.location.href = "/auth.html";
+                    if(initial == false) {    
+                        // If session expired, redirect to auth.html
+                        alert("Session expired. Please log in again.");
+                        window.location.href = "/auth.html?expired=true";
+                    } else {
+                        window.location.href = "/auth.html";
+                    }    
                 }
             } catch (error) {
                 console.error("Error checking session:", error);
@@ -370,7 +374,7 @@
         setInterval(checkSession, 5 * 60 * 1000);
         
         // Initial check when the page loads
-        checkSession();
+        checkSession(true);
         
         // Get the modal
         const modal = document.getElementById("imageModal");
