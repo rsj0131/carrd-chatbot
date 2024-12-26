@@ -59,16 +59,16 @@ async function computeCostAndLog(usage, model) {
     return { inputCost, outputCost, totalCost };
 }
 
-async function isAdmin(userid) {
+async function isAdmin(userID) {
     try {
         const db = await connectToDatabase();
         const adminsCollection = db.collection("admins");
 
-        // Ensure the `userid` is treated as a string
-        const adminRecord = await adminsCollection.findOne({ userid: String(userid) });
+        // Ensure the `userID` is treated as a string
+        const adminRecord = await adminsCollection.findOne({ userID: String(userID) });
 
         // Log the result for debugging
-        console.log(`Admin check for user ${userid}:`, adminRecord);
+        console.log(`Admin check for user ${userID}:`, adminRecord);
 
         return {
             isAdminUser: !!adminRecord, // Return true if the record exists
@@ -82,6 +82,7 @@ async function isAdmin(userid) {
         };
     }
 }
+
 
 
 async function getCharacterDetails(characterId) {
@@ -121,8 +122,8 @@ async function loadPresetHistory(presetNameFromEnv) {
 }
 
 
-async function fetchChatHistory(userid) {
-    if (!userid) {
+async function fetchChatHistory(userID) {
+    if (!userID) {
         console.error("User ID is required to fetch chat history.");
         return [];
     }
@@ -133,12 +134,12 @@ async function fetchChatHistory(userid) {
 
         // Fetch chat history for the specific user, sorted by timestamp in descending order
         const history = await collection
-            .find({ userid }) // Filter by user ID
+            .find({ userID }) // Filter by user ID
             .sort({ timestamp: -1 }) // Sort by timestamp (newest first)
             //.limit(30) // Limit to the last 30 entries
             .toArray();
 
-        console.log(`Fetched chat history for user ${userid}:`, history);
+        console.log(`Fetched chat history for user ${userID}:`, history);
 
         return history.map(entry => ({
             userMessage: entry.userMessage,
@@ -151,11 +152,11 @@ async function fetchChatHistory(userid) {
     }
 }
 
-async function checkAndSummarizeChatHistory(userid) {
+async function checkAndSummarizeChatHistory(userID) {
     const startSummaryTime = Date.now(); // Start timer for summarization
 
     try {
-        if (!userid) {
+        if (!userID) {
             console.error("User ID is required to summarize chat history.");
             return;
         }
@@ -164,10 +165,10 @@ async function checkAndSummarizeChatHistory(userid) {
         const collection = db.collection("chatHistory");
 
         // Fetch chat history for the specific user, sorted by timestamp
-        const allHistory = await collection.find({ userID: userid }).sort({ timestamp: 1 }).toArray();
+        const allHistory = await collection.find({ userID: userID }).sort({ timestamp: 1 }).toArray();
 
         if (allHistory.length < 10) {
-            console.log(`Not enough messages for summarization for user ${userid}.`);
+            console.log(`Not enough messages for summarization for user ${userID}.`);
             return; // Skip summarization if history count < 10
         }
 
@@ -215,7 +216,7 @@ async function checkAndSummarizeChatHistory(userid) {
         const result = response;
         const summary = result.choices?.[0]?.message?.content || "Summary could not be generated.";
 
-        console.log(`Generated summary for user ${userid}:`, summary);
+        console.log(`Generated summary for user ${userID}:`, summary);
 
         // Token Usage and Pricing
         const usage = result.usage || {};
@@ -230,27 +231,27 @@ async function checkAndSummarizeChatHistory(userid) {
             timestamp: new Date(),
             userMessage: "System: Summary of older chat messages.",
             botReply: summary,
-            userID: userid,
+            userID: userID,
         });
 
-        console.log(`Summary saved to chat history for user ${userid}.`);
+        console.log(`Summary saved to chat history for user ${userID}.`);
 
         // Delete older messages that were summarized
         const olderIds = olderMessages.map(msg => msg._id);
         await collection.deleteMany({ _id: { $in: olderIds } });
 
-        console.log(`Older messages summarized and deleted for user ${userid}.`);
+        console.log(`Older messages summarized and deleted for user ${userID}.`);
     } catch (error) {
-        console.error(`Error checking and summarizing chat history for user ${userid}:`, error);
+        console.error(`Error checking and summarizing chat history for user ${userID}:`, error);
     } finally {
         const summaryElapsedTime = Date.now() - startSummaryTime; // End timer for summarization
-        console.log(`Time taken for summarization for user ${userid}: ${summaryElapsedTime} ms`);
+        console.log(`Time taken for summarization for user ${userID}: ${summaryElapsedTime} ms`);
     }
 }
 
 
 
-async function saveChatHistory(userMessage, botReplies, userid) {
+async function saveChatHistory(userMessage, botReplies, userID) {
     try {
         const db = await connectToDatabase();
         const collection = db.collection("chatHistory");
@@ -260,7 +261,7 @@ async function saveChatHistory(userMessage, botReplies, userid) {
             timestamp: new Date(),
             userMessage,
             botReply: reply,
-            userID: userid,
+            userID: userID,
         }));
 
         await collection.insertMany(chatEntries);
@@ -284,7 +285,7 @@ export default async function handler(req, res) {
         return res.status(405).json({ error: "Method Not Allowed" });
     }
 
-    const { message, characterId, username, userid, user_name } = req.body;
+    const { message, characterId, username, userID, user_name } = req.body;
 
     if (!message) {
         return res.status(400).json({ error: "Message is required" });
@@ -293,7 +294,7 @@ export default async function handler(req, res) {
     const startTime = Date.now();
 
     try {
-        const { isAdminUser, adminName } = await isAdmin(userid); // Check if the user is an admin  
+        const { isAdminUser, adminName } = await isAdmin(userID); // Check if the user is an admin  
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
@@ -307,7 +308,7 @@ export default async function handler(req, res) {
             second: '2-digit',
             hour12: false,
         }).format(new Date());
-        const history = await fetchChatHistory(userid);
+        const history = await fetchChatHistory(userID);
 
         let dynamicSystemMessage = `
             You are roleplaying as ${characterName}, here's things about you:
@@ -434,10 +435,10 @@ export default async function handler(req, res) {
             replies.push(botReply);
         }
 
-        await saveChatHistory(message, replies, userid);
+        await saveChatHistory(message, replies, userID);
 
         // Summarize and clean up chat history
-        await checkAndSummarizeChatHistory(userid);
+        await checkAndSummarizeChatHistory(userID);
 
         const overallElapsedTime = Date.now() - startTime;
         console.log(`Overall processing time: ${overallElapsedTime} ms`);
