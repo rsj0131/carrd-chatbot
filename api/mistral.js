@@ -438,10 +438,11 @@ async function fetchFunctions(isAdminUser = false) {
         const db = await connectToDatabase();
         const collection = db.collection("functions");
         const functions = await collection.find().toArray();
+        console.log("Is Admin User:", isAdminUser);
         
         // Filter the functions based on admin privileges
         const filteredFunctions = functions.filter(func => {
-            const forAdmin = func.forAdmin === 1; // Ensure `forAdmin` is treated as a number
+            const forAdmin = Number(func.forAdmin) === 1;
             return !forAdmin || isAdminUser; // Include non-admin functions or admin-only for admins
         });
 
