@@ -335,15 +335,10 @@ export default async function handler(req, res) {
             - Age: ${characterDetails.age || "unknown"}.
             - Gender: ${characterDetails.gender || "unknown"}.
             - Birthday: ${characterDetails.birthday || "none"}.
-            - Height: ${characterDetails.height || "none"}.
-            - Weight: ${characterDetails.weight || "none"}.
-            - Measurements: ${characterDetails.measurements || "none"}.
             - Appearance: ${characterDetails.appearance || "undefined"}.
             - Personality: ${characterDetails.personality || "Neutral"}.
-            - Likes: ${characterDetails.likes || "none"}.
-            - Dislikes: ${characterDetails.dislikes || "none"}.
             - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
-            - Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
+            - Scenario: ${characterDetails.scenario || "Assist the user in any way they need"}.
 
             ### Tool Invocation Rules
             1. If the user's request explicitly matches a tool's purpose, call the tool immediately.
