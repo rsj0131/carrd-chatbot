@@ -15,6 +15,7 @@ export default async function handler(req, res) {
         // Ensure the response includes both `username` and `name`
         return res.status(200).json({
             logged_in: true,
+            id: decoded.id,
             username: decoded.username,
             name: decoded.name || null, // Add the `name` field here
         });
