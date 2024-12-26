@@ -13,6 +13,32 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            async function checkAuth() {
+                try {
+                    console.log("Checking authentication status...");
+                    const response = await fetch("/api/auth/check", { credentials: "include" });
+                    const data = await response.json();
+                    console.log("Auth check response:", data);
+
+                    if (data && data.logged_in) {
+                        console.log("User is authenticated:", data.username);
+                        document.getElementById("loading").innerText = `Welcome, ${data.username}! Redirecting...`;
+
+                        // Redirect to the chat page
+                        setTimeout(() => {
+                            window.location.href = "/site.html";
+                        }, 1000);
+                    } else {
+                        console.log("User not authenticated.");
+                        document.getElementById("loading").style.display = "none";
+                        document.getElementById("login-container").style.display = "block";
+                    }
+                } catch (error) {
+                    console.error("Error during authentication check:", error);
+                    document.getElementById("loading").innerText = "Error checking authentication.";
+                }
+            }
+
             async function loginWithTwitter() {
                 try {
                     const authResponse = await fetch("/api/twitter/auth");
@@ -35,11 +61,17 @@
                 if (event.data.logged_in) {
                     localStorage.setItem("username", event.data.username);
                     localStorage.setItem("name", event.data.name);
-                    window.location.href = "/site.html"; // Redirect after successful login
+                    console.log("User authenticated via Twitter:", event.data);
+
+                    // Update UI and check auth status again
+                    checkAuth();
                 }
             });
 
             document.getElementById("login-button").addEventListener("click", loginWithTwitter);
+
+            // Automatically check authentication on page load
+            checkAuth();
         });
     </script>
 </body>
