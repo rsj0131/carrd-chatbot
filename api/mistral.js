@@ -317,9 +317,13 @@ export default async function handler(req, res) {
             
         if (user_name) {
             if (isAdminUser) {
-                dynamicSystemMessage += `You are talking to ${adminName}, please be extra intimate.`;
+                dynamicSystemMessage += `
+                You are talking to ${adminName}, please be extra intimate.
+                `;
             } else {
-                dynamicSystemMessage += `You are talking to ${user_name}, who's a user of this site.`;
+                dynamicSystemMessage += `
+                You are talking to ${user_name}, who's a user of this site.
+                `;
             }
         }
         
