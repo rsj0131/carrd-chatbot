@@ -381,7 +381,7 @@
 
         let username = null,
             user_name = null,
-            userid = null;
+            userID = null;
         
         async function loadUserInfo() {
             try {
@@ -391,7 +391,7 @@
                 if (data.logged_in) {
                     username = data.username;
                     user_name = data.name;
-                    userid = data.id;
+                    userID = data.id;
                     document.getElementById("twitter-name").textContent = user_name || "";
                     
                     // Send user info to backend for storage and integration
