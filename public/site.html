@@ -415,20 +415,6 @@
         
         // Call loadUserInfo on page load
         loadUserInfo();
-
-        async function updateHeader() {
-            const username = localStorage.getItem("username");
-            const name = localStorage.getItem("name");
-        
-            if (username && name) {
-                const header = document.querySelector("header");
-                const userDiv = document.createElement("div");
-                userDiv.innerHTML = `<strong>${name}</strong> (@${username})`;
-                header.appendChild(userDiv);
-            }
-        }
-        
-        updateHeader();
         
         // Get the modal
         const modal = document.getElementById("imageModal");
