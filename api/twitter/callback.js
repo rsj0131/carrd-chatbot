@@ -1,20 +1,11 @@
 import jwt from "jsonwebtoken";
-import cookie from "cookie";
 
 export default async function handler(req, res) {
-    const { code } = req.query;
+    const { code, codeVerifier } = req.query; // Accept `codeVerifier` from the request query
 
-    if (!code) {
-        console.error("Missing code parameter");
-        return res.status(400).json({ error: "Missing code parameter" });
-    }
-
-    const cookies = cookie.parse(req.headers.cookie || "");
-    const codeVerifier = cookies.code_verifier;
-
-    if (!codeVerifier) {
-        console.error("Missing code_verifier");
-        return res.status(400).json({ error: "Missing code_verifier" });
+    if (!code || !codeVerifier) {
+        console.error("Missing code or codeVerifier parameter");
+        return res.status(400).json({ error: "Missing code or codeVerifier parameter" });
     }
 
     try {
@@ -31,7 +22,7 @@ export default async function handler(req, res) {
                 code,
                 redirect_uri: process.env.TWITTER_CALLBACK_URL,
                 client_id: process.env.TWITTER_API_KEY,
-                code_verifier: codeVerifier,
+                code_verifier: codeVerifier, // Pass codeVerifier from request
             }),
         });
 
@@ -50,9 +41,7 @@ export default async function handler(req, res) {
         }
 
         const userResponse = await fetch("https://api.twitter.com/2/users/me", {
-            headers: {
-                Authorization: `Bearer ${access_token}`,
-            },
+            headers: { Authorization: `Bearer ${access_token}` },
         });
 
         const userData = await userResponse.json();
@@ -77,23 +66,11 @@ export default async function handler(req, res) {
         );
 
         res.setHeader("Set-Cookie", [
-            cookie.serialize("session", sessionToken, {
-                httpOnly: true,
-                secure: true,
-                path: "/",
-                maxAge: 7200, // 2 hours
-                sameSite: "None",
-            }),
-            cookie.serialize("refresh_token", refreshToken, {
-                httpOnly: true,
-                secure: true,
-                path: "/",
-                maxAge: 604800, // 7 days
-                sameSite: "None",
-            }),
+            `session=${sessionToken}; HttpOnly; Path=/; Max-Age=7200; Secure; SameSite=None`,
+            `refresh_token=${refreshToken}; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=None`,
         ]);
 
-        // Send a script to post a message to the parent window
+        // Use postMessage to send authentication status to the parent window
         res.send(`
             <script>
                 window.opener.postMessage({ logged_in: true, username: "${username}", name: "${name}" }, "*");
