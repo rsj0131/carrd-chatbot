@@ -1,29 +1,46 @@
-<script>
-    async function loginWithTwitter() {
-        try {
-            const authResponse = await fetch("/api/twitter/auth");
-            const { redirectUrl, codeVerifier } = await authResponse.json();
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication</title>
+</head>
+<body>
+    <div id="loading">Checking authentication...</div>
+    <div id="login-container" style="display: none;">
+        <button id="login-button">Login with Twitter</button>
+    </div>
 
-            localStorage.setItem("code_verifier", codeVerifier); // Store the codeVerifier temporarily
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            async function loginWithTwitter() {
+                try {
+                    const authResponse = await fetch("/api/twitter/auth");
+                    const { redirectUrl, codeVerifier } = await authResponse.json();
 
-            const twitterLoginWindow = window.open(
-                redirectUrl,
-                "TwitterLogin",
-                "width=600,height=600"
-            );
-        } catch (error) {
-            console.error("Twitter Authentication Error:", error);
-        }
-    }
+                    localStorage.setItem("code_verifier", codeVerifier); // Store the codeVerifier temporarily
 
-    // Listen for messages from child windows
-    window.addEventListener("message", (event) => {
-        if (event.data.logged_in) {
-            localStorage.setItem("username", event.data.username);
-            localStorage.setItem("name", event.data.name);
-            window.location.href = "/site.html"; // Redirect after successful login
-        }
-    });
+                    const twitterLoginWindow = window.open(
+                        redirectUrl,
+                        "TwitterLogin",
+                        "width=600,height=600"
+                    );
+                } catch (error) {
+                    console.error("Twitter Authentication Error:", error);
+                }
+            }
 
-    document.getElementById("login-button").addEventListener("click", loginWithTwitter);
-</script>
+            // Listen for messages from child windows
+            window.addEventListener("message", (event) => {
+                if (event.data.logged_in) {
+                    localStorage.setItem("username", event.data.username);
+                    localStorage.setItem("name", event.data.name);
+                    window.location.href = "/site.html"; // Redirect after successful login
+                }
+            });
+
+            document.getElementById("login-button").addEventListener("click", loginWithTwitter);
+        });
+    </script>
+</body>
+</html>
