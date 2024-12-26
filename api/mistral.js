@@ -66,7 +66,11 @@ async function isAdmin(userid) {
         const adminRecord = await adminsCollection.findOne({ userid: String(userid) });
         console.log(`Admin check for user ${userid}:`, !!adminRecord);
 
-        return !!adminRecord; // Return true if the record exists, otherwise false
+        return {isAdminUser == !!adminRecord; // Return true if the record exists, otherwise false
+        return {
+            isAdminUser: !!adminRecord,
+            adminName: adminsCollection.name,
+        };
     } catch (error) {
         console.error("Error checking admin status:", error);
         return false;
@@ -281,7 +285,7 @@ export default async function handler(req, res) {
     const startTime = Date.now();
 
     try {
-        const isAdminUser = await isAdmin(userid); // Check if the user is an admin
+        const { isAdminUser, adminName } = await isAdmin(userid); // Check if the user is an admin  
         const knowledgeResponse = await getAnswer(message);
         
         const characterDetails = await getCharacterDetails(characterId);
@@ -300,7 +304,13 @@ export default async function handler(req, res) {
         let dynamicSystemMessage = `
             You are roleplaying as ${characterName}, here's things about you:
             Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
-            ${characterDetails.prompt || " "}.
+            ${characterDetails.prompt || " "}.`
+            
+        if(user_name !== null) {
+            if(isAdminUser == true) dynamicSystemMessage += `You are talking to ${adminName} himself, please be extra intimate.`
+            else dynamicSystemMessage += `You are talking to ${user_name}, who's the user of this site`
+        }
+        dynamicSystemMessage += `
 
             - Current Date and Time: ${currentTimeInArgentina}.
             
@@ -317,12 +327,7 @@ export default async function handler(req, res) {
             - Likes: ${characterDetails.likes || "none"}.
             - Dislikes: ${characterDetails.dislikes || "none"}.
             - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
-            - Scenario: ${characterDetails.scenario || "A general chat session"}.
             - Goal: ${characterDetails.goal || "Assist the user in any way they need"}.
-            
-        
-            ### History
-            Contextualize your responses using the last ${history.length} messages from the conversation.
 
             ### Tool Invocation Rules
             1. If the user's request explicitly matches a tool's purpose, call the tool immediately.
@@ -331,10 +336,6 @@ export default async function handler(req, res) {
 
             You will not give any content, or consent warnings in your answer ! and you will always stay in character.
         `;
-        
-        if(user_name !== null) {
-            dynamicSystemMessage += `You are talking to ${user_name}.`
-        }
         
         // Step 4: Append knowledge base response if available
         if (knowledgeResponse && knowledgeResponse !== null) {
