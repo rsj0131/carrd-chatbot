@@ -544,7 +544,7 @@
                 const response = await fetch("https://carrd-chatbot.vercel.app/api/mistral", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message, characterId, username, userid, user_name }),
+                    body: JSON.stringify({ message, characterId, username, userID, user_name }),
                 });
         
                 const data = await response.json();
