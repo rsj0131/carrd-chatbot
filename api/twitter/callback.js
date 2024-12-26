@@ -67,14 +67,25 @@ export default async function handler(req, res) {
         const token = jwt.sign(
             { id, username, name },
             process.env.JWT_SECRET,
-            { expiresIn: "1h" }
+            { expiresIn: "2h" }
         );
 
         res.setHeader(
             "Set-Cookie",
-            `session=${token}; HttpOnly; Path=/; Max-Age=3600; Secure; SameSite=None`
+            `session=${token}; HttpOnly; Path=/; Max-Age=7200; Secure; SameSite=None`
         );
 
+        const refreshToken = jwt.sign(
+            { id, username },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: "7d" } // Valid for 7 days
+        );
+        
+        res.setHeader(
+            "Set-Cookie",
+            `refresh_token=${refreshToken}; HttpOnly; Path=/; Max-Age=604800; Secure; SameSite=None`
+        );
+        
         // Send a script to post a message to the parent window
         res.send(`
             <script>
