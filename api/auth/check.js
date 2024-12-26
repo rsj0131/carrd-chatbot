@@ -14,6 +14,6 @@ export default async function handler(req, res) {
         return res.status(200).json({ logged_in: true, username: decoded.username });
     } catch (error) {
         console.error("Auth Check Error:", error);
-        return res.status(200).json({ logged_in: false });
+        return res.status(200).json({ logged_in: false }); // Expired or invalid token
     }
 }
