@@ -323,8 +323,7 @@
                  class="avatar">
             <h1>Vivian</h1>
             <div id="user-info" style="margin-left: auto; color: white; font-size: 1rem;">
-                <span id="twitter-name"></span>
-                <span id="twitter-username" style="font-weight: bold;"></span>
+                <span id="twitter-name" style="font-weight: bold;"></span>
             </div>
         </header>
     
@@ -380,16 +379,21 @@
         // Initial check when the page loads
         checkSession(true);
 
+        let username = null,
+            user_name = null,
+            userid = null;
+        
         async function loadUserInfo() {
             try {
                 const response = await fetch("/api/auth/check", { credentials: "include" });
                 const data = await response.json();
         
                 if (data.logged_in) {
-                    // Display user's Twitter name and username
-                    document.getElementById("twitter-name").textContent = data.name || "";
-                    document.getElementById("twitter-username").textContent = `@${data.username}` || "";
-        
+                    username = data.username;
+                    user_name = data.name;
+                    userid = data.id;
+                    document.getElementById("twitter-name").textContent = user_name || "";
+                    
                     // Send user info to backend for storage and integration
                     //await sendUserInfoToBackend(data.id, data.username, data.name);
                 } else {
@@ -398,18 +402,6 @@
                 }
             } catch (error) {
                 console.error("Error loading user info:", error);
-            }
-        }
-        
-        async function sendUserInfoToBackend(username, name) {
-            try {
-                await fetch("/api/store-user-info", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, name }),
-                });
-            } catch (error) {
-                console.error("Error sending user info to backend:", error);
             }
         }
         
@@ -552,7 +544,7 @@
                 const response = await fetch("https://carrd-chatbot.vercel.app/api/mistral", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message, characterId }),
+                    body: JSON.stringify({ message, characterId, username, userid, user_name }),
                 });
         
                 const data = await response.json();
