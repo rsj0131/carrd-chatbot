@@ -11,9 +11,15 @@ export default async function handler(req, res) {
         }
 
         const decoded = jwt.verify(session, process.env.JWT_SECRET);
-        return res.status(200).json({ logged_in: true, username: decoded.username });
+
+        // Ensure the response includes both `username` and `name`
+        return res.status(200).json({
+            logged_in: true,
+            username: decoded.username,
+            name: decoded.name || null, // Add the `name` field here
+        });
     } catch (error) {
         console.error("Auth Check Error:", error);
-        return res.status(200).json({ logged_in: false }); // Expired or invalid token
+        return res.status(200).json({ logged_in: false }); // Return `logged_in: false` if the session is invalid
     }
 }
