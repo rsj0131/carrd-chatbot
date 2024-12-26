@@ -387,11 +387,11 @@
         
                 if (data.logged_in) {
                     // Display user's Twitter name and username
-                    document.getElementById("twitter-name").textContent = data.name || "";
+                    document.getElementById("twitter-name").textContent = `@${data.name}` || "";
                     document.getElementById("twitter-username").textContent = `@${data.username}` || "";
         
                     // Send user info to backend for storage and integration
-                    //await sendUserInfoToBackend(data.username, data.name);
+                    //await sendUserInfoToBackend(data.id, data.username, data.name);
                 } else {
                     // Redirect to login if not authenticated
                     window.location.href = "/auth.html";
