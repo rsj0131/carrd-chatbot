@@ -304,7 +304,7 @@ export default async function handler(req, res) {
         let dynamicSystemMessage = `
             You are roleplaying as ${characterName}, here's things about you:
             Always prioritize calling these tools when the user's request matches their functionality. Do not attempt to fulfill such requests conversationally unless explicitly stated.
-            ${characterDetails.prompt || " "}.`
+            ${characterDetails.prompt || " "}.`;
             
         if(user_name !== null) {
             if(isAdminUser == true) dynamicSystemMessage += `You are talking to ${adminName} himself, please be extra intimate.`;
