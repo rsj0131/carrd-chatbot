@@ -20,7 +20,7 @@ const MODEL = "gemini-1.5-pro";
 const EMBED_MODEL = "text-embedding-004"; // Specify the embedding model
 
 // Initialize the client
-const genAI = new GoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Pricing
 const PRICING = {
