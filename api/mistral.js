@@ -229,7 +229,7 @@ async function checkAndSummarizeChatHistory(userID) {
         // Save the summary back to chatHistory
         await collection.insertOne({
             timestamp: new Date(),
-            userMessage: "System: Summary of older chat messages.",
+            userMessage: "(Summary of older chat messages)",
             botReply: summary,
             userID: userID,
         });
