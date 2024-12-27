@@ -396,6 +396,12 @@ export default async function handler(req, res) {
         
         let functionProcessed = false; // To track if a function call was processed
         
+        // Check if the response includes a function call or text
+        const responseParts = response.response.candidates[0]?.content?.parts || [];
+        
+        let functionProcessed = false; // To track if a function call was processed
+        let textProcessed = false; // To track if text has already been added to replies
+        
         for (const part of responseParts) {
             if (part.functionCall) {
                 // Extract function call details
@@ -415,15 +421,16 @@ export default async function handler(req, res) {
                 // Update the system message to inform the user about the result
                 dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}`;
                 functionProcessed = true;
-            } else if (part.text) {
-                // If text exists, it should be treated as a follow-up or regular response
+            } else if (part.text && !textProcessed) {
+                // If text exists and hasn't been processed, add it as a reply
                 const followUpMessage = transformMarkdownLinksToHTML(part.text);
                 replies.push(followUpMessage);
+                textProcessed = true; // Mark text as processed to avoid duplication
             }
         }
         
         // If a function call was processed but no follow-up text was included, generate one
-        if (functionProcessed && !responseParts.some(part => part.text)) {
+        if (functionProcessed && !textProcessed) {
             console.log("No follow-up text found. Generating a follow-up response...");
             const followupModel = genAI.getGenerativeModel({
                 model: MODEL,
@@ -445,15 +452,12 @@ export default async function handler(req, res) {
             replies.push(followUpMessage);
         }
         
-        // If no function call exists, simply handle text responses
-        if (!functionProcessed && responseParts.some(part => part.text)) {
+        // Ensure no fallback logic repeats already added text
+        if (!functionProcessed && !textProcessed) {
             const botReplyContent = responseParts.map(part => part.text).join(" ").trim();
             const botReply = botReplyContent || "No response available.";
             replies.push(transformMarkdownLinksToHTML(botReply));
         }
-
-
-
         await saveChatHistory(message, replies, userID);
 
         // Summarize and clean up chat history
