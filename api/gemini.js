@@ -405,7 +405,7 @@ export default async function handler(req, res) {
             );
         
             if (hasMessage && msgContent) {
-                replies.push(msgContent);
+                replies.push(transformMarkdownLinksToHTML(msgContent)); // Ensure formatting
             }
         
             // Update the system message to inform the user about the result
@@ -423,14 +423,17 @@ export default async function handler(req, res) {
             console.log("Follow-up Response:", JSON.stringify(followUpResponse, null, 2));
         
             // Extract and format the follow-up message
-            let followUpMessage = followUpResponse.response.text() || "Follow-up not generated.";
+            const followUpContent = followUpResponse.response?.candidates[0]?.content?.parts[0]?.text;
+            let followUpMessage = followUpContent || "Follow-up not generated.";
             followUpMessage = transformMarkdownLinksToHTML(followUpMessage);
             replies.push(followUpMessage);
         } else {
             // Standard response handling
-            const botReply = response.response.candidates[0]?.content?.parts[0]?.content || "No response available.";
+            const botReplyContent = response.response.candidates[0]?.content?.parts[0]?.text;
+            const botReply = botReplyContent || "No response available.";
             replies.push(transformMarkdownLinksToHTML(botReply));
         }
+
 
 
         await saveChatHistory(message, replies, userID);
