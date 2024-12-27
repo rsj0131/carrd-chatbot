@@ -417,12 +417,12 @@ export default async function handler(req, res) {
         
         // Check if the response includes a function call
         if (response.response.function_call) {
-            const { name, arguments } = response.response.function_call;
+            const { name, argument } = response.response.function_call;
         
-            console.log("Function call detected:", name, arguments);
+            console.log("Function call detected:", name, argument);
         
             const { result, hasMessage, msgContent } = await processToolCall(
-                { function: { name, arguments } },
+                { function: { name, argument } },
                 message
             );
         
