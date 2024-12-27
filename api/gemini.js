@@ -393,9 +393,9 @@ export default async function handler(req, res) {
             systemInstruction: dynamicSystemMessage, // Include system instruction for context
         });
         
-        const chat = await client.startChat({
+        const chat = await model.startChat({
           history: geminiMessages,   // Use properly formatted messages
-          //tools,                     // Add tool definitions
+          tools,                     // Add tool definitions
         });
         
         // Send the message and handle the response
@@ -590,10 +590,8 @@ async function sendImage(userMessage) {
         if (!queryEmbedding) {
             console.log("No cached embedding found, generating new one.");
             const inputTokens = encode(userMessage).length;
-            const embeddingResponse = await client.embeddings.create({
-                model: EMBED_MODEL,
-                inputs: [userMessage],
-            });
+            const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+            const embeddingResponse = await model.embedContent(userMessage);
 
             if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
                 throw new Error("Failed to generate embedding.");
@@ -708,11 +706,8 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
                 ? `${entry.question} ${(entry.tags || []).join(" ")}`
                 : `${entry.description} ${(entry.tags || []).join(" ")}`;
 
-            // Generate embedding
-            const response = await client.embeddings.create({
-                model: EMBED_MODEL,
-                inputs: [inputText],
-            });
+            const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+            const response = await model.embedContent(inputText);
 
             const embedding = response.data[0]?.embedding;
             if (!embedding) {
@@ -783,10 +778,9 @@ async function getAnswer(userQuery) {
         // Step 1: Generate an embedding for the user query
         const inputTokens = encode(userQuery).length;
         const embeddingStartTime = Date.now(); // Timer for embedding generation
-        const embeddingResponse = await client.embeddings.create({
-                model: EMBED_MODEL,
-                inputs: [userQuery],
-        });
+        
+        const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+        const embeddingResponse = await model.embedContent(userQuery);
         
         if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
             console.error("Embedding response data is missing or invalid:", embeddingResponse);
