@@ -2,8 +2,7 @@ import { MongoClient } from "mongodb";
 import fetch from "node-fetch";
 import { Readable } from "stream";
 import { encode } from "gpt-3-encoder";
-
-const { GenerativeModel } = await import('@google/generative-ai');
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 
 let cachedEmbedding = null;
@@ -22,10 +21,7 @@ const MODEL = "gemini-1.5-pro";
 const EMBED_MODEL = "text-embedding-004"; // Specify the embedding model
 
 // Initialize the client
-const client = new GenerativeModel({
-  apiKey: process.env.GEMINI_API_KEY, // Ensure this is set correctly in your environment
-  model: MODEL,           // Specify the model
-});
+const genAI = new GoogleGenerativeAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Pricing
 const PRICING = {
@@ -394,13 +390,13 @@ export default async function handler(req, res) {
         console.log("Available functions:", JSON.stringify(tools, null, 2));
         
         const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-pro",
+            model: MODEL,
             systemInstruction: dynamicSystemMessage, // Include system instruction for context
         });
         
         const chat = await client.startChat({
           history: geminiMessages,   // Use properly formatted messages
-          tools,                     // Add tool definitions
+          //tools,                     // Add tool definitions
         });
         
         // Send the message and handle the response
