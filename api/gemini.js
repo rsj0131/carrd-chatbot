@@ -373,19 +373,6 @@ export default async function handler(req, res) {
             },
         ]);
         
-        // Add system and user messages
-        const geminiMessages = [
-            {
-                role: "system",
-                parts: [{ text: dynamicSystemMessage }],
-            },
-            ...chatHistory,
-            {
-                role: "user",
-                parts: [{ text: message }],
-            },
-        ];
-        
         console.log("Available functions:", JSON.stringify(tools, null, 2));
         
         const model = genAI.getGenerativeModel({
@@ -394,23 +381,10 @@ export default async function handler(req, res) {
         });
         
         const chat = await model.startChat({
-          history: geminiMessages,   // Use properly formatted messages
-          tools,                     // Add tool definitions
+          history: chatHistory,
+          tools,
         });
-        
-        // Send the message and handle the response
-        const response = await chat.sendMessage({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: message }],
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: 150,
-            temperature: 0.7,
-          },
-        });
+        const response = await chat.sendMessage(message);
         console.log("API Response:", JSON.stringify(response, null, 2));
         
         let replies = []; // Store multiple replies
@@ -429,17 +403,17 @@ export default async function handler(req, res) {
             if (hasMessage && msgContent) {
                 replies.push(msgContent);
             }
-        
-            // Add tool result back to the chat history
-            geminiMessages.push({
-                role: "system",
-                parts: [{ text: `Tool result: ${result}` }],
+
+            dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}`;
+            const followupModel = genAI.getGenerativeModel({
+                model: MODEL,
+                systemInstruction: dynamicSystemMessage,
             });
-        
-            // Continue the chat with updated history
-            const followUpResponse = await chat.sendMessage({
-                contents: geminiMessages,
+            
+            const followupChat = await followupModel.startChat({
+              history: chatHistory,
             });
+            const followUpResponse = await followupChat.sendMessage(message);
             console.log("Follow-up Response:", JSON.stringify(followUpResponse, null, 2));
         
             let followUpMessage = followUpResponse.response.text() || "Follow-up not generated.";
