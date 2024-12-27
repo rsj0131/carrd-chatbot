@@ -393,7 +393,7 @@ export default async function handler(req, res) {
         
         const chat = model.startChat({
             history: geminiMessages, // Use Gemini's chat history format
-            functions: tools, // Include functions for tool invocation
+            tools: tools, // Include functions for tool invocation
         });
         
         // Send the message and handle the response
@@ -472,15 +472,12 @@ async function fetchFunctions(isAdminUser = false) {
 
         // Transform each function into the correct Mistral tool format
         return filteredFunctions.map(func => ({
-            type: "function",
-            function: {
-                name: func.name,
+            name: func.name,
+            parameters: {
+                type: "OBJECT",
                 description: func.description,
-                parameters: {
-                    type: "object",
-                    properties: func.parameters?.properties || {}, // Ensure `properties` are valid
-                    required: func.parameters?.required || [], // Ensure `required` is a list
-                },
+                properties: func.parameters?.properties || {},
+                required: func.parameters?.required || [],
             },
         }));
     } catch (error) {
