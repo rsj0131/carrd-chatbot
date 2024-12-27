@@ -760,6 +760,7 @@ async function getAnswer(userQuery) {
         const embeddingResponse = await model.embedContent(userQuery);
         
         if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
+            console.log("getAnswer embeddingResponse:", JSON.stringify(embeddingResponse, null, 2));
             console.error("Embedding response data is missing or invalid:", embeddingResponse);
             throw new Error("Failed to generate embedding.");
         }
