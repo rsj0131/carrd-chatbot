@@ -2,7 +2,9 @@ import { MongoClient } from "mongodb";
 import fetch from "node-fetch";
 import { Readable } from "stream";
 import { encode } from "gpt-3-encoder";
-import { GenerativeModel } from '@google/generative-ai';
+
+const { GenerativeModel } = await import('@google/generative-ai');
+
 
 let cachedEmbedding = null;
 
