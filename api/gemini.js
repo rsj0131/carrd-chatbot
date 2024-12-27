@@ -392,40 +392,46 @@ export default async function handler(req, res) {
         let replies = []; // Store multiple replies
         
         // Check if the response includes a function call
-        if (response.response.function_call) {
-            const { name, argument } = response.response.function_call;
+        if (response.response.candidates[0]?.content?.parts[0]?.functionCall) {
+            const { functionCall } = response.response.candidates[0].content.parts[0];
+            const { name, args } = functionCall;
         
-            console.log("Function call detected:", name, argument);
+            console.log("Function call detected:", name, args);
         
+            // Process the tool call with the extracted name and arguments
             const { result, hasMessage, msgContent } = await processToolCall(
-                { function: { name, argument } },
+                { function: { name, arguments: args } },
                 message
             );
         
             if (hasMessage && msgContent) {
                 replies.push(msgContent);
             }
-
+        
+            // Update the system message to inform the user about the result
             dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}`;
             const followupModel = genAI.getGenerativeModel({
                 model: MODEL,
                 systemInstruction: dynamicSystemMessage,
             });
-            
+        
+            // Start a new follow-up chat
             const followupChat = await followupModel.startChat({
-              history: chatHistory,
+                history: chatHistory,
             });
             const followUpResponse = await followupChat.sendMessage(message);
             console.log("Follow-up Response:", JSON.stringify(followUpResponse, null, 2));
         
+            // Extract and format the follow-up message
             let followUpMessage = followUpResponse.response.text() || "Follow-up not generated.";
             followUpMessage = transformMarkdownLinksToHTML(followUpMessage);
             replies.push(followUpMessage);
         } else {
             // Standard response handling
-            const botReply = response.response.text() || "No response available.";
+            const botReply = response.response.candidates[0]?.content?.parts[0]?.content || "No response available.";
             replies.push(transformMarkdownLinksToHTML(botReply));
         }
+
 
         await saveChatHistory(message, replies, userID);
 
