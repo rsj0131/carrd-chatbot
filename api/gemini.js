@@ -610,7 +610,7 @@ async function sendImage(userMessage) {
             const embeddingResponse = await model.embedContent(userMessage);
 
             // Debugging the API response
-            console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
+            //console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
 
             // Access embedding values directly
             queryEmbedding = embeddingResponse?.embedding?.values;
@@ -742,7 +742,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
                     const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
                     const response = await model.embedContent(inputText);
 
-                    console.log("Embedding API response:", JSON.stringify(response, null, 2));
+                    //console.log("Embedding API response:", JSON.stringify(response, null, 2));
 
                     const embedding = response?.embedding?.values;
                     if (!embedding || embedding.length === 0) {
