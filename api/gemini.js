@@ -391,9 +391,6 @@ export default async function handler(req, res) {
         
         let replies = []; // Store multiple replies
         
-        // Check if the response includes a function call or text
-        const responseParts = response.response.candidates[0]?.content?.parts || [];
-        
         let functionProcessed = false; // To track if a function call was processed
         
         // Check if the response includes a function call or text
