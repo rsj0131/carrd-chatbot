@@ -590,44 +590,30 @@ async function sendImage(userMessage) {
         if (!queryEmbedding) {
             console.log("No cached embedding found, generating a new one.");
 
-            const MAX_RETRIES = 3;
-            let retries = 0;
+            const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+            const embeddingResponse = await model.embedContent(userMessage);
 
-            while (retries < MAX_RETRIES) {
-                try {
-                    const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-                    const embeddingResponse = await model.embedContent(userMessage);
+            // Debugging the API response
+            console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
 
-                    // Debugging the API response
-                    console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
-
-                    // Access embedding values directly
-                    queryEmbedding = embeddingResponse?.embedding?.values;
-                    if (!queryEmbedding || queryEmbedding.length === 0) {
-                        throw new Error("Invalid or missing embedding data.");
-                    }
-
-                    // Calculate cost dynamically
-                    const inputTokens = encode(userMessage).length;
-                    const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-                    const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-                    totalCost += inputCost;
-
-                    console.log(`Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
-                    break; // Exit retry loop on success
-                } catch (retryError) {
-                    retries++;
-                    console.error(`Retry ${retries} failed for embedding generation.`, retryError);
-                    if (retries === MAX_RETRIES) {
-                        console.error("Max retries reached for embedding generation. Skipping.");
-                        return {
-                            result: "Failed to generate embedding for the user message.",
-                            hasMessage: false,
-                            msgContent: null,
-                        };
-                    }
-                }
+            // Access embedding values directly
+            queryEmbedding = embeddingResponse?.embedding?.values;
+            if (!queryEmbedding || queryEmbedding.length === 0) {
+                console.error("Invalid or missing embedding data.");
+                return {
+                    result: "Failed to generate embedding for the user message.",
+                    hasMessage: false,
+                    msgContent: null,
+                };
             }
+
+            // Calculate cost dynamically
+            const inputTokens = encode(userMessage).length;
+            const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
+            const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+            totalCost += inputCost;
+
+            console.log(`Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
         } else {
             console.log("Using cached embedding:", queryEmbedding);
         }
