@@ -391,25 +391,40 @@ export default async function handler(req, res) {
         
         let replies = []; // Store multiple replies
         
-        // Check if the response includes a function call
-        if (response.response.candidates[0]?.content?.parts[0]?.functionCall) {
-            const { functionCall } = response.response.candidates[0].content.parts[0];
-            const { name, args } = functionCall;
+        // Check if the response includes a function call or text
+        const responseParts = response.response.candidates[0]?.content?.parts || [];
         
-            console.log("Function call detected:", name, args);
+        let functionProcessed = false; // To track if a function call was processed
         
-            // Process the tool call with the extracted name and arguments
-            const { result, hasMessage, msgContent } = await processToolCall(
-                { function: { name, arguments: args } },
-                message
-            );
+        for (const part of responseParts) {
+            if (part.functionCall) {
+                // Extract function call details
+                const { name, args } = part.functionCall;
+                console.log("Function call detected:", name, args);
         
-            if (hasMessage && msgContent) {
-                replies.push(transformMarkdownLinksToHTML(msgContent)); // Ensure formatting
+                // Process the tool call with the extracted name and arguments
+                const { result, hasMessage, msgContent } = await processToolCall(
+                    { function: { name, arguments: args } },
+                    message
+                );
+        
+                if (hasMessage && msgContent) {
+                    replies.push(transformMarkdownLinksToHTML(msgContent)); // Ensure formatting
+                }
+        
+                // Update the system message to inform the user about the result
+                dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}`;
+                functionProcessed = true;
+            } else if (part.text) {
+                // If text exists, it should be treated as a follow-up or regular response
+                const followUpMessage = transformMarkdownLinksToHTML(part.text);
+                replies.push(followUpMessage);
             }
+        }
         
-            // Update the system message to inform the user about the result
-            dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}`;
+        // If a function call was processed but no follow-up text was included, generate one
+        if (functionProcessed && !responseParts.some(part => part.text)) {
+            console.log("No follow-up text found. Generating a follow-up response...");
             const followupModel = genAI.getGenerativeModel({
                 model: MODEL,
                 systemInstruction: dynamicSystemMessage,
@@ -424,12 +439,15 @@ export default async function handler(req, res) {
         
             // Extract and format the follow-up message
             const followUpContent = followUpResponse.response?.candidates[0]?.content?.parts[0]?.text;
-            let followUpMessage = followUpContent || "Follow-up not generated.";
-            followUpMessage = transformMarkdownLinksToHTML(followUpMessage);
+            const followUpMessage = followUpContent
+                ? transformMarkdownLinksToHTML(followUpContent)
+                : "Follow-up not generated.";
             replies.push(followUpMessage);
-        } else {
-            // Standard response handling
-            const botReplyContent = response.response.candidates[0]?.content?.parts[0]?.text;
+        }
+        
+        // If no function call exists, simply handle text responses
+        if (!functionProcessed && responseParts.some(part => part.text)) {
+            const botReplyContent = responseParts.map(part => part.text).join(" ").trim();
             const botReply = botReplyContent || "No response available.";
             replies.push(transformMarkdownLinksToHTML(botReply));
         }
