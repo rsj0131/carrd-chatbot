@@ -2,7 +2,7 @@ import { MongoClient } from "mongodb";
 import fetch from "node-fetch";
 import { Readable } from "stream";
 import { encode } from "gpt-3-encoder";
-import { GoogleGenerativeAI  } from '@google/generative-ai';
+import { GenerativeModel } from '@google/generative-ai';
 
 let cachedEmbedding = null;
 
@@ -16,9 +16,14 @@ async function connectToDatabase() {
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
 
-const client = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const MODEL = "gemini-1.5-pro";
 const EMBED_MODEL = "text-embedding-004"; // Specify the embedding model
+
+// Initialize the client
+const client = new GenerativeModel({
+  apiKey: process.env.GEMINI_API_KEY, // Ensure this is set correctly in your environment
+  model: MODEL,           // Specify the model
+});
 
 // Pricing
 const PRICING = {
@@ -391,13 +396,24 @@ export default async function handler(req, res) {
             systemInstruction: dynamicSystemMessage, // Include system instruction for context
         });
         
-        const chat = model.startChat({
-            history: geminiMessages, // Use Gemini's chat history format
-            tools: tools, // Include functions for tool invocation
+        const chat = await client.startChat({
+          history: geminiMessages,   // Use properly formatted messages
+          tools,                     // Add tool definitions
         });
         
         // Send the message and handle the response
-        const response = await chat.sendMessage(message);
+        const response = await chat.sendMessage({
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: message }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 150,
+            temperature: 0.7,
+          },
+        });
         console.log("API Response:", JSON.stringify(response, null, 2));
         
         let replies = []; // Store multiple replies
@@ -406,10 +422,9 @@ export default async function handler(req, res) {
         if (response.response.function_call) {
             const { name, arguments } = response.response.function_call;
         
-            console.log("Function call detected:", response.response.function_call);
+            console.log("Function call detected:", name, arguments);
         
-            // Process the function call
-            const { result, hasMessage, msgContent, isNSFW = false } = await processToolCall(
+            const { result, hasMessage, msgContent } = await processToolCall(
                 { function: { name, arguments } },
                 message
             );
@@ -418,10 +433,10 @@ export default async function handler(req, res) {
                 replies.push(msgContent);
             }
         
-            // Add tool result as a system message for follow-ups
+            // Add tool result back to the chat history
             geminiMessages.push({
                 role: "system",
-                parts: [{ text: `You have used a tool. Inform the user about result: ${result}` }],
+                parts: [{ text: `Tool result: ${result}` }],
             });
         
             // Continue the chat with updated history
