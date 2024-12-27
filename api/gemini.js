@@ -693,40 +693,53 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
                 ? `${entry.question} ${(entry.tags || []).join(" ")}`
                 : `${entry.description} ${(entry.tags || []).join(" ")}`;
 
-            // Call the embedding API
-            const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-            const response = await model.embedContent(inputText);
-
-            // Debugging the API response
-            console.log("Embedding API response:", JSON.stringify(response, null, 2));
-
-            if (!response?.data || response.data.length === 0) {
-                console.error("Embedding generation failed for entry:", _id);
-                continue; // Skip to the next entry
+            // Skip entries with invalid input text
+            if (!inputText || inputText.trim().length === 0) {
+                console.error(`Invalid input text for entry with ID: ${_id}. Skipping.`);
+                continue;
             }
 
-            const embedding = response.data[0]?.embedding;
-            if (!embedding) {
-                console.error("Invalid embedding data for entry:", _id);
-                continue; // Skip to the next entry
-            }
+            const MAX_RETRIES = 3;
+            let retries = 0;
 
-            // Calculate cost dynamically
-            const inputTokens = encode(inputText).length;
-            const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-            const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-            totalCost += inputCost;
+            while (retries < MAX_RETRIES) {
+                try {
+                    const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+                    const response = await model.embedContent(inputText);
 
-            console.log(`Cost for entry ${_id}: $${inputCost.toFixed(6)} (Tokens: ${inputTokens})`);
+                    console.log("Embedding API response:", JSON.stringify(response, null, 2));
 
-            // Update the document with the embedding
-            const result = await collection.updateOne(
-                { _id },
-                { $set: { embedding } }
-            );
+                    const embedding = response?.embedding?.values;
+                    if (!embedding || embedding.length === 0) {
+                        throw new Error("No embedding data returned.");
+                    }
 
-            if (result.modifiedCount > 0) {
-                updatedCount++;
+                    // Calculate cost dynamically
+                    const inputTokens = encode(inputText).length;
+                    const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
+                    const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+                    totalCost += inputCost;
+
+                    console.log(`Cost for entry ${_id}: $${inputCost.toFixed(6)} (Tokens: ${inputTokens})`);
+
+                    // Update the document with the embedding
+                    const result = await collection.updateOne(
+                        { _id },
+                        { $set: { embedding } }
+                    );
+
+                    if (result.modifiedCount > 0) {
+                        updatedCount++;
+                    }
+
+                    break; // Exit retry loop on success
+                } catch (retryError) {
+                    retries++;
+                    console.error(`Retry ${retries} failed for entry: ${_id}`, retryError);
+                    if (retries === MAX_RETRIES) {
+                        console.error(`Max retries reached for entry: ${_id}. Skipping.`);
+                    }
+                }
             }
         }
 
@@ -748,6 +761,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
         };
     }
 }
+
 
 
 
