@@ -662,8 +662,6 @@ async function sendImage(userMessage) {
     }
 }
 
-
-
 // Vector Embeddings
 async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
     const startTime = Date.now();
@@ -695,13 +693,22 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
                 ? `${entry.question} ${(entry.tags || []).join(" ")}`
                 : `${entry.description} ${(entry.tags || []).join(" ")}`;
 
+            // Call the embedding API
             const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
             const response = await model.embedContent(inputText);
 
+            // Debugging the API response
+            console.log("Embedding API response:", JSON.stringify(response, null, 2));
+
+            if (!response?.data || response.data.length === 0) {
+                console.error("Embedding generation failed for entry:", _id);
+                continue; // Skip to the next entry
+            }
+
             const embedding = response.data[0]?.embedding;
             if (!embedding) {
-                console.log("Failed to generate embedding for entry:", _id);
-                continue;
+                console.error("Invalid embedding data for entry:", _id);
+                continue; // Skip to the next entry
             }
 
             // Calculate cost dynamically
@@ -739,10 +746,9 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
             hasMessage: false,
             msgContent: null,
         };
-    } finally {
-        await mongoClient.close();
     }
 }
+
 
 
 /**
