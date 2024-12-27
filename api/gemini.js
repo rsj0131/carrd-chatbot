@@ -381,8 +381,10 @@ export default async function handler(req, res) {
         });
         
         const chat = await model.startChat({
-          history: chatHistory,
-          tools,
+            history: chatHistory,
+            tools: {
+                functionDeclarations: tools,
+            },
         });
         const response = await chat.sendMessage(message);
         console.log("API Response:", JSON.stringify(response, null, 2));
@@ -471,6 +473,7 @@ async function fetchFunctions(isAdminUser = false) {
         return [];
     }
 }
+
 
 async function processToolCall(toolCall, userMessage) {
     try {
