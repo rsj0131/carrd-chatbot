@@ -385,6 +385,11 @@ export default async function handler(req, res) {
             tools: {
                 functionDeclarations: tools,
             },
+            tool_config: {
+                function_calling_config: {
+                    mode: "AUTO",
+                }
+            }
         });
         const response = await chat.sendMessage(message);
         console.log("API Response:", JSON.stringify(response, null, 2));
