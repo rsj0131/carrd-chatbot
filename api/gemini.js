@@ -2,8 +2,8 @@ import { MongoClient } from "mongodb";
 import fetch from "node-fetch";
 import { Readable } from "stream";
 import { encode } from "gpt-3-encoder";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 let cachedEmbedding = null;
 
 // MongoDB Configuration
