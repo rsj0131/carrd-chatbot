@@ -24,7 +24,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Pricing
 const PRICING = {
-        "gemini-1.5-pro": { input: 0.0375 / 1_000_000, output: 0.0150 / 1_000_000 },
+        "gemini-1.5-flash": { input: 0.0375 / 1_000_000, output: 0.0150 / 1_000_000 },
         "text-embedding-004": { input: 0.000 / 1_000_000, output: 0.000 / 1_000_000 }
     };
 
