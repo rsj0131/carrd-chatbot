@@ -572,35 +572,64 @@ async function sendImage(userMessage) {
         const db = await connectToDatabase();
         const collection = db.collection("images");
 
-        // Step 1: Generate an embedding for the user message
-        const inputTokens = encode(userMessage).length;
-        const embeddingStartTime = Date.now(); // Timer for embedding generation
+        // Step 1: Validate input text
+        if (!userMessage || userMessage.trim().length === 0) {
+            console.error("Invalid user message. Skipping embedding generation.");
+            return {
+                result: "Invalid user message. Cannot generate image.",
+                hasMessage: false,
+                msgContent: null,
+            };
+        }
+
+        // Step 2: Generate an embedding for the user message
         let queryEmbedding = cachedEmbedding;
         if (!queryEmbedding) {
-            console.log("No cached embedding found, generating new one.");
-            const inputTokens = encode(userMessage).length;
-            const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-            const embeddingResponse = await model.embedContent(userMessage);
+            console.log("No cached embedding found, generating a new one.");
 
-            if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
-                throw new Error("Failed to generate embedding.");
+            const MAX_RETRIES = 3;
+            let retries = 0;
+
+            while (retries < MAX_RETRIES) {
+                try {
+                    const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+                    const embeddingResponse = await model.embedContent(userMessage);
+
+                    // Debugging the API response
+                    console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
+
+                    // Access embedding values directly
+                    queryEmbedding = embeddingResponse?.embedding?.values;
+                    if (!queryEmbedding || queryEmbedding.length === 0) {
+                        throw new Error("Invalid or missing embedding data.");
+                    }
+
+                    // Calculate cost dynamically
+                    const inputTokens = encode(userMessage).length;
+                    const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
+                    const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+                    totalCost += inputCost;
+
+                    console.log(`Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
+                    break; // Exit retry loop on success
+                } catch (retryError) {
+                    retries++;
+                    console.error(`Retry ${retries} failed for embedding generation.`, retryError);
+                    if (retries === MAX_RETRIES) {
+                        console.error("Max retries reached for embedding generation. Skipping.");
+                        return {
+                            result: "Failed to generate embedding for the user message.",
+                            hasMessage: false,
+                            msgContent: null,
+                        };
+                    }
+                }
             }
-
-            queryEmbedding = embeddingResponse.data[0].embedding;
-            console.log("Generated new embedding:", queryEmbedding);
-            const embeddingDuration = Date.now() - embeddingStartTime;
-
-            // Calculate cost dynamically
-            const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-            const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-            totalCost += inputCost;
-    
-            console.log(`Generated embedding for user message. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}, Duration: ${embeddingDuration}ms`);
         } else {
             console.log("Using cached embedding:", queryEmbedding);
         }
-        
-        // Step 2: Fetch all images with embeddings
+
+        // Step 3: Fetch all images with embeddings
         const fetchStartTime = Date.now();
         const images = await collection.find({ embedding: { $exists: true } }).toArray();
         const fetchDuration = Date.now() - fetchStartTime;
@@ -613,9 +642,9 @@ async function sendImage(userMessage) {
                 msgContent: null,
             };
         }
-        console.log(`Fetched ${images.length} images. Duration: ${fetchDuration}ms`);
+        console.log(`Fetched ${images.length} images. Duration: ${fetchDuration}ms.`);
 
-        // Step 3: Calculate similarity scores
+        // Step 4: Calculate similarity scores
         const similarityStartTime = Date.now();
         const similarities = images.map(image => {
             const similarity = cosineSimilarity(queryEmbedding, image.embedding);
@@ -623,9 +652,9 @@ async function sendImage(userMessage) {
         });
         const similarityDuration = Date.now() - similarityStartTime;
 
-        console.log(`Calculated similarity scores for ${images.length} images. Duration: ${similarityDuration}ms`);
+        console.log(`Calculated similarity scores for ${images.length} images. Duration: ${similarityDuration}ms.`);
 
-        // Step 4: Filter images based on similarity threshold and pick one randomly
+        // Step 5: Filter images based on similarity threshold
         const threshold = 0.7; // Adjust this threshold based on desired precision
         const matchingImages = similarities.filter(({ similarity }) => similarity >= threshold);
 
@@ -638,18 +667,18 @@ async function sendImage(userMessage) {
             };
         }
 
+        // Step 6: Pick one randomly and return it
         const randomImage = matchingImages[Math.floor(Math.random() * matchingImages.length)].image;
 
         console.log(`Selected random image from ${matchingImages.length} matches.`);
 
         const totalDuration = Date.now() - startTime;
-        console.log(`Total cost: $${totalCost.toFixed(6)}, Total duration: ${totalDuration}ms`);
+        console.log(`Total cost: $${totalCost.toFixed(6)}, Total duration: ${totalDuration}ms.`);
 
-        // Step 5: Return the selected image
         return {
             result: `You have successfully sent an image to the user, the image description: ${randomImage.description}`,
             hasMessage: true,
-            msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}"  class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
+            msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}" class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
             isNSFW: randomImage.tags?.includes("nsfw") || false,
         };
     } catch (error) {
@@ -661,6 +690,7 @@ async function sendImage(userMessage) {
         };
     }
 }
+
 
 // Vector Embeddings
 async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
@@ -762,9 +792,6 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
     }
 }
 
-
-
-
 /**
  * Calculate cosine similarity between two vectors.
  */
@@ -777,76 +804,88 @@ function cosineSimilarity(vectorA, vectorB) {
 
 async function getAnswer(userQuery) {
     const startTime = Date.now(); // Start the timer
-    const TOKEN_COST = PRICING[EMBED_MODEL]; // Cost for ada-002: $0.1 per 1M tokens
+    const TOKEN_COST = PRICING[EMBED_MODEL]; // Cost for embedding generation
     let totalCost = 0;
 
     try {
+        // Step 1: Validate input query
+        if (!userQuery || userQuery.trim().length === 0) {
+            console.error("Invalid user query. Cannot generate an answer.");
+            return "Invalid query provided. Please refine your question.";
+        }
+
         const db = await connectToDatabase();
         const collection = db.collection("knowledge_base");
 
-        // Step 1: Generate an embedding for the user query
-        const inputTokens = encode(userQuery).length;
-        const embeddingStartTime = Date.now(); // Timer for embedding generation
-        
-        const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-        const embeddingResponse = await model.embedContent(userQuery);
-        
-        if (!embeddingResponse?.data || embeddingResponse.data.length === 0) {
-            console.log("getAnswer embeddingResponse:", JSON.stringify(embeddingResponse, null, 2));
-            console.error("Embedding response data is missing or invalid:", embeddingResponse);
-            throw new Error("Failed to generate embedding.");
+        // Step 2: Generate an embedding for the user query
+        const MAX_RETRIES = 3;
+        let queryEmbedding = null;
+        let retries = 0;
+
+        while (retries < MAX_RETRIES) {
+            try {
+                const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+                const embeddingResponse = await model.embedContent(userQuery);
+
+                // Debugging the API response
+                console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
+
+                queryEmbedding = embeddingResponse?.embedding?.values;
+                if (!queryEmbedding || queryEmbedding.length === 0) {
+                    throw new Error("Invalid or missing embedding data.");
+                }
+
+                // Calculate cost dynamically
+                const inputTokens = encode(userQuery).length;
+                const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
+                const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+                totalCost += inputCost;
+
+                console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
+                break; // Exit retry loop on success
+            } catch (retryError) {
+                retries++;
+                console.error(`Retry ${retries} failed for embedding generation.`, retryError);
+                if (retries === MAX_RETRIES) {
+                    console.error("Max retries reached for embedding generation. Skipping.");
+                    return "Failed to process your query. Please try again later.";
+                }
+            }
         }
-        cachedEmbedding = embeddingResponse.data[0].embedding;
-        console.log("Cached embedding:", cachedEmbedding);
-        const embeddingDuration = Date.now() - embeddingStartTime;
 
-        // Calculate cost for generating the query embedding
-        const embeddingCost = inputTokens * TOKEN_COST;
-        totalCost += embeddingCost;
-        console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${embeddingCost.toFixed(6)}, Duration: ${embeddingDuration}ms`);
-
-        // Step 2: Fetch all knowledge base entries with embeddings
-        const entriesStartTime = Date.now(); // Timer for DB fetch
+        // Step 3: Fetch all knowledge base entries with embeddings
         const entries = await collection.find({ embedding: { $exists: true } }).toArray();
-        const entriesDuration = Date.now() - entriesStartTime;
 
         if (entries.length === 0) {
             console.log("No entries with embeddings found in the knowledge base.");
-            return null;
+            return "No relevant information found in the knowledge base.";
         }
-        console.log(`Fetched ${entries.length} entries from the knowledge base. Duration: ${entriesDuration}ms`);
+        console.log(`Fetched ${entries.length} entries from the knowledge base.`);
 
-        // Step 3: Calculate similarity scores
-        const similarityStartTime = Date.now(); // Timer for similarity calculation
+        // Step 4: Calculate similarity scores
         const similarities = entries.map(entry => {
-            const similarity = cosineSimilarity(cachedEmbedding, entry.embedding);
+            const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
             return { entry, similarity };
         });
-        const similarityDuration = Date.now() - similarityStartTime;
-        console.log(`Calculated similarity scores for ${entries.length} entries. Duration: ${similarityDuration}ms`);
 
-        // Step 4: Find the most relevant entry
+        // Step 5: Find the most relevant entry
         const bestMatch = similarities.sort((a, b) => b.similarity - a.similarity)[0];
         const threshold = 0.7; // Adjust this threshold based on desired precision
         if (bestMatch.similarity < threshold) {
             console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
-            return " ";
+            return "No relevant match found for your query.";
         }
 
-        // Step 5: Build and return the response
         const { answer, guideline, links } = bestMatch.entry;
 
         // Transform links into <a> tags
-        let formattedLinks = "";
-        if (links && links.length > 0) {
-            formattedLinks = links
-                .map(
-                    link =>
-                        `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.text}</a>`
-                )
-                .join("<br>");
-        }
+        const formattedLinks = links
+            ? links
+                .map(link => `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.text}</a>`)
+                .join("<br>")
+            : "";
 
+        // Step 6: Build and return the response
         let response = `Here's what I found:<br><br>${answer}<br><br>Guideline: ${guideline}<br>`;
         if (formattedLinks) {
             response += `Relevant links:<br>${formattedLinks}`;
