@@ -390,9 +390,6 @@ export default async function handler(req, res) {
         console.log("API Response:", JSON.stringify(response, null, 2));
         
         let replies = []; // Store multiple replies
-        
-        let functionProcessed = false; // To track if a function call was processed
-        
         // Check if the response includes a function call or text
         const responseParts = response.response.candidates[0]?.content?.parts || [];
         
