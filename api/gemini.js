@@ -486,13 +486,20 @@ async function processToolCall(toolCall, userMessage) {
         let args = func?.arguments;
 
         // Debugging logs
-        console.log("Tool call received:", toolCall);
-        console.log("Raw arguments from toolCall:", args);
+        console.log("Tool call received:", JSON.stringify(toolCall, null, 2));
+        console.log("Raw arguments type:", typeof args);
+        console.log("Raw arguments value:", args);
 
         // Ensure arguments are in object form
         if (typeof args === "string") {
-            args = JSON.parse(args); // Parse only if it's a JSON string
+            try {
+                args = JSON.parse(args); // Parse only if it's a JSON string
+            } catch (err) {
+                console.error("Failed to parse arguments as JSON:", args);
+                throw new Error("Invalid arguments format; expected a JSON string or object.");
+            }
         }
+
         console.log(`Executing tool: ${func.name} with arguments:`, args);
 
         // Dynamically execute the tool
@@ -504,7 +511,6 @@ async function processToolCall(toolCall, userMessage) {
         return { result: "Error occurred while executing the tool.", hasMessage: true, msgContent: null };
     }
 }
-
 
 
 // Example function execution
@@ -519,7 +525,7 @@ async function executeFunction(name, args, userMessage) {
             
         case "generateEmbeddings":
             if (!args || !args.targetCollection) {
-                console.warn(`Missing or invalid targetCollection in args ${JSON.stringify(args, null, 2)}; defaulting to "knowledge_base"`);
+                console.warn(`Missing or invalid targetCollection in args: ${JSON.stringify(args, null, 2)}; defaulting to "knowledge_base"`);
             }
             const targetCollection = args?.targetCollection || "knowledge_base"; // Ensure a fallback
             console.log(`Target collection for embeddings: ${targetCollection}`);
