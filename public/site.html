@@ -405,8 +405,70 @@
             }
         }
         
-        // Call loadUserInfo on page load
-        loadUserInfo();
+        async function loadChatHistory() {
+            const messagesDiv = document.getElementById("messages");
+        
+            try {
+                const response = await fetch(`/api/chatHistory?userID=${userID}`, {
+                    method: "GET",
+                    credentials: "include",
+                });
+                const chatHistory = await response.json();
+        
+                if (!Array.isArray(chatHistory)) {
+                    console.error("Invalid chat history format:", chatHistory);
+                    return;
+                }
+        
+                chatHistory.forEach(entry => {
+                    const { userMessage, botReply, timestamp } = entry;
+                    const formattedTime = new Date(timestamp).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                    });
+        
+                    // Add user message
+                    const userMessageContainer = document.createElement("div");
+                    userMessageContainer.className = "message-container user";
+        
+                    const userMessageDiv = document.createElement("div");
+                    userMessageDiv.className = "user-message";
+                    userMessageDiv.textContent = userMessage;
+        
+                    const userTimestamp = document.createElement("small");
+                    userTimestamp.className = "timestamp";
+                    userTimestamp.textContent = formattedTime;
+        
+                    userMessageContainer.appendChild(userMessageDiv);
+                    userMessageContainer.appendChild(userTimestamp);
+                    messagesDiv.appendChild(userMessageContainer);
+        
+                    // Add bot reply
+                    const botMessageContainer = document.createElement("div");
+                    botMessageContainer.className = "message-container bot";
+        
+                    const botMessageDiv = document.createElement("div");
+                    botMessageDiv.className = "bot-message";
+                    botMessageDiv.innerHTML = parseMessage(botReply);
+        
+                    const botTimestamp = document.createElement("small");
+                    botTimestamp.className = "timestamp";
+                    botTimestamp.textContent = formattedTime;
+        
+                    botMessageContainer.appendChild(botMessageDiv);
+                    botMessageContainer.appendChild(botTimestamp);
+                    messagesDiv.appendChild(botMessageContainer);
+                });
+        
+                // Scroll to bottom after loading chat history
+                scrollToBottom();
+            } catch (error) {
+                console.error("Error loading chat history:", error);
+            }
+        }
+        
+        // Call loadChatHistory on page load
+        loadUserInfo().then(() => loadChatHistory());
         
         // Get the modal
         const modal = document.getElementById("imageModal");
