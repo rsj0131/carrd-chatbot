@@ -480,23 +480,23 @@ async function fetchFunctions(isAdminUser = false) {
     }
 }
 
-
 async function processToolCall(toolCall, userMessage) {
     try {
-        // Correctly access arguments from the `function` object
         const func = toolCall.function;
-        const args = func?.arguments;
+        let args = func?.arguments;
 
         // Debugging logs
         console.log("Tool call received:", toolCall);
         console.log("Raw arguments from toolCall:", args);
 
-        // Parse arguments safely
-        const parsedArgs = args ? JSON.parse(args) : {}; // Ensure arguments are parsed if available
-        console.log(`Executing tool: ${func.name} with arguments:`, parsedArgs);
+        // Ensure arguments are in object form
+        if (typeof args === "string") {
+            args = JSON.parse(args); // Parse only if it's a JSON string
+        }
+        console.log(`Executing tool: ${func.name} with arguments:`, args);
 
         // Dynamically execute the tool
-        const { result, hasMessage, msgContent } = await executeFunction(func.name, parsedArgs, userMessage);
+        const { result, hasMessage, msgContent } = await executeFunction(func.name, args, userMessage);
         console.log(`Tool ${func.name} executed. Result: ${result}, hasMessage: ${hasMessage}, msgContent: ${msgContent}`);
         return { result, hasMessage, msgContent };
     } catch (error) {
