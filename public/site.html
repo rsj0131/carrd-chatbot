@@ -313,6 +313,15 @@
             text-decoration: none;
             cursor: pointer;
         }
+
+        .transparent-italic {
+            font-style: italic;
+            color: rgba(0, 0, 0, 0.7); /* 30% transparent */
+        }
+    
+        strong {
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -551,12 +560,13 @@
         });
         
         function parseMessage(text) {
-            return text
+            const formattedText = text
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Replace **bold text**
-                .replace(/\n/g, '<br>') // Replace newlines
-                .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+                .replace(/\n/g, '<br>') // Replace newlines with <br>
+                .replace(/\*([^*]+)\*/g, '<span class="transparent-italic">$1</span>'); // Replace *italic text* with a span
+        
+            return formattedText;
         }
-
     
         async function sendMessage() {
             const inputElement = document.getElementById("message");
