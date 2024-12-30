@@ -539,8 +539,15 @@ async function executeFunction(name, args, userMessage) {
             return await deleteAllChatHistory();
             
         case "sendImage":
-            //const userMessage = args.message || ""; // Ensure the message is passed as input
-            return await sendImage(userMessage);
+            if (!args || !args.prompt) {
+                console.warn(`Missing or invalid 'prompt' in args: ${JSON.stringify(args, null, 2)}`);
+                return {
+                    result: "Missing 'prompt' parameter for the image request.",
+                    hasMessage: false,
+                    msgContent: null,
+                };
+            }
+            return await sendImage(args.prompt);
             
         case "generateEmbeddings":
             if (!args || !args.targetCollection) {
@@ -583,7 +590,7 @@ async function deleteAllChatHistory() {
     }
 }
 
-async function sendImage(userMessage) {
+async function sendImage(userQuery) {
     const startTime = Date.now(); // Start the timer
     let totalCost = 0;
 
@@ -592,10 +599,10 @@ async function sendImage(userMessage) {
         const collection = db.collection("images");
 
         // Step 1: Validate input text
-        if (!userMessage || userMessage.trim().length === 0) {
-            console.error("Invalid user message. Skipping embedding generation.");
+        if (!userQuery || userQuery.trim().length === 0) {
+            console.error("Invalid user quesry. Skipping embedding generation.");
             return {
-                result: "Invalid user message. Cannot generate image.",
+                result: "Invalid user query. Cannot generate image.",
                 hasMessage: false,
                 msgContent: null,
             };
@@ -607,7 +614,7 @@ async function sendImage(userMessage) {
             console.log("No cached embedding found, generating a new one.");
 
             const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-            const embeddingResponse = await model.embedContent(userMessage);
+            const embeddingResponse = await model.embedContent(userQuery);
 
             // Access embedding values directly
             queryEmbedding = embeddingResponse?.embedding?.values;
@@ -621,7 +628,7 @@ async function sendImage(userMessage) {
             }
 
             // Calculate cost dynamically
-            const inputTokens = encode(userMessage).length;
+            const inputTokens = encode(userQuery).length;
             const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
             const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
             totalCost += inputCost;
