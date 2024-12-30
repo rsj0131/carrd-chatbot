@@ -109,6 +109,19 @@
         // Attach click event to the button
         document.getElementById("login-button").addEventListener("click", loginWithTwitter);
 
+        window.addEventListener("message", (event) => {
+            // Validate the message source and data structure
+            if (event.origin !== window.location.origin) return; // Optional: Check source
+            if (event.data && event.data.logged_in) {
+                console.log("Authentication successful. Updating UI.");
+                localStorage.setItem("username", event.data.username);
+                localStorage.setItem("name", event.data.name);
+        
+                // Refresh the UI or redirect
+                window.location.href = "/site.html";
+            }
+        });
+        
         // Start the authentication check
         checkAuth();
     </script>
