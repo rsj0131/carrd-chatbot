@@ -428,7 +428,7 @@ export default async function handler(req, res) {
         
             // Start a new follow-up chat
             const followupChat = await followupModel.startChat({
-                history: chatHistory,
+                //history: chatHistory,
                 tool_config: {
                     function_calling_config: {
                         mode: "NONE", // Prevent additional function calls in follow-up
@@ -661,7 +661,7 @@ async function sendImage(userMessage) {
         console.log(`Highest similarity score among candidates: ${highestSimilarity}`);
 
         // Step 6: Filter images based on similarity threshold
-        const threshold = 0.5; // Adjust this threshold based on desired precision
+        const threshold = 0.45; // Adjust this threshold based on desired precision
         const matchingImages = similarities.filter(({ similarity }) => similarity >= threshold);
 
         if (matchingImages.length === 0) {
