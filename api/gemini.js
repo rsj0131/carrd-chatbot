@@ -609,9 +609,6 @@ async function sendImage(userMessage) {
             const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
             const embeddingResponse = await model.embedContent(userMessage);
 
-            // Debugging the API response
-            //console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
-
             // Access embedding values directly
             queryEmbedding = embeddingResponse?.embedding?.values;
             if (!queryEmbedding || queryEmbedding.length === 0) {
@@ -659,7 +656,11 @@ async function sendImage(userMessage) {
 
         console.log(`Calculated similarity scores for ${images.length} images. Duration: ${similarityDuration}ms.`);
 
-        // Step 5: Filter images based on similarity threshold
+        // Step 5: Log the highest similarity value
+        const highestSimilarity = Math.max(...similarities.map(s => s.similarity));
+        console.log(`Highest similarity score among candidates: ${highestSimilarity}`);
+
+        // Step 6: Filter images based on similarity threshold
         const threshold = 0.5; // Adjust this threshold based on desired precision
         const matchingImages = similarities.filter(({ similarity }) => similarity >= threshold);
 
@@ -672,7 +673,7 @@ async function sendImage(userMessage) {
             };
         }
 
-        // Step 6: Pick one randomly and return it
+        // Step 7: Pick one randomly and return it
         const randomImage = matchingImages[Math.floor(Math.random() * matchingImages.length)].image;
 
         console.log(`Selected random image from ${matchingImages.length} matches.`);
