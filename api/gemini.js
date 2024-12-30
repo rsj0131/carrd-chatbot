@@ -428,6 +428,11 @@ export default async function handler(req, res) {
                 // Start a new follow-up chat
                 const followupChat = await followupModel.startChat({
                     history: chatHistory,
+                    tool_config: {
+                        function_calling_config: {
+                            mode: "NONE",
+                        }
+                    }
                 });
                 const followUpResponse = await followupChat.sendMessage(message);
                 console.log("Follow-up Prompt:", dynamicSystemMessage);
@@ -443,8 +448,6 @@ export default async function handler(req, res) {
                 replies.push(transformMarkdownLinksToHTML(response.response?.candidates[0]?.content?.parts[0]?.text));
             }
         }
-
-        
         
         await saveChatHistory(message, replies, userID);
 
@@ -654,7 +657,7 @@ async function sendImage(userMessage) {
         console.log(`Calculated similarity scores for ${images.length} images. Duration: ${similarityDuration}ms.`);
 
         // Step 5: Filter images based on similarity threshold
-        const threshold = 0.7; // Adjust this threshold based on desired precision
+        const threshold = 0.5; // Adjust this threshold based on desired precision
         const matchingImages = similarities.filter(({ similarity }) => similarity >= threshold);
 
         if (matchingImages.length === 0) {
