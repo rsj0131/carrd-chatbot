@@ -12,16 +12,20 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f5f5f5;
+            background-color: transparent; /* Transparent background */
         }
 
         #loading {
             font-size: 16px;
-            color: #555;
+            color: #555; /* Make sure the text color contrasts with the background */
         }
 
         #login-container {
             text-align: center;
+            background: rgba(255, 255, 255, 0.8); /* Light translucent background for better readability */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         #login-button {
@@ -55,8 +59,8 @@
     <div id="loading">Checking authentication...</div>
     <div id="login-container" style="display: none;">
         <button id="login-button">
-            <img src="https://upload.wikimedia.org/wikipedia/en/6/60/Twitter_Logo_as_of_2021.svg" alt="Twitter Logo">
-            Login with Twitter
+            <img src="https://commons.wikimedia.org/wiki/File:X_logo_2023.svg" alt="X Logo">
+            Login with X (Twitter)
         </button>
     </div>
 
@@ -92,21 +96,4 @@
             );
         }
 
-        // Handle message from child window
-        window.addEventListener("message", (event) => {
-            if (event.data && event.data.logged_in) {
-                console.log("User authenticated:", event.data);
-
-                localStorage.setItem("username", event.data.username);
-                localStorage.setItem("name", event.data.name);
-
-                window.location.href = "/site.html";
-            }
-        });
-
-        document.getElementById("login-button").addEventListener("click", loginWithTwitter);
-
-        checkAuth();
-    </script>
-</body>
-</html>
+       
