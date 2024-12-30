@@ -59,31 +59,42 @@
     <div id="loading">Checking authentication...</div>
     <div id="login-container" style="display: none;">
         <button id="login-button">
-            <img src="https://commons.wikimedia.org/wiki/File:X_logo_2023.svg" alt="X Logo">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/c/ce/X_logo_2023.svg" alt="X Logo">
             Login with X (Twitter)
         </button>
     </div>
 
     <script>
         async function checkAuth() {
+            const loadingElement = document.getElementById("loading");
+            const loginContainer = document.getElementById("login-container");
+
             try {
+                console.log("Checking authentication...");
                 const response = await fetch("/api/auth/check", { credentials: "include" });
+
+                if (!response.ok) {
+                    throw new Error(`Auth check failed with status: ${response.status}`);
+                }
+
                 const data = await response.json();
+                console.log("Auth response:", data);
 
                 if (data && data.logged_in) {
-                    document.getElementById("login-container").style.display = "none";
-                    document.getElementById("loading").innerText = `Welcome, ${data.username}! Redirecting...`;
+                    loginContainer.style.display = "none";
+                    loadingElement.innerText = `Welcome, ${data.username}! Redirecting...`;
 
                     setTimeout(() => {
                         window.location.href = "/site.html";
                     }, 1000);
                 } else {
-                    document.getElementById("loading").style.display = "none";
-                    document.getElementById("login-container").style.display = "block";
+                    loadingElement.style.display = "none";
+                    loginContainer.style.display = "block";
                 }
             } catch (error) {
-                console.error("Error checking auth:", error);
-                document.getElementById("loading").innerText = "Error checking authentication.";
+                console.error("Error checking authentication:", error);
+                loadingElement.innerText = "Error checking authentication. Please try again.";
+                loginContainer.style.display = "block";
             }
         }
 
@@ -96,4 +107,11 @@
             );
         }
 
-       
+        // Attach click event to the button
+        document.getElementById("login-button").addEventListener("click", loginWithTwitter);
+
+        // Start the authentication check
+        checkAuth();
+    </script>
+</body>
+</html>
