@@ -689,7 +689,7 @@ async function sendImage(userMessage) {
         return {
             result: `You have successfully sent an image to the user, the image description: ${randomImage.description}`,
             hasMessage: true,
-            msgContent: `<img src="${randomImage.url}" alt="${randomImage.description}" class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
+            msgContent: `<img src="${randomImage.url}" alt="${randomImage.name}" class="clickable-image" style="max-width: 400px; max-height: 400px; border-radius: 10px; object-fit: contain;">`,
             isNSFW: randomImage.tags?.includes("nsfw") || false,
         };
     } catch (error) {
@@ -732,7 +732,7 @@ async function generateEmbeddings({ targetCollection = "knowledge_base" }) {
             const { _id } = entry;
             const inputText = targetCollection === "knowledge_base"
                 ? `${entry.question} ${(entry.tags || []).join(" ")}`
-                : `${entry.description} ${(entry.tags || []).join(" ")}`;
+                : `${entry.description} ${entry.name} ${(entry.tags || []).join(" ")}`;
 
             // Skip entries with invalid input text
             if (!inputText || inputText.trim().length === 0) {
