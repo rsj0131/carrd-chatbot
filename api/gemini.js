@@ -434,7 +434,7 @@ export default async function handler(req, res) {
             console.log("No follow-up text found. Generating a follow-up response...");
             const followupModel = genAI.getGenerativeModel({
                 model: MODEL,
-                systemInstruction: dynamicSystemMessage,
+                systemInstruction: `${dynamicSystemMessage} Ensure the response is conversational and user-friendly.`,
             });
         
             // Start a new follow-up chat
