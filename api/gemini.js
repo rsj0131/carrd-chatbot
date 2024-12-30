@@ -430,6 +430,7 @@ export default async function handler(req, res) {
                     history: chatHistory,
                 });
                 const followUpResponse = await followupChat.sendMessage(message);
+                console.log("Follow-up Prompt:", dynamicSystemMessage);
                 console.log("Follow-up Response:", JSON.stringify(followUpResponse, null, 2));
                 
                 // Extract and format the follow-up message
