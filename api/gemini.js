@@ -537,6 +537,9 @@ async function executeFunction(name, args, userMessage) {
     switch (name) {
         case "deleteAllChatHistory":
             return await deleteAllChatHistory();
+
+        case "sendCommissionForm":
+            return await sendCommissionForm();
             
         case "sendImage":
             if (!args || !args.prompt) {
@@ -914,5 +917,35 @@ async function getAnswer(userQuery) {
         console.error("Error in getAnswer:", error);
         cachedEmbedding = null; // Clear the cache on error
         return "An error occurred while retrieving the information. Please try again later.";
+    }
+}
+
+async function sendCommissionForm() {
+    try {
+        // Define the iframe content
+        const iframeContent = `
+            <iframe 
+                src="https://docs.google.com/forms/d/e/1FAIpQLSd5CyvfHwX8uSE1XOKqJA51fVnWHtgKtiVFJeEzhhc42dZJRg/viewform?embedded=true" 
+                width="640" 
+                height="800" 
+                frameborder="0" 
+                marginheight="0" 
+                marginwidth="0">
+                Loading…
+            </iframe>
+        `;
+
+        return {
+            result: "The Google Form for commission requests has been sent.",
+            hasMessage: true,
+            msgContent: iframeContent,
+        };
+    } catch (error) {
+        console.error("Error sending Google Form iframe:", error);
+        return {
+            result: "An error occurred while sending the Google Form.",
+            hasMessage: false,
+            msgContent: null,
+        };
     }
 }
