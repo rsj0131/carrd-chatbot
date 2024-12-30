@@ -399,7 +399,7 @@ export default async function handler(req, res) {
         // Check if the response includes a function call or text
         const responseParts = response.response.candidates[0]?.content?.parts || [];
         
-        let functionProcessed = false; // To track if a function call was processed
+        /*let functionProcessed = false; // To track if a function call was processed
         let textProcessed = false; // To track if text has already been added to replies
         
         for (const part of responseParts) {
@@ -457,7 +457,50 @@ export default async function handler(req, res) {
             const botReplyContent = responseParts.map(part => part.text).join(" ").trim();
             const botReply = botReplyContent || "No response available.";
             replies.push(transformMarkdownLinksToHTML(botReply));
+        }*/
+
+        for (const part of responseParts) {
+            if (part.functionCall) {
+                // Extract function call details
+                const { name, args } = part.functionCall;
+                console.log("Function call detected:", name, args);
+        
+                // Process the tool call with the extracted name and arguments
+                const { result, hasMessage, msgContent } = await processToolCall(
+                    { function: { name, arguments: args } },
+                    message
+                );
+        
+                if (hasMessage && msgContent) {
+                    replies.push(transformMarkdownLinksToHTML(msgContent)); // Ensure formatting
+                }
+        
+                // Update the system message to inform the user about the result
+                dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}`;
+            }
         }
+
+        // Always generate a follow-up response
+        console.log("Generating follow-up response...");
+        const followupModel = genAI.getGenerativeModel({
+            model: MODEL,
+            systemInstruction: `${dynamicSystemMessage} Ensure the response is conversational and user-friendly.`,
+        });
+        
+        // Start a new follow-up chat
+        const followupChat = await followupModel.startChat({
+            history: chatHistory,
+        });
+        const followUpResponse = await followupChat.sendMessage(message);
+        console.log("Follow-up Response:", JSON.stringify(followUpResponse, null, 2));
+        
+        // Extract and format the follow-up message
+        const followUpContent = followUpResponse.response?.candidates[0]?.content?.parts[0]?.text;
+        const followUpMessage = followUpContent
+            ? transformMarkdownLinksToHTML(followUpContent)
+            : "Follow-up not generated.";
+        replies.push(followUpMessage);
+        
         await saveChatHistory(message, replies, userID);
 
         // Summarize and clean up chat history
