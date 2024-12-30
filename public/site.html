@@ -553,7 +553,8 @@
         function parseMessage(text) {
             return text
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Replace **bold text**
-                .replace(/\n/g, '<br>'); // Replace newlines
+                .replace(/\n/g, '<br>') // Replace newlines
+                .replace(/\*([^*]+)\*/g, '<em>$1</em>');
         }
 
     
