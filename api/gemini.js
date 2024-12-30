@@ -906,6 +906,7 @@ async function getAnswer(userQuery) {
                 }
             }
         }
+        cachedEmbedding = embeddingResponse;
 
         // Step 3: Fetch all knowledge base entries with embeddings
         const entries = await collection.find({ embedding: { $exists: true } }).toArray();
