@@ -3,6 +3,8 @@ import fetch from "node-fetch";
 import { Readable } from "stream";
 import { encode } from "gpt-3-encoder";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+
 
 let cachedEmbedding = null;
 
@@ -16,7 +18,7 @@ async function connectToDatabase() {
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
 
-const MODEL = "gemini-1.5-flash";
+const MODEL = "gemini-2.0-flash-exp";
 const EMBED_MODEL = "text-embedding-004"; // Specify the embedding model
 
 // Initialize the client
@@ -24,10 +26,21 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 // Pricing
 const PRICING = {
-        "gemini-2.0-flash-exp": { input: 0.0375 / 1_000_000, output: 0.0150 / 1_000_000 },
-        "gemini-1.5-flash": { input: 0.0375 / 1_000_000, output: 0.0150 / 1_000_000 },
-        "text-embedding-004": { input: 0.000 / 1_000_000, output: 0.000 / 1_000_000 }
-    };
+    "gemini-2.0-flash-exp": { input: 0.0375 / 1_000_000, output: 0.0150 / 1_000_000 },
+    "gemini-1.5-flash": { input: 0.0375 / 1_000_000, output: 0.0150 / 1_000_000 },
+    "text-embedding-004": { input: 0.000 / 1_000_000, output: 0.000 / 1_000_000 }
+};
+
+const safetySettings = [
+    {
+        category: HarmCategory.HARM_CATEGORY_SEXUAL,
+        threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
+        category: HarmCategory.HARM_CATEGORY_MEDICAL,
+        threshold: HarmBlockThreshold.BLOCK_LOW,
+    },
+];
 
 function getPricingForModel(model) {
     const pricing = PRICING[model];
@@ -379,7 +392,7 @@ export default async function handler(req, res) {
         const model = genAI.getGenerativeModel({
             model: MODEL,
             systemInstruction: dynamicSystemMessage, // Include system instruction for context
-            temperature: 1.6,
+            temperature: 1.1,
             tools: {
                 functionDeclarations: tools,
             },
@@ -387,7 +400,8 @@ export default async function handler(req, res) {
                 function_calling_config: {
                     mode: "AUTO",
                 }
-            }
+            },
+            safetySettings: safetySettings,
         });
         console.log("systemInstruction:", dynamicSystemMessage);
         
@@ -427,6 +441,7 @@ export default async function handler(req, res) {
             const followupModel = genAI.getGenerativeModel({
                 model: MODEL,
                 systemInstruction: `${dynamicSystemMessage} Ensure the response is conversational and user-friendly.`,
+                safetySettings: safetySettings,
             });
         
             // Start a new follow-up chat
