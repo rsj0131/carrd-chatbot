@@ -16,7 +16,7 @@ async function connectToDatabase() {
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
 
-const MODEL = "gemini-2.0-flash-exp";
+const MODEL = "gemini-1.5-flash";
 const EMBED_MODEL = "text-embedding-004"; // Specify the embedding model
 
 // Initialize the client
@@ -379,11 +379,7 @@ export default async function handler(req, res) {
         const model = genAI.getGenerativeModel({
             model: MODEL,
             systemInstruction: dynamicSystemMessage, // Include system instruction for context
-        });
-        console.log("systemInstruction:", dynamicSystemMessage);
-        
-        const chat = await model.startChat({
-            history: chatHistory,
+            temperature: 1.6,
             tools: {
                 functionDeclarations: tools,
             },
@@ -392,6 +388,11 @@ export default async function handler(req, res) {
                     mode: "AUTO",
                 }
             }
+        });
+        console.log("systemInstruction:", dynamicSystemMessage);
+        
+        const chat = await model.startChat({
+            history: chatHistory,
         });
         console.log("history sent:", JSON.stringify(chatHistory, null, 2));
         const response = await chat.sendMessage(message);
