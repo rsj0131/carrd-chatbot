@@ -67,8 +67,8 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            flex-direction: column; /* Stack the elements vertically */
-            text-align: center; /* Center align the text */
+            flex-direction: column; /* Stack elements vertically */
+            text-align: center;
         }
         
         #login-button:hover {
@@ -78,15 +78,22 @@
         #login-button img {
             width: 20px;
             height: 20px;
-            margin-bottom: 5px; /* Add space below the logo */
+            margin-bottom: 5px; /* Space below the logo */
         }
         
-        #login-button .small-text {
-            font-size: 12px; /* 40% smaller */
-            font-weight: normal; /* Optional: make it lighter than the main text */
-            color: #ccc; /* Optional: make it lighter to distinguish from the main text */
+        .text-container {
+            display: flex;
+            flex-direction: column; /* Force text into vertical layout */
+            align-items: center; /* Center align the text */
+        }
+        
+        .small-text {
+            font-size: 12px; /* Smaller font size */
+            font-weight: normal; /* Lighter font weight */
+            color: #ccc; /* Lighter color */
             margin-top: 2px; /* Add some space above the smaller text */
         }
+
     </style>
 </head>
 <body>
@@ -100,7 +107,7 @@
             <button id="login-button">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.png" alt="X Logo">
                 <div>
-                    Login with X (Twitter)
+                    Login with X (Twitter)\
                     <span class="small-text">To chat with Vivian</span>
                 </div>
             </button>
