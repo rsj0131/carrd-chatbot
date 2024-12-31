@@ -12,45 +12,39 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: transparent; /* Transparent background */
+            background-color: transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #background-image {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 540px;
+            object-fit: cover;
+            filter: blur(10px);
+            z-index: 0; /* Lowest layer */
+            transition: filter 0.3s ease;
+        }
+
+        #background-image:hover {
+            filter: none; /* Remove blur on hover */
+        }
+
+        #content {
+            position: relative;
+            z-index: 1; /* Above the background */
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
         }
 
         #loading {
             font-size: 16px;
-            color: #555; /* Make sure the text color contrasts with the background */
-        }
-
-        #login-container {
-            text-align: center;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            background-image: url('https://files.catbox.moe/vkkzn8.png'); /* Replace with your image URL */
-            background-size: cover;
-            background-position: center;
-            filter: blur(10px); /* Initial blur effect */
-            transition: filter 0.3s ease; /* Smooth transition for unblurring */
-            position: relative;
-        }
-
-        #login-container:hover {
-            filter: none; /* Remove blur on hover */
-        }
-
-        #login-container::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1;
-            transition: background 0.3s ease; /* Smooth fade for overlay */
-        }
-
-        #login-container:hover::after {
-            background: rgba(0, 0, 0, 0); /* Remove overlay on hover */
+            color: #555;
+            margin-bottom: 20px;
         }
 
         #login-button {
@@ -70,7 +64,7 @@
         }
 
         #login-button:hover {
-            background-color: #000000;
+            background-color: #333333;
         }
 
         #login-button img {
@@ -81,14 +75,20 @@
     </style>
 </head>
 <body>
-    <div id="loading">Checking authentication...</div>
-    <div id="login-container" style="display: none;">
-        <button id="login-button">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.png" alt="X Logo">
-            Login with X (Twitter)
-        </button>
-    </div>
+    <!-- Background Image -->
+    <img id="background-image" src="https://files.catbox.moe/vkkzn8.png" alt="Background">
 
+    <!-- Content Container -->
+    <div id="content">
+        <div id="loading">Checking authentication...</div>
+        <div id="login-container" style="display: none;">
+            <button id="login-button">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.png" alt="X Logo">
+                Login with X (Twitter)
+            </button>
+        </div>
+    </div>
+    
     <script>
         async function checkAuth() {
             const loadingElement = document.getElementById("loading");
