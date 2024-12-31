@@ -459,7 +459,7 @@
                     const botMessageDiv = document.createElement("div");
                     botMessageDiv.className = "bot-message";
                     // Check if the reply includes iframe content
-                    if (reply.includes("<iframe")) {
+                    if (botReply.includes("<iframe")) {
                         botMessage.innerHTML = botReply; // Render the iframe directly
                     } else {
                         botMessage.innerHTML = parseMessage(botReply); // Parse other types of messages
