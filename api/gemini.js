@@ -414,58 +414,48 @@ export default async function handler(req, res) {
         
         let replies = []; // Store replies
 
-        const candidate = response.response.candidates[0]?.content;
-        const functionCall = candidate?.parts.find(part => part.functionCall)?.functionCall;
-        const responseText = candidate?.parts.find(part => part.text)?.text;
-        
-        // Scenario 1: Function call detected
-        if (functionCall) {
-            const { name, args } = functionCall;
-            console.log("Function call detected:", name, args);
-        
-            // Process the tool call with the extracted name and arguments
-            const { result, hasMessage, msgContent } = await processToolCall(
-                { function: { name, arguments: args } },
-                message
-            );
-        
-            if (hasMessage && msgContent) {
-                replies.push(transformMarkdownLinksToHTML(msgContent)); // Ensure formatting
-            }
-        
-            // Update the system message to inform the user about the result
-            dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}.`;
-        
-            // Always generate a follow-up response
-            console.log("Generating follow-up response...");
-            const followupModel = genAI.getGenerativeModel({
-                model: MODEL,
-                systemInstruction: `${dynamicSystemMessage} Ensure the response is conversational and user-friendly.`,
-                safetySettings: safetySettings,
-            });
-        
-            // Start a new follow-up chat
-            const followupChat = await followupModel.startChat({
-                //history: chatHistory,
-                tool_config: {
-                    function_calling_config: {
-                        mode: "NONE", // Prevent additional function calls in follow-up
-                    },
-                },
-            });
-            const followUpResponse = await followupChat.sendMessage(message);
-            console.log("Follow-up Prompt:", dynamicSystemMessage);
-            console.log("Follow-up Response:", JSON.stringify(followUpResponse, null, 2));
-        
-            // Extract and format the follow-up message
-            const followUpContent = followUpResponse.response?.candidates[0]?.content?.parts[0]?.text;
-            const followUpMessage = followUpContent
-                ? transformMarkdownLinksToHTML(followUpContent)
-                : "Follow-up not generated.";
-            replies.push(followUpMessage);
+        const candidate = response.response.candidates[0];
+        const finishReason = candidate?.finishReason;
+
+        if (finishReason === "PROHIBITED_CONTENT") {
+            // Handle prohibited content
+            console.log("Content is prohibited. Generating a follow-up message.");
+            replies.push("The content you requested is prohibited and cannot be processed. Please try a different request.");
         } else {
-            // Scenario 2: No function call, handle text response
-            if (responseText) {
+            const functionCall = candidate?.content?.parts.find(part => part.functionCall)?.functionCall;
+            const responseText = candidate?.content?.parts.find(part => part.text)?.text;
+
+            if (functionCall) {
+                const { name, args } = functionCall;
+                console.log("Function call detected:", name, args);
+
+                const { result, hasMessage, msgContent } = await processToolCall(
+                    { function: { name, arguments: args } },
+                    message
+                );
+
+                if (hasMessage && msgContent) {
+                    replies.push(transformMarkdownLinksToHTML(msgContent));
+                }
+
+                dynamicSystemMessage += `\n\nYou have used a tool. Inform the user about result: ${result}.`;
+
+                const followupModel = genAI.getGenerativeModel({
+                    model: MODEL,
+                    systemInstruction: `${dynamicSystemMessage} Ensure the response is conversational and user-friendly.`,
+                    safetySettings: safetySettings,
+                });
+
+                const followupChat = await followupModel.startChat({
+                    tool_config: { function_calling_config: { mode: "NONE" } },
+                });
+                const followUpResponse = await followupChat.sendMessage(message);
+                const followUpContent = followUpResponse.response?.candidates[0]?.content?.parts[0]?.text;
+                const followUpMessage = followUpContent
+                    ? transformMarkdownLinksToHTML(followUpContent)
+                    : "Follow-up not generated.";
+                replies.push(followUpMessage);
+            } else if (responseText) {
                 replies.push(transformMarkdownLinksToHTML(responseText));
             }
         }
