@@ -110,6 +110,7 @@
         .bot-message {
             background-color: rgba(135, 206, 235, 0.5);
             color: white;
+            overflow: hidden; /* Prevent content overflow */
         }
 
         .bot-message a {
@@ -118,12 +119,12 @@
         }
 
         .bot-message iframe {
-            max-width: 100%; /* Ensure the iframe doesn't exceed the bot message box width */
-            width: 100%; /* Make the iframe fill the available space */
-            border-radius: 8px; /* Optional: Add rounded corners to the iframe */
-            height: auto; /* Adjust height as needed */
-            display: block; /* Ensure the iframe is displayed as a block element */
-            border: none; /* Remove the iframe border */
+            width: 100%; /* Ensure iframe takes up full container width */
+            max-width: 100%; /* Prevent iframe from exceeding container width */
+            height: 300px; /* Set a fixed height for iframe */
+            border: none; /* Remove border */
+            border-radius: 8px; /* Optional: Rounded corners */
+            display: block; /* Ensure iframe is treated as a block element */
         }
         
         .typing-indicator {
@@ -470,6 +471,7 @@
                     // Check if the reply includes iframe content
                     if (botReply.includes("<iframe")) {
                         botMessageDiv.innerHTML = botReply; // Render the iframe directly
+                        botMessageDiv.style.width = "100%"; // Ensure full width for iframe container
                     } else {
                         botMessageDiv.innerHTML = parseMessage(botReply); // Parse other types of messages
                     }
@@ -646,6 +648,7 @@
                         botMessage.className = "bot-message";
                         if (reply.includes("<iframe")) {
                             botMessage.innerHTML = reply; // Render the iframe directly
+                            botMessage.style.width = "100%"; // Ensure full width for iframe container
                         } else {
                             botMessage.innerHTML = parseMessage(reply); // Parse other types of messages
                         }
