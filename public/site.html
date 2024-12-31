@@ -460,9 +460,9 @@
                     botMessageDiv.className = "bot-message";
                     // Check if the reply includes iframe content
                     if (reply.includes("<iframe")) {
-                        botMessage.innerHTML = reply; // Render the iframe directly
+                        botMessage.innerHTML = botReply; // Render the iframe directly
                     } else {
-                        botMessage.innerHTML = parseMessage(reply); // Parse other types of messages
+                        botMessage.innerHTML = parseMessage(botReply); // Parse other types of messages
                     }
         
                     const botTimestamp = document.createElement("small");
@@ -635,7 +635,11 @@
         
                         const botMessage = document.createElement("div");
                         botMessage.className = "bot-message";
-                        botMessage.innerHTML = parseMessage(reply);
+                        if (reply.includes("<iframe")) {
+                            botMessage.innerHTML = reply; // Render the iframe directly
+                        } else {
+                            botMessage.innerHTML = parseMessage(reply); // Parse other types of messages
+                        }
         
                         const botTimestamp = document.createElement("small");
                         botTimestamp.className = "timestamp";
