@@ -458,7 +458,12 @@
         
                     const botMessageDiv = document.createElement("div");
                     botMessageDiv.className = "bot-message";
-                    botMessageDiv.innerHTML = parseMessage(botReply);
+                    // Check if the reply includes iframe content
+                    if (reply.includes("<iframe")) {
+                        botMessage.innerHTML = reply; // Render the iframe directly
+                    } else {
+                        botMessage.innerHTML = parseMessage(reply); // Parse other types of messages
+                    }
         
                     const botTimestamp = document.createElement("small");
                     botTimestamp.className = "timestamp";
