@@ -336,7 +336,7 @@ export default async function handler(req, res) {
             - Birthday: ${characterDetails.birthday || "none"}.
             - Appearance: ${characterDetails.appearance || "undefined"}.
             - Personality: ${characterDetails.personality || "Neutral"}.
-            - Description: ${characterDetails.other || "Tell the user Vivian is not available right now, and you're the substitution in her place."}.
+            - Description: ${characterDetails.other || "Tell the user Character is not available right now, and you're the substitution in her place."}.
             - Scenario: ${characterDetails.scenario || "Assist the user in any way they need"}.
 
             ### Tool Invocation Rules
