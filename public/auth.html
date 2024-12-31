@@ -28,8 +28,29 @@
             background-image: url('https://files.catbox.moe/vkkzn8.png'); /* Replace with your image URL */
             background-size: cover;
             background-position: center;
-            filter: blur(10px); /* Add blur effect */
+            filter: blur(10px); /* Initial blur effect */
+            transition: filter 0.3s ease; /* Smooth transition for unblurring */
             position: relative;
+        }
+
+        #login-container:hover {
+            filter: none; /* Remove blur on hover */
+        }
+
+        #login-container::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+            transition: background 0.3s ease; /* Smooth fade for overlay */
+        }
+
+        #login-container:hover::after {
+            background: rgba(0, 0, 0, 0); /* Remove overlay on hover */
         }
 
         #login-button {
