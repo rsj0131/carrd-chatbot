@@ -380,6 +380,7 @@ export default async function handler(req, res) {
             model: MODEL,
             systemInstruction: dynamicSystemMessage, // Include system instruction for context
         });
+        console.log("systemInstruction:", dynamicSystemMessage);
         
         const chat = await model.startChat({
             history: chatHistory,
