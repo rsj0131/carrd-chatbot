@@ -927,9 +927,10 @@ async function getAnswer(userQuery) {
 async function sendCommissionForm() {
     try {
         // Define the iframe content
+        const formLink = process.env.COMMISSION_FORM;
         const iframeContent = `
             <iframe 
-                src="process.env.COMMISSION_FORM"
+                src="${formLink}"
                 width="640" 
                 height="800" 
                 frameborder="0" 
