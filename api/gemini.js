@@ -393,6 +393,7 @@ export default async function handler(req, res) {
                 }
             }
         });
+        console.log("history sent:", JSON.stringify(chatHistory, null, 2));
         const response = await chat.sendMessage(message);
         console.log("API Response:", JSON.stringify(response, null, 2));
         
