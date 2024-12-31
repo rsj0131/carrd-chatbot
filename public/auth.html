@@ -55,8 +55,7 @@
 
         #login-button {
             display: flex;
-            align-items: center;
-            justify-content: center;
+            align-items: center; /* Align items vertically centered */
             background-color: #000000;
             color: white;
             font-size: 16px;
@@ -67,8 +66,8 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            flex-direction: column; /* Stack elements vertically */
-            text-align: center;
+            text-align: left; /* Align content to the left */
+            gap: 10px; /* Space between the icon and text */
         }
         
         #login-button:hover {
@@ -78,20 +77,24 @@
         #login-button img {
             width: 20px;
             height: 20px;
-            margin-bottom: 5px; /* Space below the logo */
         }
         
         .text-container {
             display: flex;
-            flex-direction: column; /* Force text into vertical layout */
-            align-items: center; /* Center align the text */
+            flex-direction: column; /* Stack text elements vertically */
+            align-items: flex-start; /* Align text to the start */
+        }
+        
+        .main-text {
+            font-size: 16px; /* Main font size */
+            font-weight: bold;
         }
         
         .small-text {
             font-size: 12px; /* Smaller font size */
             font-weight: normal; /* Lighter font weight */
             color: #ccc; /* Lighter color */
-            margin-top: 2px; /* Add some space above the smaller text */
+            margin-top: 2px; /* Space above the smaller text */
         }
 
     </style>
@@ -107,7 +110,7 @@
             <button id="login-button">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/57/X_logo_2023_%28white%29.png" alt="X Logo">
                 <div class="text-container">
-                    <span>Login with X (Twitter)</span>
+                    <span class="main-text">Login with X (Twitter)</span>
                     <span class="small-text">To chat with Vivian</span>
                 </div>
             </button>
