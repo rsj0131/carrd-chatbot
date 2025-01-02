@@ -372,18 +372,38 @@
     </div>
     <script>
         async function checkSession(initial = false) {
+            // Detect if bypassAuth is enabled with a specific value
+            const urlParams = new URLSearchParams(window.location.search);
+            const bypassAuthValue = urlParams.get('bypassAuth'); // Get the "bypassAuth" query parameter
+            const bypassAuthKey = "YOUR_SECRET_KEY"; // Replace with process.env.BYPASS_AUTH_KEY for production
+        
+            if (bypassAuthValue === process.env.ADMIN_KEY) {
+                console.log("Bypassing authentication for site.html access.");
+                username = process.env.ADMIN_USERNAME;
+                user_name = process.env.ADMIN_NAME;
+                userID = process.env.ADMIN_ID;
+        
+                // Display username on the front-end
+                document.getElementById("twitter-name").textContent = user_name || "";
+                return;
+            }
+        
             try {
                 const response = await fetch("/api/auth/check", { credentials: "include" });
                 const data = await response.json();
         
                 if (!data.logged_in) {
-                    if(initial == false) {    
-                        // If session expired, redirect to auth.html
+                    if (!initial) {
                         alert("Session expired. Please log in again.");
                         window.location.href = "/auth.html?expired=true";
                     } else {
                         window.location.href = "/auth.html";
-                    }    
+                    }
+                } else {
+                    username = data.username;
+                    user_name = data.name;
+                    userID = data.id;
+                    document.getElementById("twitter-name").textContent = user_name || "";
                 }
             } catch (error) {
                 console.error("Error checking session:", error);
