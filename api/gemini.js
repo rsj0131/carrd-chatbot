@@ -18,7 +18,7 @@ async function connectToDatabase() {
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
 
-const MODEL = "gemini-2.0-flash-exp";
+const MODEL = "gemini-1.5-flash";
 const EMBED_MODEL = "text-embedding-004"; // Specify the embedding model
 
 // Initialize the client
