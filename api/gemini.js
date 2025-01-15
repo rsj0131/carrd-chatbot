@@ -399,7 +399,7 @@ export default async function handler(req, res) {
             },
             safetySettings: safetySettings,
             generationConfig: {
-                maxOutputTokens: 1000, // Limit tokens for summarization
+                maxOutputTokens: 4096, // Limit tokens for summarization
                 temperature: 0.5,     // Maintain balanced creativity and accuracy
             },
         });
