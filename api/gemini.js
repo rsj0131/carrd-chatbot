@@ -13,7 +13,7 @@ const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
 async function connectToDatabase() {
     if (!mongoClient.topology || !mongoClient.topology.isConnected()) {
-        await mongoClient.connect();
+        await mongoClient.conEnect();
     }
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
@@ -852,7 +852,7 @@ async function getAnswer(userQuery) {
                 const embeddingResponse = await model.embedContent(userQuery);
 
                 // Debugging the API response
-                console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
+                //console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
 
                 queryEmbedding = embeddingResponse?.embedding?.values;
                 if (!queryEmbedding || queryEmbedding.length === 0) {
@@ -902,7 +902,9 @@ async function getAnswer(userQuery) {
             .slice(0, topN);
 
         if (topMatches.length === 0) {
+            const highestSimilarity = Math.max(...similarities.map(({ similarity }) => similarity), 0);
             console.log(`No matches met the similarity threshold (${threshold}).`);
+            console.log(`Highest similarity value among all entries: ${highestSimilarity.toFixed(6)}.`);
             return "No relevant match found for your query.";
         }
 
