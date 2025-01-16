@@ -882,7 +882,7 @@ async function getAnswer(userQuery) {
 
         // Step 5: Select top N most relevant entries
         const topN = 3; // Adjust this number based on testing and user experience
-        const threshold = 0.45; // Adjust this threshold based on desired precision
+        const threshold = 0.49; // Adjust this threshold based on desired precision
         const topMatches = similarities
             .filter(({ similarity }) => similarity >= threshold)
             .sort((a, b) => b.similarity - a.similarity)
