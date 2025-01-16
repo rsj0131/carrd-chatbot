@@ -13,7 +13,7 @@ const mongoClient = new MongoClient(process.env.MONGODB_URI);
 
 async function connectToDatabase() {
     if (!mongoClient.topology || !mongoClient.topology.isConnected()) {
-        await mongoClient.conEnect();
+        await mongoClient.connect();
     }
     return mongoClient.db("caard-bot"); // Replace with your database name
 }
