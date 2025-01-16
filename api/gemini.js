@@ -845,9 +845,6 @@ async function getAnswer(userQuery) {
         const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
         const embeddingResponse = await model.embedContent(userQuery);
 
-        // Debugging the API response
-        //console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
-
         const queryEmbedding = embeddingResponse?.embedding?.values;
         if (!queryEmbedding || queryEmbedding.length === 0) {
             console.error("Failed to generate embedding. Missing or invalid embedding data.");
@@ -875,6 +872,12 @@ async function getAnswer(userQuery) {
         const similarities = entries.map(entry => {
             const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
             return { entry, similarity };
+        });
+
+        // Log similarity values for all entries
+        console.log("Similarity scores for all entries:");
+        similarities.forEach(({ entry, similarity }, index) => {
+            console.log(`Entry ${index + 1}: Similarity = ${similarity.toFixed(6)}.`);
         });
 
         // Step 5: Select top N most relevant entries
@@ -917,109 +920,6 @@ async function getAnswer(userQuery) {
         return "An error occurred while retrieving the information. Please try again later.";
     }
 }
-
-
-/*async function getAnswer(userQuery) {
-    const startTime = Date.now(); // Start the timer
-    const TOKEN_COST = PRICING[EMBED_MODEL]; // Cost for embedding generation
-    let totalCost = 0;
-
-    try {
-        // Step 1: Validate input query
-        if (!userQuery || userQuery.trim().length === 0) {
-            console.error("Invalid user query. Cannot generate an answer.");
-            return "Invalid query provided. Please refine your question.";
-        }
-
-        const db = await connectToDatabase();
-        const collection = db.collection("knowledge_base");
-
-        // Step 2: Generate an embedding for the user query
-        const MAX_RETRIES = 3;
-        let queryEmbedding = null;
-        let retries = 0;
-
-        while (retries < MAX_RETRIES) {
-            try {
-                const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-                const embeddingResponse = await model.embedContent(userQuery);
-
-                // Debugging the API response
-                console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
-
-                queryEmbedding = embeddingResponse?.embedding?.values;
-                if (!queryEmbedding || queryEmbedding.length === 0) {
-                    throw new Error("Invalid or missing embedding data.");
-                }
-
-                // Calculate cost dynamically
-                const inputTokens = encode(userQuery).length;
-                const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-                const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-                totalCost += inputCost;
-
-                console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
-                break; // Exit retry loop on success
-            } catch (retryError) {
-                retries++;
-                console.error(`Retry ${retries} failed for embedding generation.`, retryError);
-                if (retries === MAX_RETRIES) {
-                    console.error("Max retries reached for embedding generation. Skipping.");
-                    return "Failed to process your query. Please try again later.";
-                }
-            }
-        }
-        cachedEmbedding = queryEmbedding;
-
-        // Step 3: Fetch all knowledge base entries with embeddings
-        const entries = await collection.find({ embedding: { $exists: true } }).toArray();
-
-        if (entries.length === 0) {
-            console.log("No entries with embeddings found in the knowledge base.");
-            return "No relevant information found in the knowledge base.";
-        }
-        console.log(`Fetched ${entries.length} entries from the knowledge base.`);
-
-        // Step 4: Calculate similarity scores
-        const similarities = entries.map(entry => {
-            const similarity = cosineSimilarity(queryEmbedding, entry.embedding);
-            return { entry, similarity };
-        });
-
-        // Step 5: Find the most relevant entry
-        const bestMatch = similarities.sort((a, b) => b.similarity - a.similarity)[0];
-        const threshold = 0.55; // Adjust this threshold based on desired precision
-        if (bestMatch.similarity < threshold) {
-            console.log(`Best match similarity (${bestMatch.similarity}) is below the threshold (${threshold}).`);
-            return "No relevant match found for your query.";
-        }
-
-        const { answer, guideline, links } = bestMatch.entry;
-
-        // Transform links into <a> tags
-        const formattedLinks = links
-            ? links
-                .map(link => `<a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.text}</a>`)
-                .join("<br>")
-            : "";
-
-        // Step 6: Build and return the response
-        let response = `Here's what I found:<br><br>${answer}<br><br>Guideline: ${guideline}<br>`;
-        if (formattedLinks) {
-            response += `Relevant links:<br>${formattedLinks}`;
-        }
-
-        const totalDuration = Date.now() - startTime;
-        console.log(`Best match found with similarity ${bestMatch.similarity}:`, bestMatch.entry);
-        console.log(`Total cost: $${totalCost.toFixed(6)}, Total duration: ${totalDuration}ms`);
-
-        return response;
-    } catch (error) {
-        console.error("Error in getAnswer:", error);
-        cachedEmbedding = null; // Clear the cache on error
-        return "An error occurred while retrieving the information. Please try again later.";
-    }
-}*/
 
 async function sendCommissionForm() {
     try {
