@@ -842,41 +842,25 @@ async function getAnswer(userQuery) {
         const collection = db.collection("knowledge_base");
 
         // Step 2: Generate an embedding for the user query
-        const MAX_RETRIES = 3;
-        let queryEmbedding = null;
-        let retries = 0;
+        const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
+        const embeddingResponse = await model.embedContent(userQuery);
 
-        while (retries < MAX_RETRIES) {
-            try {
-                const model = genAI.getGenerativeModel({ model: EMBED_MODEL });
-                const embeddingResponse = await model.embedContent(userQuery);
+        // Debugging the API response
+        //console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
 
-                // Debugging the API response
-                //console.log("Embedding API response:", JSON.stringify(embeddingResponse, null, 2));
-
-                queryEmbedding = embeddingResponse?.embedding?.values;
-                if (!queryEmbedding || queryEmbedding.length === 0) {
-                    throw new Error("Invalid or missing embedding data.");
-                }
-
-                // Calculate cost dynamically
-                const inputTokens = encode(userQuery).length;
-                const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
-                const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
-                totalCost += inputCost;
-
-                console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
-                break; // Exit retry loop on success
-            } catch (retryError) {
-                retries++;
-                console.error(`Retry ${retries} failed for embedding generation.`, retryError);
-                if (retries === MAX_RETRIES) {
-                    console.error("Max retries reached for embedding generation. Skipping.");
-                    return "Failed to process your query. Please try again later.";
-                }
-            }
+        const queryEmbedding = embeddingResponse?.embedding?.values;
+        if (!queryEmbedding || queryEmbedding.length === 0) {
+            console.error("Failed to generate embedding. Missing or invalid embedding data.");
+            return "Failed to process your query. Please try again later.";
         }
-        cachedEmbedding = queryEmbedding;
+
+        // Calculate cost dynamically
+        const inputTokens = encode(userQuery).length;
+        const usage = { prompt_tokens: inputTokens, completion_tokens: 0, total_tokens: inputTokens };
+        const { inputCost } = await computeCostAndLog(usage, EMBED_MODEL);
+        totalCost += inputCost;
+
+        console.log(`Generated embedding for query. Tokens: ${inputTokens}, Cost: $${inputCost.toFixed(6)}.`);
 
         // Step 3: Fetch all knowledge base entries with embeddings
         const entries = await collection.find({ embedding: { $exists: true } }).toArray();
@@ -930,10 +914,10 @@ async function getAnswer(userQuery) {
         return combinedAnswer;
     } catch (error) {
         console.error("Error in getAnswer:", error);
-        cachedEmbedding = null; // Clear the cache on error
         return "An error occurred while retrieving the information. Please try again later.";
     }
 }
+
 
 /*async function getAnswer(userQuery) {
     const startTime = Date.now(); // Start the timer
